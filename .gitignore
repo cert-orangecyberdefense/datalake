@@ -1,0 +1,44 @@
+# IDE files
+.project
+.pydevproject
+.settings
+.idea
+
+# setuptools
+*.egg-info
+.eggs
+build
+dist
+.cache
+
+# Results_and_inputs
+.results_and_inputs
+
+# Unit testing process outputs
+.cov
+.coverage
+.noseids
+nosetests.xml
+
+# Debugging files in case of unittest errors
+tests/last_backup_tests
+
+# Tests: generated helper files
+tests/**/expected
+
+# Python 3
+**/__pycache__/
+
+# i18n
+**.mo
+
+# Transient files
+**/*~
+**/*.swp
+**/*.bkp
+**/*.log
+**/.~*
+
+# virtualenv
+/.venv
+/.venv-j2

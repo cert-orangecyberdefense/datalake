@@ -1,0 +1,13 @@
+{
+  "main": {
+    "preprod": "https://ti.extranet.mrti-center.com/api",
+    "prod": "https://datalake.cert.orangecyberdefense.com/api"
+  },
+  "endpoints": {
+    "advanced-queries": "/v1/mrti/advanced-queries/threats/",
+    "bulk-search": "/v1/mrti/bulk-search/",
+    "threats": "/v1/mrti/threats/",
+    "threats-manual": "/v1/mrti/threats-manual/",
+    "token": "/v1/auth/token/"
+  }
+}
