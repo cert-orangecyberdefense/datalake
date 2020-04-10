@@ -9,9 +9,9 @@ import time
 import requests
 from requests import Response
 
-from src.common.logger import logger
-from src.common.throttler import throttle
-from src.common.token_manager import TokenGenerator
+from datalake_scripts.common.logger import logger
+from datalake_scripts.common.throttler import throttle
+from datalake_scripts.common.token_manager import TokenGenerator
 
 
 class BaseEngine:

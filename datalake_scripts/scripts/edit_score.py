@@ -1,8 +1,8 @@
 import sys
 
-from src.common.base_script import BaseScripts
-from src.common.logger import logger
-from src.engines.post_engine import ThreatsScoringPost, AddThreatsPost
+from datalake_scripts.common.base_script import BaseScripts
+from datalake_scripts.common.logger import logger
+from datalake_scripts.engines.post_engine import ThreatsScoringPost, AddThreatsPost
 
 
 def main(override_args=None):

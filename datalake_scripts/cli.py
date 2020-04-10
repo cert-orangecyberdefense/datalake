@@ -3,8 +3,8 @@
 import argparse
 import sys
 
-from src.common.base_script import BaseScripts
-from src.scripts import add_new_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
+from datalake_scripts.common.base_script import BaseScripts
+from datalake_scripts.scripts import add_new_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
     add_new_comment_or_tags
 
 

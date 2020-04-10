@@ -6,7 +6,7 @@ from getpass import getpass
 
 import requests
 
-from src.common.logger import logger
+from datalake_scripts.common.logger import logger
 
 
 class TokenGenerator:

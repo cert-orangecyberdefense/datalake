@@ -4,15 +4,18 @@ This is all common functions for basics scripts
 import argparse
 import json
 import logging
+import os
 from typing import List
 
-from src.common.logger import configure_logging, logger
-from src.common.token_manager import TokenGenerator
+from datalake_scripts.common.logger import configure_logging, logger
+from datalake_scripts.common.token_manager import TokenGenerator
+
+FOLDER_ABSOLUTE_PATH = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
 
 
 class BaseScripts:
 
-    _CONFIG_ENDPOINTS = './config/endpoints.json'
+    _CONFIG_ENDPOINTS = os.path.join(FOLDER_ABSOLUTE_PATH, '..', 'config', 'endpoints.json')
     PACKAGE_NAME = 'ocd-dtl'
 
     def save_output(self, file_name: str, data):

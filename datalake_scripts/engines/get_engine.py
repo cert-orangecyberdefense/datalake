@@ -3,8 +3,8 @@ from urllib.parse import urljoin
 
 from typing import Iterator
 
-from src.common.base_engine import BaseEngine
-from src.common.logger import logger
+from datalake_scripts.common.base_engine import BaseEngine
+from datalake_scripts.common.logger import logger
 
 
 class GetEngine(BaseEngine):

@@ -1,8 +1,8 @@
 import sys
 
-from src.common.base_script import BaseScripts
-from src.common.logger import logger
-from src.engines.get_engine import BulkSearch
+from datalake_scripts.common.base_script import BaseScripts
+from datalake_scripts.common.logger import logger
+from datalake_scripts.engines.get_engine import BulkSearch
 
 
 def main(override_args=None):
