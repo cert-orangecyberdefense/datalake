@@ -13,7 +13,7 @@ def main(override_args=None):
     parser = starter.start('Edit scores of a specified list of ids (hashkeys)')
     parser.add_argument(
         'hashkeys',
-        help='hashkeys of the threat to add tags and/or the comment.',
+        help='hashkeys of the threat to edit score.',
         nargs='*',
     )
     parser.add_argument(
