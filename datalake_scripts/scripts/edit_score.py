@@ -73,8 +73,9 @@ def main(override_args=None):
 def retrieve_hashkeys_from_file(input_file, hashkeys):
     with open(input_file, 'r', encoding='utf-8') as input_file:
         for line in input_file:
+            line = line.strip()
             if line:
-                hashkeys.add(line.strip())
+                hashkeys.add(line)
 
 
 if __name__ == '__main__':
