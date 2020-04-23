@@ -2,6 +2,7 @@
 Token manager will manage tokens for the scripts.
 """
 import json
+import os
 from getpass import getpass
 
 import requests
@@ -48,8 +49,8 @@ class TokenGenerator:
         """
         Generate token from user input, with email and password
         """
-        username = input('Email: ')
-        password = getpass()
+        username = os.getenv('OCD_DTL_USERNAME') or input('Email: ')
+        password = os.getenv('OCD_DTL_PASSWORD') or getpass()
         print()
         return self.retrieve_token({'email': username, 'password': password}, False)
 

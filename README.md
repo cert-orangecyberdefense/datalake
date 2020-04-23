@@ -33,13 +33,19 @@ You can also use a script directly by using the following command: `<script_name
 
 ## Environment variables
 
+#### Authentication
+In case you don't want to enter credential for each commands and you are on a secured terminal, set those variables:  
+* `OCD_DTL_USERNAME` email address used to login on Datalake API/GUI.   
+* `OCD_DTL_PASSWORD` password used to login on Datalake API/GUI.
+> They are independent and one can be used without the other if you wish.
+
 #### Throttling
 For throttling the request, those two environment variable can be used:  
 * `OCD_DTL_QUOTA_TIME` define, in seconds, the time before resetting the requests limit, *default is 1 second*.   
-* `OCD_DTL_REQUESTS_PER_QUOTA_TIME` define the number of request to do at maximum for the given time,  *default is 5 queries*
+* `OCD_DTL_REQUESTS_PER_QUOTA_TIME` define the number of request to do at maximum for the given time,  *default is 5 queries*.
 
 > Please don't exceed the quota marked [here](https://datalake.cert.orangecyberdefense.com/api/v1/docs/) for each endpoint
 
 ## More documentation
 
-Please check [the documentation directory](docs)
+Please check [the documentation directory](https://github.com/cert-orangecyberdefense/datalake/tree/master/docs)
