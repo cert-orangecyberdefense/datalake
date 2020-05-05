@@ -1,7 +1,9 @@
 """All the engines that use a GET endpoint."""
 from urllib.parse import urljoin
 
-from typing import Iterator
+from typing import List
+
+from requests import PreparedRequest
 
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.logger import logger
@@ -63,12 +65,13 @@ class BulkSearch(GetEngine):
     Bulk search engines
     """
 
-    def get_threats_hashkeys(self, query_hash: str) -> Iterator[list]:
-        url = urljoin(self.url, query_hash)
-        response = self.datalake_requests(url, 'get', headers={'Authorization': self.tokens[0]})
-        original_count = response.get('count', 0)
-        logger.info(f'Number of hashkeys that have been retrieved: {original_count}')
+    def get_threats(self, query_hash: str, query_fields: List[str] = None) -> dict:
+        params = {}
+        if query_fields:
+            params['query_fields'] = ','.join(query_fields)
+        url_without_param = urljoin(self.url, query_hash)
+        req = PreparedRequest()  # Adding parameters using requests' tool
+        req.prepare_url(url_without_param, params)
 
-        for result in response.get('results', []):
-            if result:
-                yield result[0]  # result looks like [hashkey, atom_value]
+        response = self.datalake_requests(req.url, 'get', headers={'Authorization': self.tokens[0]})
+        return response
