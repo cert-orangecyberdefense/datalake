@@ -238,7 +238,7 @@ class ThreatsScoringPost(PostEngine):
         for hashkey in hashkeys:
             response = self._post_new_score(hashkey, scores, override_type)
             if response.get('message'):
-                logger.info('\x1b[6;30;41m' + hashkey + ': ' + response.get('message') + '\x1b[0m')
+                logger.warning('\x1b[6;30;41m' + hashkey + ': ' + response.get('message') + '\x1b[0m')
                 return_value.append(hashkey + ': ' + response.get('message'))
             else:
                 return_value.append(hashkey + ': OK')
