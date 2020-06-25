@@ -42,6 +42,7 @@ To create threats:
 > --is_csv  set it to have a csv file as an input  
 > -d to have a special delimiter  
 > -c to select the column (starting at **1**)
+> --link to provide a link i.e. a URL that will be filled in "external_analysis_link"
 
 > -o (Optional) will set the output file as the API gives it.  
 > -e (Optional) to change the environment {preprod, prod},  default is **prod**  
