@@ -25,8 +25,8 @@ From CSV file:
 
 To create threats:
 
-    add_new_threats -o output_file.json -t ddos 50 scam 15 -i ip_list.txt -a IP --tag test0 test32 test320 
-    add_new_threats -o output_file.json -t ddos 50 scam 15 -i ip_list.csv -a IP --tag test0 test32 test320 --is_csv -d , -c 1
+    ocd-dtl add_threats -o output_file.json -t ddos 50 scam 15 -i ip_list.txt -a IP --tag test0 test32 test320 
+    ocd-dtl add_threats -o output_file.json -t ddos 50 scam 15 -i ip_list.csv -a IP --tag test0 test32 test320 --is_csv -d , -c 1
 
 #### Parameters
 
