@@ -2,6 +2,7 @@
 This is all common functions for basics scripts
 """
 import argparse
+import csv
 import json
 import logging
 import os
@@ -109,11 +110,14 @@ class BaseScripts:
         """
         Load a CSV file and return one column in a list
         """
-        list_lines = self._load_list(file_name)
         ret = []
-        for line in list_lines:
-            if isinstance(line.split(delimiter), list):
-                ret.append(line.split(delimiter)[column])
-            else:
-                ret.append(line)
+        i = 0  # Keep current row number in case of exception
+        try:
+            with open(file_name, 'r') as csvfile:
+                csv_reader = csv.reader(csvfile, delimiter=delimiter)
+                for i, row in enumerate(csv_reader):
+                    if row and not row[0].startswith('#'):  # We discard comments
+                        ret.append(row[column])
+        except IndexError:
+            raise ValueError(f'Csv passed does not have enough columns on line {i} or the delimiter is incorrect')
         return ret
