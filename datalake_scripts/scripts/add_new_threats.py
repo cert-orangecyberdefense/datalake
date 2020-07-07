@@ -87,7 +87,11 @@ def main(override_args=None):
     url_manual_threats = main_url + endpoint_url['endpoints']['threats-manual']
     post_engine_add_threats = AddThreatsPost(url_manual_threats, main_url, tokens)
     if args.is_csv:
-        list_new_threats = starter._load_csv(args.input, args.delimiter, args.column - 1)
+        try:
+            list_new_threats = starter._load_csv(args.input, args.delimiter, args.column - 1)
+        except ValueError as ve:
+            logger.error(ve)
+            exit()
     else:
         list_new_threats = starter._load_list(args.input)
     threat_types = AddThreatsPost.parse_threat_types(args.threat_types) or []
