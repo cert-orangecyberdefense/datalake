@@ -90,6 +90,7 @@ def main(override_args=None):
         list_new_threats = starter._load_csv(args.input, args.delimiter, args.column - 1)
     else:
         list_new_threats = starter._load_list(args.input)
+    list_new_threats = defang_threats(list_new_threats, args.atom_type)
     threat_types = AddThreatsPost.parse_threat_types(args.threat_types) or []
     response_dict = post_engine_add_threats.add_threats(
         list_new_threats,
@@ -105,6 +106,21 @@ def main(override_args=None):
         starter.save_output(args.output, response_dict)
         logger.debug(f'Results saved in {args.output}\n')
     logger.debug(f'END: add_new_threats.py')
+
+
+def defang_threats(threats, atom_type):
+    defanged = []
+    for threat in threats:
+        threat = threat.replace('[.]', '.')
+        threat = threat.replace('(.)', '.')
+        if atom_type == 'url':
+            if not threat.startswith('http'):
+                if threat.startswith('hxxp'):
+                    threat = threat.replace('hxxp', 'http')
+                else:
+                    threat = 'http://' + threat
+        defanged.append(threat)
+    return defanged
 
 
 if __name__ == '__main__':
