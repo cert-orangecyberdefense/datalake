@@ -31,7 +31,8 @@ To create threats:
 #### Parameters
 Required:
 > -i will be the input file  
-> -a will set the atom type, here IP
+> -a will set the atom type, here IP 
+
 > -t will set the score for the threat to the corresponding value, here you have `ddos = 50` and `scam = 15`  
 > -w (Optional) will set all the scores to 0 like a whitelist  
 
