@@ -133,6 +133,8 @@ def defang_threats(threats, atom_type):
                 logger.warning(f'\'{unmodified_threat}\' has been modified as \'{threat}\' but is still not recognized'
                                f' as an url. Skipping this line')
                 continue
+            if unmodified_threat != threat:
+                logger.info(f'\'{unmodified_threat}\' has been modified as \'{threat}\'')
         defanged.append(threat)
     return defanged
 
