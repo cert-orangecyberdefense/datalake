@@ -36,14 +36,13 @@ Required:
 > -w (Optional) will set all the scores to 0 like a whitelist  
 
 
->  (Optional) 
+(Optional) 
 > --tag will add all the following tags to the new threats, here `test0 test32 test320`  
-> -p (Optional) set the visibility to public default=private 
- 
+> -p set the visibility to public default=private 
 > --is_csv  set it to have a csv file as an input  
 > -d to have a special delimiter  
 > -c to select the column (starting at **1**)
 > --link to provide a link i.e. a URL that will be filled in "external_analysis_link"
-> -o (Optional) will set the output file as the API gives it.  
-> -e (Optional) to change the environment {preprod, prod},  default is **prod**  
+> -o will set the output file as the API gives it.  
+> -e to change the environment {preprod, prod},  default is **prod**  
 
