@@ -1,3 +1,4 @@
+import re
 import sys
 
 from datalake_scripts.common.base_script import BaseScripts
@@ -110,15 +111,28 @@ def main(override_args=None):
 
 def defang_threats(threats, atom_type):
     defanged = []
+    # matches urls like http://www.website.com:444/file.html
+    standard_url_regex = re.compile(r'^(https?:\/\/)[a-z0-9]+([\-\.][a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$')
+    # matches urls like http://185.25.5.3:8080/result.php
+    ip_url_regex = re.compile(r'^(https?:\/\/)[0-9]{1,3}([\.][0-9]{1,3}){3}(:[0-9]{1,5})?(\/.*)?$')
     for threat in threats:
+        unmodified_threat = threat
         threat = threat.replace('[.]', '.')
         threat = threat.replace('(.)', '.')
         if atom_type == 'url':
             if not threat.startswith('http'):
                 if threat.startswith('hxxp'):
                     threat = threat.replace('hxxp', 'http')
+                elif threat.startswith('ftp'):
+                    threat = threat.replace('ftp', 'http')
+                elif threat.startswith('sftp'):
+                    threat = threat.replace('sftp', 'https')
                 else:
                     threat = 'http://' + threat
+            if not standard_url_regex.match(threat) and not ip_url_regex.match(threat):
+                logger.warning(f'\'{unmodified_threat}\' has been modified as \'{threat}\' but is still not recognized'
+                               f' as an url. Skipping this line')
+                continue
         defanged.append(threat)
     return defanged
 
