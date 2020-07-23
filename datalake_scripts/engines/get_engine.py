@@ -75,3 +75,27 @@ class BulkSearch(GetEngine):
 
         response = self.datalake_requests(req.url, 'get', headers={'Authorization': self.tokens[0]})
         return response
+
+
+class LookupThreats(GetEngine):
+    """Lookup threats engine"""
+
+    def get_lookup_result(self, threat, atom_type) -> list:
+        params = {'atom_value': threat, 'atom_type': atom_type}
+        req = PreparedRequest()  # Adding parameters using requests' tool
+        req.prepare_url(self.url, params)
+
+        response = self.datalake_requests(req.url, 'get', headers={'Authorization': self.tokens[0]})
+        return response
+
+    def lookup_threats(self, threats: set, atom_type):
+        complete_response = []
+        boolean_to_text_and_color = {True: ('FOUND', '\x1b[6;30;42m'),
+                                     False: ('NOT_FOUND', '\x1b[6;30;41m')}
+        for threat in threats:
+            response = self.get_lookup_result(threat, atom_type)
+            found = boolean_to_text_and_color[response['threat_found']]
+            logger.info('{}{} hashkey:{} {}\x1b[0m'.format(found[1], threat, response['hashkey'], found[0]))
+            response = '{},{},{}'.format(threat, response.get('hashkey'), found[0])
+            complete_response.append(response)
+        return complete_response
