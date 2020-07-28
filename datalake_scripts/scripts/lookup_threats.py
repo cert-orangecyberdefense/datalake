@@ -6,6 +6,26 @@ from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.get_engine import LookupThreats
 
 
+def output_type2header(v, parser):
+    if v.lower() == 'json':
+        return 'application/json'
+    elif v.lower() == 'csv':
+        return 'text/csv'
+    else:
+        raise parser.error('output_type : value in {json,csv} expected.')
+
+
+def str2bool(v, parser):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1', 'o', 'oui'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0', 'non'):
+        return False
+    else:
+        raise parser.error('hashkey_only : Boolean value expected.')
+
+
 def main(override_args=None):
     """Method to start the script"""
     starter = BaseScripts()
@@ -24,6 +44,17 @@ def main(override_args=None):
         '-i',
         '--input',
         help='read threats to add from FILE',
+    )
+    parser.add_argument(
+        '-ho',
+        '--hashkey_only',
+        help='set to false if you want the complete result',
+    )
+    parser.add_argument(
+        '-ot',
+        '--output_type',
+        default='json',
+        help='set to the output type desired {json,csv}. Default is json if not specified',
     )
     required_named.add_argument(
         '-a',
@@ -58,6 +89,8 @@ def main(override_args=None):
     if not args.threats and not args.input:
         parser.error("either a threat or an input_file is required")
 
+    args.output_type = output_type2header(args.output_type, parser)
+    args.hashkey_only = str2bool(args.hashkey_only, parser) if args.hashkey_only else True
     # Load api_endpoints and tokens
     endpoint_url, main_url, tokens = starter.load_config(args)
     url_lookup_threats = main_url + endpoint_url['endpoints']['lookup']
@@ -76,6 +109,8 @@ def main(override_args=None):
     response_dict = get_engine_lookup_threats.lookup_threats(
         list_threats,
         args.atom_type,
+        args.hashkey_only,
+        args.output_type
     )
 
     if args.output:

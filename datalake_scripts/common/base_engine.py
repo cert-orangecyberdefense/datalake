@@ -5,6 +5,7 @@ Extend this engine to give it more functionality.
 import os
 import json
 import time
+from json.decoder import JSONDecodeError
 
 import requests
 from requests import Response
@@ -44,9 +45,9 @@ class BaseEngine:
         period=OCD_DTL_QUOTA_TIME,
         call_per_period=OCD_DTL_REQUESTS_PER_QUOTA_TIME,
     )
-    def datalake_requests(self, url: str, method: str, headers: dict, post_body: dict = None):
+    def datalake_requests(self, url: str, method: str, headers: dict, post_body: dict = None, expecting_json=True):
         """
-        Use it to request the API.
+        Use it to request the API
         """
         tries_left = self.SET_MAX_RETRY
         api_response = None
@@ -61,10 +62,15 @@ class BaseEngine:
         while tries_left > 0:
             try:
                 response = self._send_request(url, method, headers, post_body)
-                dict_response = self._load_response(response)
+                if expecting_json:
+                    try:
+                        dict_response = self._load_response(response)
+                    except JSONDecodeError:
+                        logger.warning('Request unexpectedly returned non dict value. Retrying')
+                else:
+                    return response.text.strip()
                 if self._token_update(dict_response):
                     return dict_response
-
             except:
                 tries_left -= 1
                 if tries_left <= 0:
