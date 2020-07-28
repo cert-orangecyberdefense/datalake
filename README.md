@@ -17,6 +17,8 @@ Datalake scripts
 With Python 3.6+:  
 ```
 $ pip install datalake-scripts
+$ pip3 install datalake-scripts
+
 ```
 
 ### Using a script
