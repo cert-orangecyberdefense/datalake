@@ -93,9 +93,6 @@ def main(override_args=None):
     if args.atom_type not in PostEngine.authorized_atom_value:
         parser.error("atom type must be in {}".format(','.join(PostEngine.authorized_atom_value)))
 
-    if args.output_type not in ['json','csv']:
-        parser.error("output_type must be in {json,csv}")
-
     args.output_type = output_type2header(args.output_type, parser)
     args.hashkey_only = str2bool(args.hashkey_only, parser) if args.hashkey_only else True
     # Load api_endpoints and tokens
