@@ -44,14 +44,10 @@ class CsvBuilder:
 
     @staticmethod
     def _load_sources(sources):
-        tot = ''
-        for source in sources:
-            tot += f"{source['source_id']},"
-        return tot[:-1]
+        return f"\"{','.join([source['source_id'] for source in sources])}\""
 
     @staticmethod
     def _create_tags_list(tags):
         if not tags:
             return None
-        tags = [tag['name'] for tag in tags]
-        return f"\"{','.join(tags)}\""
+        return f"\"{','.join([tag['name'] for tag in tags])}\""
