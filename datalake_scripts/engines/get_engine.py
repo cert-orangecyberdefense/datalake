@@ -7,6 +7,7 @@ from requests import PreparedRequest
 
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.logger import logger
+from datalake_scripts.helper_scripts.output_builder import CsvBuilder
 
 
 class GetEngine(BaseEngine):
@@ -80,15 +81,12 @@ class BulkSearch(GetEngine):
 class LookupThreats(GetEngine):
     """Lookup threats engine"""
 
-    def get_lookup_result(self, threat, atom_type, hashkey_only, output_type) -> list:
+    def get_lookup_result(self, threat, atom_type, hashkey_only) -> list:
         params = {'atom_value': threat, 'atom_type': atom_type, 'hashkey_only': hashkey_only}
         req = PreparedRequest()  # Adding parameters using requests' tool
         req.prepare_url(self.url, params)
-        expecting_json = output_type == 'application/json'
         response = self.datalake_requests(req.url, 'get',
-                                          headers={'Authorization': self.tokens[0],
-                                                   'Accept': output_type},
-                                          expecting_json=expecting_json)
+                                          headers={'Authorization': self.tokens[0]})
         return response
 
     def lookup_threats(self, threats: list, atom_type, hashkey_only, output_type):
@@ -96,17 +94,13 @@ class LookupThreats(GetEngine):
                                      False: ('NOT_FOUND', '\x1b[6;30;41m')}
         complete_response = None
         for threat in threats:
-            response = self.get_lookup_result(threat, atom_type, hashkey_only, output_type)
+            response = self.get_lookup_result(threat, atom_type, hashkey_only)
+            logger.info(response)
             found = response['threat_found'] if 'threat_found' in response.keys() else True
             text, color = boolean_to_text_and_color[found]
-            logger.info(response)
             logger.info('{}{} hashkey:{} {}\x1b[0m'.format(color, threat, response['hashkey'], text))
-
-            if output_type == 'application/json':
-                complete_response = {} if not complete_response else complete_response
-                complete_response[threat] = response
-            else:
-                complete_response = [] if not complete_response else complete_response
-                response = '{},{},{}'.format(threat, response.get('hashkey'), text)
-                complete_response.append(response)
+            complete_response = {} if not complete_response else complete_response
+            complete_response[threat] = response
+        if output_type == 'text/csv':
+            return CsvBuilder.create_csv(complete_response, atom_type)
         return complete_response

@@ -14,6 +14,7 @@ class PostEngine(BaseEngine):
         'as',
         'cc',
         'crypto',
+        'cve',
         'domain',
         'email',
         'file',
@@ -21,6 +22,8 @@ class PostEngine(BaseEngine):
         'ip',
         'ip_range',
         'paste',
+        'phone_number',
+        'regkey',
         'ssl',
         'url',
     ]

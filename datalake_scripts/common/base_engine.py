@@ -45,7 +45,7 @@ class BaseEngine:
         period=OCD_DTL_QUOTA_TIME,
         call_per_period=OCD_DTL_REQUESTS_PER_QUOTA_TIME,
     )
-    def datalake_requests(self, url: str, method: str, headers: dict, post_body: dict = None, expecting_json=True):
+    def datalake_requests(self, url: str, method: str, headers: dict, post_body: dict = None):
         """
         Use it to request the API
         """
@@ -62,13 +62,10 @@ class BaseEngine:
         while tries_left > 0:
             try:
                 response = self._send_request(url, method, headers, post_body)
-                if expecting_json:
-                    try:
-                        dict_response = self._load_response(response)
-                    except JSONDecodeError:
-                        logger.warning('Request unexpectedly returned non dict value. Retrying')
-                else:
-                    return response.text.strip()
+                try:
+                    dict_response = self._load_response(response)
+                except JSONDecodeError:
+                    logger.warning('Request unexpectedly returned non dict value. Retrying')
                 if self._token_update(dict_response):
                     return dict_response
             except:

@@ -17,11 +17,11 @@ From CSV file:
 
 To look them up:
     
-    ocd-dtl lookup_threats -i input.txt -o output.csv -a domain -e prod
+    ocd-dtl lookup_threats -i input.txt -o output.csv -ot csv -a domain
 
 Or/And directly from the cli:
     
-    ocd-dtl lookup_threats threat1.com anotherthreat.fr en.wikipedia -o output.csv -a domain -e prod
+    ocd-dtl lookup_threats threat1.com anotherthreat.fr en.wikipedia -o output.json -a domain
 
 
 #### Parameters
@@ -34,6 +34,8 @@ Or/And directly from the cli:
 > --is_csv  set it to have a csv file as an input  
 > -d to have a special delimiter  
 > -c to select the column (starting at **1**)
+> -ho set it to False to get the complete result
+> -ot set it to json or csv to choose the output type. Default is json
 
 > -o (Optional) will set the output file as a csv.  
 > -e (Optional) to change the environment {preprod, prod},  default is **prod**  
