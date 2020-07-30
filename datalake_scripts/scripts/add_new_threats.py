@@ -73,6 +73,11 @@ def main(override_args=None):
         help='add link as external_analysis_link',
         nargs='+',
     )
+    parser.add_argument(
+        '--permanent',
+        help='sets override_type to permanent. Scores won\'t be updated by the algorithm. Default is temporary',
+        action='store_true',
+    )
     if override_args:
         args = parser.parse_args(override_args)
     else:
@@ -81,6 +86,8 @@ def main(override_args=None):
 
     if not args.threat_types and not args.whitelist:
         parser.error("threat types is required if the atom is not for whitelisting")
+
+    args.permanent = 'permanent' if args.permanent else 'temporary'
 
     # Load api_endpoints and tokens
     endpoint_url, main_url, tokens = starter.load_config(args)
@@ -103,6 +110,7 @@ def main(override_args=None):
         args.public,
         args.tag,
         args.link,
+        args.permanent
     )
 
     if args.output:

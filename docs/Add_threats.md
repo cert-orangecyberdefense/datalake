@@ -44,6 +44,7 @@ Required:
 > -d to have a special delimiter  
 > -c to select the column (starting at **1**)
 > --link to provide a link i.e. a URL that will be filled in "external_analysis_link"
+> --permanent to set override_type to permanent. For scores that can’t be updated by the algorithm
 > -o will set the output file as the API gives it.  
 > -e to change the environment {preprod, prod},  default is **prod**  
 

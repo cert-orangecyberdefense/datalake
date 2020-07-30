@@ -122,7 +122,7 @@ class AddThreatsPost(PostEngine):
         return payload
 
     def add_threats(self, atom_list: list, atom_type: str, white: bool, threats_score: Dict[str, int], is_public: bool,
-                    tags: list, links: list) -> dict:
+                    tags: list, links: list, override_type: str) -> dict:
         """
         Use it to add a list of threats to the API.
 
@@ -135,6 +135,7 @@ class AddThreatsPost(PostEngine):
         :param links: external_analysis_link to include with each atoms
         """
         payload = {
+            'override_type': override_type,
             'public': is_public,
             'threat_data': {
                 'content': {},
