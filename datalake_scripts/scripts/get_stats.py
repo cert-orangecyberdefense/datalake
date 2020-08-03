@@ -5,7 +5,6 @@ from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.get_engine import AdvancedSearchGet
 from datalake_scripts.engines.post_engine import AdvancedSearchPost
 
-
 query_hashes = ['5adb93d0bf66fd1cde8b41f72592fa37', '09d21b81f96351a7f78a2cc526769b69',
                 '23ed1c5570f9c84629cc63e7bcf17bf1', '13a81f8e9711b4204df307b0dab4078f',
                 'fc0460f022428819c7b290baa7ee17b1', 'd05031cf8898a1973c8a3dc39f52d93c',
@@ -66,13 +65,37 @@ def main(override_args=None):
             for score in args.scores:
                 response = advanced_search.get_threats(create_payload(atom_type, score))['results']
                 count_per_source = compute_stats(response, count_per_source, args.count_events)
-    logger.info(extract_top(count_per_source))
+    logger.info('aggregated result: '+str(extract_top(count_per_source)))
+    logger.debug(f'Results saved in {args.output}\n')
+    logger.debug(f'END: add_new_threats.py')
 
 
 def create_payload(atom_type: str, score: int) -> dict:
-    return {"JSON": {"query_body": {"AND": [{"field": "atom_type", "multi_values": [atom_type], "type": "filter"},
-                                            {"field": "last_updated", "type": "filter", "value": 43200},
-                                            {"field": "risk", "range": {"gt": score}, "type": "filter"}]}}}
+    return {
+        "query_body": {
+            "AND": [
+                {
+                    "field": "atom_type",
+                    "multi_values": [
+                        atom_type
+                    ],
+                    "type": "filter"
+                },
+                {
+                    "field": "last_updated",
+                    "type": "filter",
+                    "value": 43200
+                },
+                {
+                    "field": "risk",
+                    "range": {
+                        "gt": int(score)
+                    },
+                    "type": "filter"
+                }
+            ]
+        }
+    }
 
 
 def compute_stats(response, count_per_source, count_events: bool):

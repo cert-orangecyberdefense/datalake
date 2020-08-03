@@ -255,9 +255,11 @@ class AdvancedSearchPost(PostEngine):
     """
 
     def get_threats(self, payload: dict) -> dict:
-        params = {'limit': 5000}
+        params = {'limit': 50}
         req = PreparedRequest()  # Adding parameters using requests' tool
         req.prepare_url(self.url, params)
 
-        response = self.datalake_requests(req.url, 'post', headers={'Authorization': self.tokens[0]}, post_body=payload)
+        response = self.datalake_requests(req.url, 'post', headers={'Authorization': self.tokens[0],
+                                                                    'Content-Type': 'application/json'},
+                                          post_body=payload)
         return response
