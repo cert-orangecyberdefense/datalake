@@ -255,7 +255,7 @@ class AdvancedSearchPost(PostEngine):
     """
 
     def get_threats(self, payload: dict) -> dict:
-        params = {'limit': 50}
+        params = {'limit': 5000}
         req = PreparedRequest()  # Adding parameters using requests' tool
         req.prepare_url(self.url, params)
 

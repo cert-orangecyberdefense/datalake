@@ -40,7 +40,7 @@ def main(override_args=None):
     )
     parser.add_argument(
         '--all_stats',
-        help='''set it to make the stats on all 5 atoms types and score of 60,70,80''',
+        help='''set it to make the stats on all 5 atoms types and score of 60,70,80. You only get aggregated results''',
         action='store_true',
     )
 
@@ -53,20 +53,29 @@ def main(override_args=None):
     endpoint_url, main_url, tokens = starter.load_config(args)
 
     url_event = main_url + endpoint_url['endpoints']['advanced-queries']
-    count_per_source = {}
+    output_dict = {}
+    count_per_source_aggregated = {}
     if args.all_stats:
         advanced_search = AdvancedSearchGet(url_event, main_url, tokens)
         for query_hash in query_hashes:
             response = advanced_search.get_threats(query_hash)['results']
-            count_per_source = compute_stats(response, count_per_source, args.count_events)
+            count_per_source_aggregated = compute_stats(response, count_per_source_aggregated, args.count_events)
     else:
         advanced_search = AdvancedSearchPost(url_event, main_url, tokens)
         for atom_type in args.atom_types:
             for score in args.scores:
+                count_per_source_latest = {}
                 response = advanced_search.get_threats(create_payload(atom_type, score))['results']
-                count_per_source = compute_stats(response, count_per_source, args.count_events)
-    logger.info('aggregated result: '+str(extract_top(count_per_source)))
-    logger.debug(f'Results saved in {args.output}\n')
+                count_per_source_aggregated = compute_stats(response, count_per_source_aggregated, args.count_events)
+                count_per_source_latest = compute_stats(response, count_per_source_latest, args.count_events)
+                output_dict[f'{atom_type}_{score}'] = extract_top(count_per_source_latest)
+
+    aggregated_result = extract_top(count_per_source_aggregated)
+    output_dict['all_aggregated'] = aggregated_result
+    logger.info('aggregated result: '+str(aggregated_result))
+    if args.output:
+        starter.save_output(args.output, output_dict)
+        logger.debug(f'Results saved in {args.output}\n')
     logger.debug(f'END: add_new_threats.py')
 
 
