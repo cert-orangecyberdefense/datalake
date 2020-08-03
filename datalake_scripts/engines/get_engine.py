@@ -75,3 +75,18 @@ class BulkSearch(GetEngine):
 
         response = self.datalake_requests(req.url, 'get', headers={'Authorization': self.tokens[0]})
         return response
+
+
+class AdvancedSearchGet(GetEngine):
+    """
+    AdvancedSearch engines
+    """
+
+    def get_threats(self, query_hash: str) -> dict:
+        params = {'limit': 5000}
+        url_without_param = urljoin(self.url, query_hash)
+        req = PreparedRequest()  # Adding parameters using requests' tool
+        req.prepare_url(url_without_param, params)
+
+        response = self.datalake_requests(req.url, 'get', headers={'Authorization': self.tokens[0]})
+        return response

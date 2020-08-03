@@ -1,6 +1,8 @@
 """All the engines that use a GET endpoint."""
 from typing import Set, Dict
 
+from requests import PreparedRequest
+
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.logger import logger
 
@@ -245,3 +247,17 @@ class ThreatsScoringPost(PostEngine):
                 return_value.append(hashkey + ': OK')
                 logger.info('\x1b[6;30;42m' + hashkey + ': OK\x1b[0m')
         return return_value
+
+
+class AdvancedSearchPost(PostEngine):
+    """
+    AdvancedSearch engines
+    """
+
+    def get_threats(self, payload: dict) -> dict:
+        params = {'limit': 5000}
+        req = PreparedRequest()  # Adding parameters using requests' tool
+        req.prepare_url(self.url, params)
+
+        response = self.datalake_requests(req.url, 'post', headers={'Authorization': self.tokens[0]}, post_body=payload)
+        return response
