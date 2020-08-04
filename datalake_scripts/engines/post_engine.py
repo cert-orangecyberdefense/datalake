@@ -230,7 +230,7 @@ class ThreatsScoringPost(PostEngine):
         logger.debug('url : ' + repr(self.url))
         return self.datalake_requests(f'{self.url}{hashkey}/scoring-edits/', 'post', self._post_headers(), payload)
 
-    def post_new_score_from_list(self, hashkeys: set, scores: Dict[str, int], override_type: str = 'temporary') -> list:
+    def post_new_score_from_list(self, hashkeys: list, scores: Dict[str, int], override_type: str = 'temporary') -> list:
         """
         Post new score to the API from a list of hashkeys
         """

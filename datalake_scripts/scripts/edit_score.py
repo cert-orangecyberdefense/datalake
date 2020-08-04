@@ -1,4 +1,5 @@
 import sys
+from collections import OrderedDict
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
@@ -48,11 +49,11 @@ def main(override_args=None):
     if not args.threat_types or len(args.threat_types) % 2 != 0:
         parser.error("threat_types invalid ! should be like: ddos 50 scam 15")
     parsed_threat_type = AddThreatsPost.parse_threat_types(args.threat_types)
-
-    hashkeys = set(args.hashkeys) if args.hashkeys else set()
+    # removing duplicates while preserving order
+    hashkeys = args.hashkeys
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
-
+    hashkeys = list(OrderedDict.fromkeys(hashkeys)) if hashkeys else []
     # Load api_endpoints and tokens
     endpoint_url, main_url, tokens = starter.load_config(args)
     url_threats = main_url + endpoint_url['endpoints']['threats']
@@ -75,7 +76,7 @@ def retrieve_hashkeys_from_file(input_file, hashkeys):
         for line in input_file:
             line = line.strip()
             if line:
-                hashkeys.add(line)
+                hashkeys.append(line)
 
 
 if __name__ == '__main__':
