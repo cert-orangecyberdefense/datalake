@@ -50,10 +50,10 @@ def main(override_args=None):
         parser.error("threat_types invalid ! should be like: ddos 50 scam 15")
     parsed_threat_type = AddThreatsPost.parse_threat_types(args.threat_types)
     # removing duplicates while preserving order
-    hashkeys = list(OrderedDict.fromkeys(args.hashkeys)) if args.hashkeys else []
+    hashkeys = args.hashkeys
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
-
+    hashkeys = list(OrderedDict.fromkeys(hashkeys)) if hashkeys else []
     # Load api_endpoints and tokens
     endpoint_url, main_url, tokens = starter.load_config(args)
     url_threats = main_url + endpoint_url['endpoints']['threats']
