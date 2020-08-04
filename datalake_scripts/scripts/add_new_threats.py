@@ -1,5 +1,7 @@
 import sys
 
+from collections import OrderedDict
+
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import AddThreatsPost
@@ -94,6 +96,7 @@ def main(override_args=None):
             exit()
     else:
         list_new_threats = starter._load_list(args.input)
+    list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
     threat_types = AddThreatsPost.parse_threat_types(args.threat_types) or []
     response_dict = post_engine_add_threats.add_threats(
         list_new_threats,
