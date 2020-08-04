@@ -29,21 +29,21 @@ To create threats:
     ocd-dtl add_threats -o output_file.json -t ddos 50 scam 15 -i ip_list.csv -a IP --tag test0 test32 test320 --is_csv -d , -c 1
 
 #### Parameters
-
+Required:
 > -i will be the input file  
-> -a will set the atom type, here IP
+> -a will set the atom type, here IP 
 
 > -t will set the score for the threat to the corresponding value, here you have `ddos = 50` and `scam = 15`  
 > -w (Optional) will set all the scores to 0 like a whitelist  
-> --tag will add all the following tags to the new threats, here `test0 test32 test320`  
-> -p (Optional) set the visibility to public default=private 
 
->  (Optional)  
+
+(Optional) 
+> --tag will add all the following tags to the new threats, here `test0 test32 test320`  
+> -p set the visibility to public default=private 
 > --is_csv  set it to have a csv file as an input  
 > -d to have a special delimiter  
 > -c to select the column (starting at **1**)
 > --link to provide a link i.e. a URL that will be filled in "external_analysis_link"
-
-> -o (Optional) will set the output file as the API gives it.  
-> -e (Optional) to change the environment {preprod, prod},  default is **prod**  
+> -o will set the output file as the API gives it.  
+> -e to change the environment {preprod, prod},  default is **prod**  
 

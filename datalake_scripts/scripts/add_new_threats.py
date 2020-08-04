@@ -1,6 +1,8 @@
 import re
 import sys
 
+from collections import OrderedDict
+
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import AddThreatsPost
@@ -88,10 +90,15 @@ def main(override_args=None):
     url_manual_threats = main_url + endpoint_url['endpoints']['threats-manual']
     post_engine_add_threats = AddThreatsPost(url_manual_threats, main_url, tokens)
     if args.is_csv:
-        list_new_threats = starter._load_csv(args.input, args.delimiter, args.column - 1)
+        try:
+            list_new_threats = starter._load_csv(args.input, args.delimiter, args.column - 1)
+        except ValueError as ve:
+            logger.error(ve)
+            exit()
     else:
         list_new_threats = starter._load_list(args.input)
     list_new_threats = defang_threats(list_new_threats, args.atom_type)
+    list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
     threat_types = AddThreatsPost.parse_threat_types(args.threat_types) or []
     response_dict = post_engine_add_threats.add_threats(
         list_new_threats,

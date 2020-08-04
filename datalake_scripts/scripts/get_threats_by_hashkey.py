@@ -33,7 +33,7 @@ def main(override_args=None):
 
     if not args.hashkeys and not args.input_file:
         parser.error("either a hashkey or an input_file is required")
-    threats_list = starter._load_csv(args.input_file) if args.input_file else args.hashkeys
+    threats_list = starter._load_list(args.input_file) if args.input_file else args.hashkeys
 
     # Load api_endpoints and tokens
     endpoint_url, main_url, tokens = starter.load_config(args)
