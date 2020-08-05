@@ -95,6 +95,8 @@ class LookupThreats(GetEngine):
         complete_response = None
         for threat in threats:
             response = self.get_lookup_result(threat, atom_type, hashkey_only)
+            if not response:
+                continue
             found = response['threat_found'] if 'threat_found' in response.keys() else True
             text, color = boolean_to_text_and_color[found]
             logger.info('{}{} hashkey:{} {}\x1b[0m'.format(color, threat, response['hashkey'], text))
