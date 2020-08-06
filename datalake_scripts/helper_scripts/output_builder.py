@@ -10,8 +10,7 @@ class CsvBuilder:
         for threat in complete_response.keys():
             response = complete_response[threat]
             if 'threat_found' in response.keys():  # means threat not found
-                line = f"{response['hashkey']},{atom_type},{threat},{False},{None},{None},{None},{None},{None},{None}" \
-                       f",{None},{None},{None},{None},{None},{None},{None},{None},{None},{None},{None},{None}"
+                line = f"{response['hashkey']},{atom_type},{threat},{False}," + ','.join([f"{None}"] * 18)
             else:
                 threat_scores = CsvBuilder._load_scores(response['scores'])
                 line = f"{response['hashkey']},{atom_type},{threat},{True}," \

@@ -19,6 +19,7 @@ class PostEngine(BaseEngine):
         'email',
         'file',
         'fqdn',
+        'iban',
         'ip',
         'ip_range',
         'paste',

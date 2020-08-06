@@ -28,6 +28,7 @@ class BaseEngine:
         self.tokens = tokens
         self.terminal_size = self._get_size_terminal()
         self.token_generator = TokenGenerator(token_url)
+        self.headers = None
 
         self.SET_MAX_RETRY = 3
 
@@ -49,6 +50,7 @@ class BaseEngine:
         """
         Use it to request the API
         """
+        self.headers = headers
         tries_left = self.SET_MAX_RETRY
 
         logger.debug(self._pretty_debug_request(url, method, post_body, headers, self.tokens))
@@ -60,21 +62,26 @@ class BaseEngine:
         while True:
             response = self._send_request(url, method, headers, post_body)
             logger.debug(f'API response:\n{str(response.text)}')
-            if response.status_code != 200:
-                logger.error(f'API returned non 200 response code : {response.status_code}\n{response.text}'
+            if response.status_code == 401:
+                logger.warning('Token expired or Missing authorization header. Updating token')
+                self._token_update(self._load_response(response))
+            elif response.status_code == 422:
+                logger.warning('Bad authorization header. Updating token')
+                self._token_update(self._load_response(response))
+            elif response.status_code < 200 or response.status_code > 299:
+                logger.error(f'API returned non 2xx response code : {response.status_code}\n{response.text}'
                              f'\n Retrying')
             else:
                 try:
                     dict_response = self._load_response(response)
-                    if self._token_update(dict_response):
-                        return dict_response
+                    return dict_response
                 except JSONDecodeError:
                     logger.error('Request unexpectedly returned non dict value. Retrying')
             tries_left -= 1
             if tries_left <= 0:
                 logger.error('Request failed: Will return nothing for this request')
                 return {}
-            time.sleep(5)
+            # time.sleep(5)
 
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """
@@ -134,7 +141,11 @@ class BaseEngine:
             self.tokens = [f'Token {fresh_tokens["access_token"]}', f'Token {fresh_tokens["refresh_token"]}']
             self.headers['Authorization'] = self.tokens[0]
             return False
-
+        elif dict_response.get('msg') == 'Bad Authorization header. Expected value \'Token <JWT>\'':
+            fresh_tokens = self.token_generator.get_token()
+            self.tokens = [f'Token {fresh_tokens["access_token"]}', f'Token {fresh_tokens["refresh_token"]}']
+            self.headers['Authorization'] = self.tokens[0]
+            return False
         elif dict_response.get('msg') == 'Token has expired':
             fresh_token = self.token_generator.refresh_token(self.tokens[1])
             self.tokens = [f'Token {fresh_token["access_token"]}', self.tokens[1]]

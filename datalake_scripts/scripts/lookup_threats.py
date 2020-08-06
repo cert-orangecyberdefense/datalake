@@ -16,17 +16,6 @@ def output_type2header(v, parser):
         raise parser.error('output_type : value in {json,csv} expected.')
 
 
-def str2bool(v, parser):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1', 'o', 'oui'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0', 'non'):
-        return False
-    else:
-        raise parser.error('hashkey_only : Boolean value expected.')
-
-
 def main(override_args=None):
     """Method to start the script"""
     starter = BaseScripts()
@@ -47,9 +36,10 @@ def main(override_args=None):
         help='read threats to add from FILE',
     )
     parser.add_argument(
-        '-ho',
-        '--hashkey_only',
-        help='set to false if you want the complete result',
+        '-td',
+        '--threat_details',
+        action='store_true',
+        help='set if you also want to have access to the threat details ',
     )
     parser.add_argument(
         '-ot',
@@ -94,7 +84,7 @@ def main(override_args=None):
         parser.error("atom type must be in {}".format(','.join(PostEngine.authorized_atom_value)))
 
     args.output_type = output_type2header(args.output_type, parser)
-    args.hashkey_only = str2bool(args.hashkey_only, parser) if args.hashkey_only else True
+    hashkey_only = not args.threat_details
     # Load api_endpoints and tokens
     endpoint_url, main_url, tokens = starter.load_config(args)
     url_lookup_threats = main_url + endpoint_url['endpoints']['lookup']
@@ -113,7 +103,7 @@ def main(override_args=None):
     response_dict = get_engine_lookup_threats.lookup_threats(
         list_threats,
         args.atom_type,
-        args.hashkey_only,
+        hashkey_only,
         args.output_type
     )
 
