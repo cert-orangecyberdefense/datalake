@@ -1,3 +1,6 @@
+import json
+
+
 class CsvBuilder:
 
     @staticmethod
@@ -49,4 +52,5 @@ class CsvBuilder:
     def _create_tags_list(tags):
         if not tags:
             return None
-        return f"\"{','.join([tag['name'] for tag in tags])}\""
+        tags = ','.join([tag['name'] for tag in tags]).replace('"', '""')
+        return f"\"{tags}\""
