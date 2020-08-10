@@ -5,6 +5,7 @@ Extend this engine to give it more functionality.
 import os
 import json
 import time
+from json.decoder import JSONDecodeError
 
 import requests
 from requests import Response
@@ -27,6 +28,7 @@ class BaseEngine:
         self.tokens = tokens
         self.terminal_size = self._get_size_terminal()
         self.token_generator = TokenGenerator(token_url)
+        self.headers = None
 
         self.SET_MAX_RETRY = 3
 
@@ -46,10 +48,10 @@ class BaseEngine:
     )
     def datalake_requests(self, url: str, method: str, headers: dict, post_body: dict = None):
         """
-        Use it to request the API.
+        Use it to request the API
         """
+        self.headers = headers
         tries_left = self.SET_MAX_RETRY
-        api_response = None
 
         logger.debug(self._pretty_debug_request(url, method, post_body, headers, self.tokens))
 
@@ -57,27 +59,29 @@ class BaseEngine:
             fresh_tokens = self.token_generator.get_token()
             self.tokens = [f'Token {fresh_tokens["access_token"]}', f'Token {fresh_tokens["refresh_token"]}']
             headers['Authorization'] = self.tokens[0]
-
-        while tries_left > 0:
-            try:
-                response = self._send_request(url, method, headers, post_body)
-                dict_response = self._load_response(response)
-                if self._token_update(dict_response):
+        while True:
+            response = self._send_request(url, method, headers, post_body)
+            logger.debug(f'API response:\n{str(response.text)}')
+            if response.status_code == 401:
+                logger.warning('Token expired or Missing authorization header. Updating token')
+                self._token_update(self._load_response(response))
+            elif response.status_code == 422:
+                logger.warning('Bad authorization header. Updating token')
+                self._token_update(self._load_response(response))
+            elif response.status_code < 200 or response.status_code > 299:
+                logger.error(f'API returned non 2xx response code : {response.status_code}\n{response.text}'
+                             f'\n Retrying')
+            else:
+                try:
+                    dict_response = self._load_response(response)
                     return dict_response
-
-            except:
-                tries_left -= 1
-                if tries_left <= 0:
-                    logger.warning('Request failed: Will return nothing for this request')
-                    return {}
-                elif not api_response:
-                    logger.debug('ERROR : Something has gone wrong with requests ...')
-                    logger.debug('sleep 5 seconds')
-                    time.sleep(5)
-                else:
-                    logger.warning('ERROR :  Wrong requests, please refer to the API')
-                    logger.warning(f'for URL: {url}\nwith:\nheaders:{headers}\nbody:{post_body}\n')
-                    logger.warning(api_response.text)
+                except JSONDecodeError:
+                    logger.error('Request unexpectedly returned non dict value. Retrying')
+            tries_left -= 1
+            if tries_left <= 0:
+                logger.error('Request failed: Will return nothing for this request')
+                return {}
+            # time.sleep(5)
 
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """
@@ -137,7 +141,11 @@ class BaseEngine:
             self.tokens = [f'Token {fresh_tokens["access_token"]}', f'Token {fresh_tokens["refresh_token"]}']
             self.headers['Authorization'] = self.tokens[0]
             return False
-
+        elif dict_response.get('msg') == 'Bad Authorization header. Expected value \'Token <JWT>\'':
+            fresh_tokens = self.token_generator.get_token()
+            self.tokens = [f'Token {fresh_tokens["access_token"]}', f'Token {fresh_tokens["refresh_token"]}']
+            self.headers['Authorization'] = self.tokens[0]
+            return False
         elif dict_response.get('msg') == 'Token has expired':
             fresh_token = self.token_generator.refresh_token(self.tokens[1])
             self.tokens = [f'Token {fresh_token["access_token"]}', self.tokens[1]]
