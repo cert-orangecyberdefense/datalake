@@ -16,9 +16,13 @@ class CsvBuilder:
                 line = f"{response['hashkey']},{atom_type},{threat},{False}," + ','.join([f"{None}"] * 18)
             else:
                 threat_scores = CsvBuilder._load_scores(response['scores'])
+                threat_types = ','.join(response['threat_types']) if 'threat_types' in response else None
+                if threat_types:
+                    threat_types = f'"{threat_types}"'
+
                 line = f"{response['hashkey']},{atom_type},{threat},{True}," \
                        f"{CsvBuilder._count_events(response['sources'])},{response['first_seen']}," \
-                       f"{response['last_updated']},\"{','.join(response['threat_types'])}\"," \
+                       f"{response['last_updated']},{threat_types}," \
                        f"{threat_scores.get('ddos')},{threat_scores.get('fraud')}," \
                        f"{threat_scores.get('hack')},{threat_scores.get('leak')},{threat_scores.get('malware')}," \
                        f"{threat_scores.get('phishing')},{threat_scores.get('scam')},{threat_scores.get('spam')}," \
