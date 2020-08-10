@@ -11,7 +11,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='datalake-scripts',
-    version='1.23.0',
+    version='1.23.1',
     author='OCD',
     author_email='datalake-interne.ocd@orange.com',
     description='A collection of scripts to easily use the API of OCD Datalake',
