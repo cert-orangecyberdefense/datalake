@@ -91,6 +91,10 @@ class ThreatsPost(PostEngine):
             threat_type_parsed[threat_type] = int(score)
         return threat_type_parsed
 
+    @staticmethod
+    def get_whitelist_threat_types() -> dict:
+        return {threat_type: 0 for threat_type in PostEngine.authorized_threats_value}
+
     def _add_new_atom(self, value: str, atom_type: str, payload: dict, links: list) -> dict:
         """
         Create the correct payload to add a new threat to the API.

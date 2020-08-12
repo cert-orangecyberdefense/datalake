@@ -29,6 +29,12 @@ def main(override_args=None):
         help='Choose specific threat types and their score, like: ddos 50 scam 15.',
     )
     parser.add_argument(
+        '-w',
+        '--whitelist',
+        help='Whitelist the input, equivalent to setting all threat types at 0.',
+        action='store_true',
+    )
+    parser.add_argument(
         '--permanent',
         help='''Permanent: all values will override any values provided by both newer and
             older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
@@ -46,9 +52,12 @@ def main(override_args=None):
     if not args.hashkeys and not args.input_file:
         parser.error("either a hashkey or an input_file is required")
 
-    if not args.threat_types or len(args.threat_types) % 2 != 0:
-        parser.error("threat_types invalid ! should be like: ddos 50 scam 15")
-    parsed_threat_type = ThreatsPost.parse_threat_types(args.threat_types)
+    if args.whitelist:
+        parsed_threat_type = ThreatsPost.get_whitelist_threat_types()
+    else:
+        if not args.threat_types or len(args.threat_types) % 2 != 0:
+            parser.error("threat_types invalid ! should be like: ddos 50 scam 15")
+        parsed_threat_type = ThreatsPost.parse_threat_types(args.threat_types)
     # removing duplicates while preserving order
     hashkeys = args.hashkeys
     if args.input_file:
