@@ -4,8 +4,8 @@ Extend this engine to give it more functionality.
 """
 import os
 import json
-import time
 from json.decoder import JSONDecodeError
+from urllib.parse import urljoin
 
 import requests
 from requests import Response
@@ -22,12 +22,13 @@ class BaseEngine:
 
     SET_MAX_RETRY = 3
 
-    def __init__(self, url: str, token_url: str, tokens: list):
-        self.url = url
-        self.token_url = token_url
+    def __init__(self, endpoint_config: dict, environment: str, tokens: list):
+        self.endpoint_config = endpoint_config
+        self.environment = environment
+        self.url = self._build_url(endpoint_config, environment)
         self.tokens = tokens
         self.terminal_size = self._get_size_terminal()
-        self.token_generator = TokenGenerator(token_url)
+        self.token_generator = TokenGenerator(endpoint_config, environment=environment)
         self.headers = None
 
         self.SET_MAX_RETRY = 3
@@ -67,6 +68,7 @@ class BaseEngine:
                 self._token_update(self._load_response(response))
             elif response.status_code == 422:
                 logger.warning('Bad authorization header. Updating token')
+                logger.debug(f'422 HTTP code: {response.text}')
                 self._token_update(self._load_response(response))
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(f'API returned non 2xx response code : {response.status_code}\n{response.text}'
@@ -175,3 +177,12 @@ class BaseEngine:
                  f' - refresh_token: \n{tokens[1]}\n' +
                  '-' * self.terminal_size)
         return debug
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        """To be implemented by each subclass"""
+        raise NotImplemented()
+
+    def _build_url_for_endpoint(self, endpoint_name):
+        base_url = urljoin(self.endpoint_config['main'][self.environment], self.endpoint_config['api_version'])
+        enpoints = self.endpoint_config['endpoints']
+        return urljoin(base_url, enpoints[endpoint_name], allow_fragments=True)

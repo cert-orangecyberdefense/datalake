@@ -86,9 +86,8 @@ def main(override_args=None):
     args.output_type = output_type2header(args.output_type, parser)
     hashkey_only = not args.threat_details
     # Load api_endpoints and tokens
-    endpoint_url, main_url, tokens = starter.load_config(args)
-    url_lookup_threats = main_url + endpoint_url['endpoints']['lookup']
-    get_engine_lookup_threats = LookupThreats(url_lookup_threats, main_url, tokens)
+    endpoint_config, main_url, tokens = starter.load_config(args)
+    get_engine_lookup_threats = LookupThreats(endpoint_config, args.env, tokens)
     list_threats = list(args.threats) if args.threats else []
     if args.input:
         if args.is_csv:

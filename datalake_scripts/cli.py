@@ -5,7 +5,7 @@ import sys
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
-    add_new_comment_or_tags, lookup_threats
+    add_comments, lookup_threats, add_tags
 
 
 class Cli:
@@ -54,7 +54,12 @@ The most commonly used {self.CLI_NAME} commands are:
 
     def add_comment(self):
         args = sys.argv[2:]
-        add_new_comment_or_tags.main(args)
+        add_comments.main(args)
+
+    def add_tags(self):
+        args = sys.argv[2:]
+        add_tags.main(args)
+
 
     def lookup_threat(self):
         args = sys.argv[2:]

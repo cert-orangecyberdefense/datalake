@@ -4,6 +4,7 @@ Token manager will manage tokens for the scripts.
 import json
 import os
 from getpass import getpass
+from urllib.parse import urljoin
 
 import requests
 
@@ -15,9 +16,13 @@ class TokenGenerator:
     Use it to generate token access to the API
     """
 
-    def __init__(self, url: str):
-        self.url_token = url + '/v1/auth/token/'
-        self.url_refresh = url + '/v1/auth/refresh-token/'
+    def __init__(self, endpoint_config: dict, *, environment: str):
+        """environment can be either prod or preprod"""
+        base_url = urljoin(endpoint_config['main'][environment], endpoint_config['api_version'])
+        enpoints = endpoint_config['endpoints']
+
+        self.url_token = urljoin(base_url, enpoints['token'], allow_fragments=True)
+        self.url_refresh = urljoin(base_url, enpoints['refresh_token'], allow_fragments=True)
 
     def retrieve_token(self, data: dict, refresh_token: bool):
         """

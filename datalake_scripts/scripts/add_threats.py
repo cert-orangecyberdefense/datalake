@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
-from datalake_scripts.engines.post_engine import AddThreatsPost
+from datalake_scripts.engines.post_engine import ThreatsPost
 
 
 def main(override_args=None):
@@ -93,9 +93,8 @@ def main(override_args=None):
     permanent = 'permanent' if args.permanent else 'temporary'
 
     # Load api_endpoints and tokens
-    endpoint_url, main_url, tokens = starter.load_config(args)
-    url_manual_threats = main_url + endpoint_url['endpoints']['threats-manual']
-    post_engine_add_threats = AddThreatsPost(url_manual_threats, main_url, tokens)
+    endpoint_config, main_url, tokens = starter.load_config(args)
+    post_engine_add_threats = ThreatsPost(endpoint_config, args.env, tokens)
     if args.is_csv:
         try:
             list_new_threats = starter._load_csv(args.input, args.delimiter, args.column - 1)
@@ -106,7 +105,7 @@ def main(override_args=None):
         list_new_threats = starter._load_list(args.input)
     list_new_threats = defang_threats(list_new_threats, args.atom_type)
     list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
-    threat_types = AddThreatsPost.parse_threat_types(args.threat_types) or []
+    threat_types = ThreatsPost.parse_threat_types(args.threat_types) or []
     response_dict = post_engine_add_threats.add_threats(
         list_new_threats,
         args.atom_type,

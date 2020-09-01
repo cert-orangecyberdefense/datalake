@@ -3,7 +3,7 @@ import sys
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
-from datalake_scripts.engines.get_engine import BulkSearch
+from datalake_scripts.engines.post_engine import BulkSearch
 
 
 def main(override_args=None):
@@ -15,7 +15,8 @@ def main(override_args=None):
     parser = starter.start('Retrieve a list of response from a given query hash.')
     parser.add_argument(
         '--query_fields',
-        help='fields to be retrieved from the threat (default: only the hashkey)',
+        help='fields to be retrieved from the threat (default: only the hashkey)\n'
+             'If an atom detail isn\'t present in a particular atom, empty string is returned.',
         nargs='+',
         default=['threat_hashkey'],
     )
@@ -38,11 +39,10 @@ def main(override_args=None):
         parser.error("List output format is only available if a single element is queried (via query_fields)")
 
     # Load api_endpoints and tokens
-    endpoint_url, main_url, tokens = starter.load_config(args)
+    endpoint_config, main_url, tokens = starter.load_config(args)
     logger.debug(f'Start to search for threat from the query hash:{args.query_hash}')
 
-    url_event = main_url + endpoint_url['endpoints']['bulk-search']
-    bulk_search = BulkSearch(url_event, main_url, tokens)
+    bulk_search = BulkSearch(endpoint_config, args.env, tokens)
 
     response = bulk_search.get_threats(args.query_hash, args.query_fields)
     original_count = response.get('count', 0)

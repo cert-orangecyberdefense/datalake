@@ -33,6 +33,9 @@ class ThreatsSearch(GetEngine):
     Threats Search Engine
     """
 
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('threats')
+
     def get_json(self, list_threats: list):
         """
         Retrieve the JSON file of a list of threats and their comments.
@@ -61,25 +64,11 @@ class ThreatsSearch(GetEngine):
         return dict_threat, list_of_lost_hashes
 
 
-class BulkSearch(GetEngine):
-    """
-    Bulk search engines
-    """
-
-    def get_threats(self, query_hash: str, query_fields: List[str] = None) -> dict:
-        params = {}
-        if query_fields:
-            params['query_fields'] = ','.join(query_fields)
-        url_without_param = urljoin(self.url, query_hash)
-        req = PreparedRequest()  # Adding parameters using requests' tool
-        req.prepare_url(url_without_param, params)
-
-        response = self.datalake_requests(req.url, 'get', headers={'Authorization': self.tokens[0]})
-        return response
-
-
 class LookupThreats(GetEngine):
     """Lookup threats engine"""
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('lookup')
 
     def get_lookup_result(self, threat, atom_type, hashkey_only) -> list:
         params = {'atom_value': threat, 'atom_type': atom_type, 'hashkey_only': hashkey_only}
