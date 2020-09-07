@@ -34,13 +34,11 @@ def main(override_args=None):
     if not args.hashkeys and not args.input_file:
         parser.error("either a hashkey or an input_file is required")
     threats_list = starter._load_list(args.input_file) if args.input_file else args.hashkeys
+    logger.debug(f'TOTAL: {len(threats_list)} threats found')
 
     # Load api_endpoints and tokens
-    endpoint_url, main_url, tokens = starter.load_config(args)
-
-    logger.debug(f'TOTAL: {len(threats_list)} threats found')
-    url_threats = main_url + endpoint_url['endpoints']['threats']
-    search_engine_threats = ThreatsSearch(url_threats, main_url, tokens)
+    endpoint_config, main_url, tokens = starter.load_config(args)
+    search_engine_threats = ThreatsSearch(endpoint_config, args.env, tokens)
     list_threats, list_lost_hashes = search_engine_threats.get_json(threats_list)
 
     if args.output:

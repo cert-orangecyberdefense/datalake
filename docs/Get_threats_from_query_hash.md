@@ -34,3 +34,10 @@ If no value is present, an empty string will replace it
 
 > -o (Optional) will set the output file as the API gives it.  
 > -e (Optional) to change the environment {preprod, prod},  default is **prod**  
+
+### Environment variables
+
+* `OCD_DTL_MAX_BACK_OFF_TIME` allow to set the maximum time period to wait between two api 
+calls to check if the bulk search is ready.  *default is 120 seconds*.
+* `OCD_DTL_MAX_BULK_SEARCH_TIME`, the maximum time period, in seconds, to wait for the bulksearch to be ready, 
+after which the bulk search will be considered failed. *default is 3600 seconds*.

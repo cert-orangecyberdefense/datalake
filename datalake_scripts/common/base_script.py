@@ -81,18 +81,18 @@ class BaseScripts:
         :return (dict, str, list<str, str>)
         """
         configure_logging(args.loglevel)
-        endpoint_url = self._load_json(self._CONFIG_ENDPOINTS)
-        main_url = endpoint_url['main'][args.env]
-        token_generator = TokenGenerator(main_url)
+        endpoint_config = self._load_config(self._CONFIG_ENDPOINTS)
+        main_url = endpoint_config['main'][args.env]
+        token_generator = TokenGenerator(endpoint_config, environment=args.env)
         token_json = token_generator.get_token()
         if token_json:
             tokens = [f'Token {token_json["access_token"]}', f'Token {token_json["refresh_token"]}']
-            return endpoint_url, main_url, tokens
+            return endpoint_config, main_url, tokens
         else:
             logger.error("Couldn't generate Tokens, please check the login/password provided")
             exit()
 
-    def _load_json(self, file_name: str) -> dict:
+    def _load_config(self, file_name: str) -> dict:
         """
         Load a Json file as a dict
         """

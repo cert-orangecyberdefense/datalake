@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
-from datalake_scripts.engines.post_engine import ThreatsScoringPost, AddThreatsPost
+from datalake_scripts.engines.post_engine import ScorePost, ThreatsPost
 
 
 def main(override_args=None):
@@ -48,16 +48,15 @@ def main(override_args=None):
 
     if not args.threat_types or len(args.threat_types) % 2 != 0:
         parser.error("threat_types invalid ! should be like: ddos 50 scam 15")
-    parsed_threat_type = AddThreatsPost.parse_threat_types(args.threat_types)
+    parsed_threat_type = ThreatsPost.parse_threat_types(args.threat_types)
     # removing duplicates while preserving order
     hashkeys = args.hashkeys
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
     hashkeys = list(OrderedDict.fromkeys(hashkeys)) if hashkeys else []
     # Load api_endpoints and tokens
-    endpoint_url, main_url, tokens = starter.load_config(args)
-    url_threats = main_url + endpoint_url['endpoints']['threats']
-    post_engine_edit_score = ThreatsScoringPost(url_threats, main_url, tokens)
+    endpoint_config, main_url, tokens = starter.load_config(args)
+    post_engine_edit_score = ScorePost(endpoint_config, args.env, tokens)
 
     response_dict = post_engine_edit_score.post_new_score_from_list(
         hashkeys,
