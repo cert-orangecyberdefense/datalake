@@ -1,4 +1,4 @@
-from datalake_scripts.scripts.add_new_threats import defang_threats
+from datalake_scripts.scripts.add_threats import defang_threats
 
 
 def test_defanging():
