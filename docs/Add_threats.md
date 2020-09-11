@@ -39,12 +39,12 @@ Required:
 
 (Optional) 
 > --tag will add all the following tags to the new threats, here `test0 test32 test320`  
-> -p set the visibility to public default=private 
+> -p set the visibility to public default=private  
 > --is_csv  set it to have a csv file as an input  
 > -d to have a special delimiter  
-> -c to select the column (starting at **1**)
-> --link to provide a link i.e. a URL that will be filled in "external_analysis_link"
-> --permanent to set override_type to permanent. For scores that should not be updated by the algorithm
+> -c to select the column (starting at **1**)  
+> --link to provide a link i.e. a URL that will be filled in "external_analysis_link"  
+> --permanent to set override_type to permanent. For scores that should not be updated by the algorithm  
 > -o will set the output file as the API gives it.  
-> -e to change the environment {preprod, prod},  default is **prod**  
+> -e to change the environment {preprod, prod},  default is **prod**   
 
