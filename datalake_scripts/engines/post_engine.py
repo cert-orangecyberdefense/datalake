@@ -106,6 +106,8 @@ class ThreatsPost(PostEngine):
         elif atom_type == 'crypto':
             address, network = value.split()
             payload['threat_data']['content'][key_value] = {'crypto_address': address, 'crypto_network': network}
+        elif atom_type == 'cve':
+            payload['threat_data']['content'][key_value] = {'cve_id': value}
         elif atom_type == 'domain':
             payload['threat_data']['content'][key_value] = {'domain': value}
         elif atom_type == 'email':
@@ -118,13 +120,20 @@ class ThreatsPost(PostEngine):
             payload['threat_data']['content'][key_value] = {'hashes': {hash_key: value}}
         elif atom_type == 'fqdn':
             payload['threat_data']['content'][key_value] = {'fqdn': value}
+        elif atom_type == 'iban':
+            payload['threat_data']['content'][key_value] = {'iban': value}
         elif atom_type == 'ip':
             ip_type = 4 if '.' in value else 6
             payload['threat_data']['content'][key_value] = {'ip_address': value, 'ip_version': ip_type}
         elif atom_type == 'ip_range':
             payload['threat_data']['content'][key_value] = {'cidr': value}
+        elif atom_type == 'regkey':
+            payload['threat_data']['content'][key_value] = {'path': value}
         elif atom_type == 'paste' or atom_type == 'url':
             payload['threat_data']['content'][key_value] = {'url': value}
+        elif atom_type == 'phone_number':
+            key = 'international_phone_number' if value.startswith('+') else 'national_phone_number'
+            payload['threat_data']['content'][key_value] = {key: value}
         else:
             raise ValueError(f'Unknow threat_types: {atom_type},\n'
                              f'_authorized_atom_value: {self.authorized_atom_value}')
