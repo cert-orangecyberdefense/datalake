@@ -11,7 +11,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='datalake-scripts',
-    version='2.0.0rc2',
+    version='2.0.0',
     author='OCD',
     author_email='cert-contact.ocd@orange.com',
     description='A collection of scripts to easily use the API of OCD Datalake',
@@ -44,7 +44,6 @@ setup(
         'Environment :: Console',
         'Topic :: Security',
         'Natural Language :: English',
-        'Development Status :: 4 - Beta',
     ],
     include_package_data=True,
     package_data={'datalake_scripts': ['config/endpoints.json']},
