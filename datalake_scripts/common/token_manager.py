@@ -24,32 +24,6 @@ class TokenGenerator:
         self.url_token = urljoin(base_url, enpoints['token'], allow_fragments=True)
         self.url_refresh = urljoin(base_url, enpoints['refresh_token'], allow_fragments=True)
 
-    def retrieve_token(self, data: dict, refresh_token: bool):
-        """
-        Generate a token from data, if the refresh_token is set to True,
-        then it will refresh a token, else it will create a new token.
-
-            Variable data is the refresh token in case of refresh_token.
-            Variable data is the header in case of not refresh_token.
-
-        :param data: dict
-        :param refresh_token: bool
-        :return dict
-        """
-        if refresh_token:
-            raw_res = requests.post(url=self.url_refresh, headers=data)
-        else:
-            raw_res = requests.post(url=self.url_token, json=data)
-        api_response = json.loads(raw_res.text)
-        if 'access_token' in api_response.keys():
-            return api_response
-
-        logger.debug('ERROR :  Wrong requests, please refer to the API')
-
-        logger.debug(f'for URL: {self.url_refresh if refresh_token else self.url_token}\n')
-        logger.debug(raw_res.text)
-        return
-
     def get_token(self):
         """
         Generate token from user input, with email and password
@@ -57,7 +31,17 @@ class TokenGenerator:
         username = os.getenv('OCD_DTL_USERNAME') or input('Email: ')
         password = os.getenv('OCD_DTL_PASSWORD') or getpass()
         print()
-        return self.retrieve_token({'email': username, 'password': password}, False)
+        data = {'email': username, 'password': password}
+
+        response = requests.post(url=self.url_token, json=data)
+        json_response = json.loads(response.text)
+        if 'access_token' in json_response.keys():
+            return json_response
+        # else an error occurred
+
+        logger.error(f'An error occurred while retrieving an access token, for URL: {self.url_token}\n'
+                     f'response of the API: {response.text}')
+        exit(1)
 
     def refresh_token(self, refresh_token: str):
         """
@@ -65,4 +49,18 @@ class TokenGenerator:
         :param refresh_token: str
         """
         logger.debug('Token will be refresh')
-        return self.retrieve_token({'Authorization': refresh_token}, True)
+        headers = {'Authorization': refresh_token}
+        response = requests.post(url=self.url_refresh, headers=headers)
+
+        json_response = json.loads(response.text)
+        if response.status_code == 401 and json_response.get('msg') == 'Token has expired':
+            logger.debug('Refreshing the refresh token')
+            # Refresh token is also expired, we need to restart the authentication from scratch
+            return self.get_token()
+        elif 'access_token' in json_response:
+            return json_response
+        # else an error occurred
+
+        logger.error(f'An error occurred while refreshing the refresh token, for URL: {self.url_refresh}\n'
+                     f'response of the API: {response.text}')
+        exit(1)
