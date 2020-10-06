@@ -23,7 +23,8 @@ Or directly from the cli:
 
 At least one of them is required.  
 
-> -t the list of threat types and it's associated score like: ddos 50 scam 15 (see below for the authorized values).
+> -t the list of threat types and it's associated score like: ddos 50 scam 15 (see below for the authorized values).  
+> -w (Optional) will set all the scores to 0 like a whitelist. Override -t  
 
 > -o (Optional) will set the output file as the API gives it.  
 > -e (Optional) to change the environment {preprod, prod},  default is **prod**  
