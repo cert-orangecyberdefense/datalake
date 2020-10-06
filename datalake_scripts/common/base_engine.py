@@ -58,8 +58,7 @@ class BaseEngine:
 
         if not headers.get('Authorization'):
             fresh_tokens = self.token_generator.get_token()
-            self.tokens = [f'Token {fresh_tokens["access_token"]}', f'Token {fresh_tokens["refresh_token"]}']
-            headers['Authorization'] = self.tokens[0]
+            self.replace_tokens(fresh_tokens)
         while True:
             response = self._send_request(url, method, headers, post_body)
             logger.debug(f'API response:\n{str(response.text)}')
@@ -140,21 +139,26 @@ class BaseEngine:
         """
         if dict_response.get('msg') == 'Missing Authorization Header':
             fresh_tokens = self.token_generator.get_token()
-            self.tokens = [f'Token {fresh_tokens["access_token"]}', f'Token {fresh_tokens["refresh_token"]}']
-            self.headers['Authorization'] = self.tokens[0]
+            self.replace_tokens(fresh_tokens)
             return False
         elif dict_response.get('msg') == 'Bad Authorization header. Expected value \'Token <JWT>\'':
             fresh_tokens = self.token_generator.get_token()
-            self.tokens = [f'Token {fresh_tokens["access_token"]}', f'Token {fresh_tokens["refresh_token"]}']
-            self.headers['Authorization'] = self.tokens[0]
+            self.replace_tokens(fresh_tokens)
             return False
         elif dict_response.get('msg') == 'Token has expired':
-            fresh_token = self.token_generator.refresh_token(self.tokens[1])
-            self.tokens = [f'Token {fresh_token["access_token"]}', self.tokens[1]]
-            self.headers['Authorization'] = self.tokens[0]
+            fresh_tokens = self.token_generator.refresh_token(self.tokens[1])
+            self.replace_tokens(fresh_tokens)
             return False
 
         return True
+
+    def replace_tokens(self, fresh_tokens: dict):
+        access_token = fresh_tokens["access_token"]
+        # Update of the refresh token is optional
+        refresh_token = fresh_tokens.get('refresh_token', self.tokens[1].replace('Token ', ''))
+
+        self.tokens = [f'Token {access_token}', f'Token {refresh_token}']
+        self.headers['Authorization'] = self.tokens[0]
 
     def _pretty_debug_request(self, url: str, method: str, data: dict, headers: dict, tokens: list):
         """
