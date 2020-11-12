@@ -32,10 +32,17 @@ Or/And directly from the cli:
 
 >  (Optional)  
 > --is_csv  set it to have a csv file as an input  
+
 > -d to have a special delimiter  
+
 > -c to select the column (starting at **1**)
+
 > -ho set it to False to get the complete result
-> -ot set it to json or csv to choose the output type. Default is json
-> -td, --threat_details set if you also want to have access to the threat details in output file
+
 > -o (Optional) will set the output file as a csv.  
+
+> -ot set it to json or csv to choose the output type. Default is json
+
+> -td, --threat_details set if you also want to have access to the threat details in output file
+
 > -e (Optional) to change the environment {preprod, prod},  default is **prod**  
