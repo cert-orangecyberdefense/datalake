@@ -39,10 +39,10 @@ Or/And directly from the cli:
 
 > -ho set it to False to get the complete result
 
-> -o (Optional) will set the output file as a csv.  
+> -o will set the output file as a csv per default.  
 
-> -ot set it to json or csv to choose the output type. Default is json
+> -ot set it to json or csv, to choose the output type. Default is json
 
 > -td, --threat_details set if you also want to have access to the threat details in output file
 
-> -e (Optional) to change the environment {preprod, prod},  default is **prod**  
+> -e  to change the environment {preprod, prod},  default is **prod**  
