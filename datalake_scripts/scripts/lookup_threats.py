@@ -5,6 +5,7 @@ from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.get_engine import LookupThreats
 from datalake_scripts.engines.post_engine import PostEngine
+from datalake_scripts.helper_scripts.output_builder import CsvBuilder
 
 
 def output_type2header(v, parser):
@@ -103,8 +104,10 @@ def main(override_args=None):
         list_threats,
         args.atom_type,
         hashkey_only,
-        args.output_type
     )
+
+    if args.output_type == 'text/csv':
+        response_dict = CsvBuilder.create_look_up_csv(response_dict, args.atom_type, has_details=args.threat_details)
 
     if args.output:
         starter.save_output(args.output, response_dict)
