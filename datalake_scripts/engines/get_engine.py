@@ -1,13 +1,9 @@
 """All the engines that use a GET endpoint."""
-from urllib.parse import urljoin
-
-from typing import List
 
 from requests import PreparedRequest
 
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.logger import logger
-from datalake_scripts.helper_scripts.output_builder import CsvBuilder
 
 
 class GetEngine(BaseEngine):
@@ -78,7 +74,7 @@ class LookupThreats(GetEngine):
                                           headers={'Authorization': self.tokens[0]})
         return response
 
-    def lookup_threats(self, threats: list, atom_type, hashkey_only, output_type):
+    def lookup_threats(self, threats: list, atom_type, hashkey_only):
         boolean_to_text_and_color = {True: ('FOUND', '\x1b[6;30;42m'),
                                      False: ('NOT_FOUND', '\x1b[6;30;41m')}
         complete_response = None
@@ -91,6 +87,4 @@ class LookupThreats(GetEngine):
             logger.info('{}{} hashkey:{} {}\x1b[0m'.format(color, threat, response['hashkey'], text))
             complete_response = {} if not complete_response else complete_response
             complete_response[threat] = response
-        if output_type == 'text/csv':
-            return CsvBuilder.create_csv(complete_response, atom_type)
         return complete_response

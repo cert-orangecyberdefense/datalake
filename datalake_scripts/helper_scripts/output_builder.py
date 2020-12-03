@@ -1,20 +1,30 @@
-import json
-
 
 class CsvBuilder:
 
     @staticmethod
-    def create_csv(complete_response, atom_type):
-        complete_csv = ['hashkey,atom_type,atom_value_best_matching,atom_found,events_number,first_seen,last_updated,'
-                        'threat_types,ddos.score.risk,fraud.score.risk,hack.score.risk,leak.score.risk,'
-                        'malware.score.risk,phishing.score.risk,scam.score.risk,spam.score.risk,sources,tags,'
-                        'href_graph,href_history,href_threat,href_threat_webGUI']
+    def create_look_up_csv(api_response: dict, atom_type: str, has_details=True) -> list:
+        """
+        :param api_response: the api lookup response aggregated by atom value
+        :param atom_type: the atom type given for the look up
+        :param has_details: indicate if the api_response includes details or only found + hashkey
+        """
+        minimum_header = 'hashkey,atom_type,atom_value_best_matching,atom_found'
+        extended_header = 'events_number,first_seen,last_updated,threat_types,ddos.score.risk,' \
+                          'fraud.score.risk,hack.score.risk,leak.score.risk,malware.score.risk,' \
+                          'phishing.score.risk,scam.score.risk,spam.score.risk,sources,tags,href_graph,' \
+                          'href_history,href_threat,href_threat_webGUI'
+        complete_csv = []
+        if has_details:
+            complete_csv.append(minimum_header + ',' + extended_header)
+        else:
+            complete_csv.append(minimum_header)
 
-        for threat in complete_response.keys():
-            response = complete_response[threat]
-            if 'threat_found' in response.keys():  # means threat not found
-                line = f"{response['hashkey']},{atom_type},{threat},{False}," + ','.join([f"{None}"] * 18)
-            else:
+        for threat in api_response.keys():
+            response = api_response[threat]
+            threat_found = response.get('threat_found', True)
+            if not has_details:
+                line = f"{response['hashkey']},{atom_type},{threat},{threat_found}"
+            elif threat_found:
                 threat_scores = CsvBuilder._load_scores(response['scores'])
                 threat_types = ','.join(response['threat_types']) if 'threat_types' in response else None
                 if threat_types:
@@ -30,6 +40,9 @@ class CsvBuilder:
                        f"{CsvBuilder._create_tags_list(response['tags'])}," \
                        f"{response['href_graph']},{response['href_history']},{response['href_threat']}," \
                        f"{response['href_threat']}"
+            else:  # Threat not found with details
+                line = f"{response['hashkey']},{atom_type},{threat},{False}," + ','.join([f"{None}"] * 18)
+
             complete_csv.append(line)
 
         return complete_csv
