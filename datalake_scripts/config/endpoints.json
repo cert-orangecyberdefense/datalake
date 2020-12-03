@@ -8,11 +8,13 @@
     "retrieve-bulk-search": "mrti/bulk-search/task/{task_uuid}/",
     "threats": "mrti/threats/",
     "threats-manual": "mrti/threats-manual/",
+    "threats-manual-bulk": "mrti/threats-manual/bulk/",
     "token": "auth/token/",
     "refresh_token": "auth/refresh-token/",
     "lookup": "mrti/threats/lookup/",
     "comment": "mrti/threats/{hashkey}/comments/",
     "tag": "mrti/threats/{hashkey}/tags/"
   },
+  "threats-manual-bulk-size": 100,
   "api_version": "v2/"
 }

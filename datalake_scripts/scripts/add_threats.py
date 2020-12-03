@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
-from datalake_scripts.engines.post_engine import ThreatsPost
+from datalake_scripts.engines.post_engine import ThreatsPost, BulkThreatsPost
 
 
 def main(override_args=None):
@@ -81,6 +81,11 @@ def main(override_args=None):
         help='sets override_type to permanent. Scores won\'t be updated by the algorithm. Default is temporary',
         action='store_true',
     )
+    parser.add_argument(
+        '--no-bulk',
+        help='force an api call for each threats, useful to retrieve the details of threats created',
+        action='store_true',
+    )
     if override_args:
         args = parser.parse_args(override_args)
     else:
@@ -92,9 +97,6 @@ def main(override_args=None):
 
     permanent = 'permanent' if args.permanent else 'temporary'
 
-    # Load api_endpoints and tokens
-    endpoint_config, main_url, tokens = starter.load_config(args)
-    post_engine_add_threats = ThreatsPost(endpoint_config, args.env, tokens)
     if args.is_csv:
         try:
             list_new_threats = starter._load_csv(args.input, args.delimiter, args.column - 1)
@@ -106,16 +108,33 @@ def main(override_args=None):
     list_new_threats = defang_threats(list_new_threats, args.atom_type)
     list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
     threat_types = ThreatsPost.parse_threat_types(args.threat_types) or []
-    response_dict = post_engine_add_threats.add_threats(
-        list_new_threats,
-        args.atom_type,
-        args.whitelist,
-        threat_types,
-        args.public,
-        args.tag,
-        args.link,
-        permanent
-    )
+
+    # Load api_endpoints and tokens
+    endpoint_config, main_url, tokens = starter.load_config(args)
+    if not args.no_bulk and not args.link:  # Bulk endpoint doesn't support external analysis links yet
+        post_engine_add_threats = BulkThreatsPost(endpoint_config, args.env, tokens)
+        hashkeys = post_engine_add_threats.add_bulk_threats(
+            list_new_threats,
+            args.atom_type,
+            args.whitelist,
+            threat_types,
+            args.public,
+            args.tag,
+            permanent
+        )
+        response_dict = {'haskeys': list(hashkeys)}
+    else:
+        post_engine_add_threats = ThreatsPost(endpoint_config, args.env, tokens)
+        response_dict = post_engine_add_threats.add_threats(
+            list_new_threats,
+            args.atom_type,
+            args.whitelist,
+            threat_types,
+            args.public,
+            args.tag,
+            args.link,
+            permanent
+        )
 
     if args.output:
         starter.save_output(args.output, response_dict)

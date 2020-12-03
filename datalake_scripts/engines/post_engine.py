@@ -7,6 +7,7 @@ import requests
 
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.logger import logger
+from datalake_scripts.helper_scripts.utils import split_list
 
 
 class PostEngine(BaseEngine):
@@ -95,10 +96,11 @@ class ThreatsPost(PostEngine):
     def get_whitelist_threat_types() -> dict:
         return {threat_type: 0 for threat_type in PostEngine.authorized_threats_value}
 
-    def _add_new_atom(self, value: str, atom_type: str, payload: dict, links: list) -> dict:
-        """
-        Create the correct payload to add a new threat to the API.
-        """
+    def _add_new_atom(self, atom_value: str, atom_type: str, payload: dict, links: list) -> dict:
+        final_payload = self._tune_payload_to_atom(atom_type, links, payload, atom_value)
+        return self.datalake_requests(self.url, 'post', self._post_headers(), final_payload)
+
+    def _tune_payload_to_atom(self, atom_type, links, payload, value):
         atom_type = atom_type.lower()
         key_value = atom_type + '_content'
         if atom_type == 'apk':
@@ -145,14 +147,14 @@ class ThreatsPost(PostEngine):
             payload['threat_data']['content'][key_value].update({'external_analysis_link': links})
         return payload
 
-    def add_threats(self, atom_list: list, atom_type: str, white: bool, threats_score: Dict[str, int], is_public: bool,
-                    tags: list, links: list, override_type: str) -> dict:
+    def add_threats(self, atom_list: list, atom_type: str, is_whitelist: bool, threats_score: Dict[str, int],
+                    is_public: bool, tags: list, links: list, override_type: str) -> dict:
         """
         Use it to add a list of threats to the API.
 
         :param atom_list: atoms that needs to be added.
         :param atom_type: must be one of the _authorized_atom_value
-        :param white: if true the score will be set to 0
+        :param is_whitelist: if true the score will be set to 0
         :param threats_score:  a dict that contain {threat_type -> score}
         :param is_public: if true the added threat will be public else will be reserved to organization
         :param tags: a list of tags to add
@@ -169,7 +171,7 @@ class ThreatsPost(PostEngine):
                 'tags': tags
             }
         }
-        if white:
+        if is_whitelist:
             for threat in self.authorized_threats_value:
                 payload['threat_data']['scores'].append({'score': {'risk': 0}, 'threat_type': threat})
                 payload['threat_data']['threat_types'].append(threat)
@@ -177,21 +179,73 @@ class ThreatsPost(PostEngine):
             for threat, score in threats_score.items():
                 payload['threat_data']['scores'].append({'score': {'risk': score}, 'threat_type': threat})
                 payload['threat_data']['threat_types'].append(threat)
+
         return_value = {'results': []}
         for atom in atom_list:
             if not atom:  # empty value
                 logger.info(f'EMPTY ATOM {atom.ljust(self.terminal_size - 6, " ")} \x1b[0;30;41m  KO  \x1b[0m')
                 continue
-            final_payload = self._add_new_atom(atom, atom_type, payload, links)
-            response_dict = self.datalake_requests(self.url, 'post', self._post_headers(), final_payload)
+            response_dict = self._add_new_atom(atom, atom_type, payload, links)
+
             if response_dict.get('atom_value'):
-                return_value['results'].append(response_dict)
                 logger.info(atom.ljust(self.terminal_size - 6, ' ') + '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m')
+                return_value['results'].append(response_dict)
             else:
                 logger.info(atom.ljust(self.terminal_size - 6, ' ') + '\x1b[0;30;41m' + '  KO  ' + '\x1b[0m')
                 logger.debug(response_dict)
-
         return return_value
+
+
+class BulkThreatsPost(PostEngine):
+    """
+    Add multiple threats to the API through a single call
+    """
+
+    def _batch_size(self):
+        return self.endpoint_config['threats-manual-bulk-size']
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('threats-manual-bulk')
+
+    def add_bulk_threats(self, atom_list: list, atom_type: str, is_whitelist: bool, threats_score: Dict[str, int],
+                         is_public: bool, tags: list, override_type: str) -> set:
+        """create threats and return their hashkeys"""
+        atom_type = atom_type.lower()
+        payload = {
+            'atom_type': atom_type,
+            'override_type': override_type,
+            'public': is_public,
+            'scores': [],
+            'tags': tags
+        }
+
+        hashkey_created = set()
+        # Build score payload
+        if is_whitelist:
+            for threat in self.authorized_threats_value:
+                payload['scores'].append({'score': {'risk': 0}, 'threat_type': threat})
+        else:
+            for threat, score in threats_score.items():
+                payload['scores'].append({'score': {'risk': score}, 'threat_type': threat})
+
+        for batch in split_list(atom_list, self._batch_size()):
+            payload['atom_values'] = '\n'.join(batch)  # Raw csv expected
+            response = self.datalake_requests(self.url, 'post', self._post_headers(), payload)
+            hashkeys = response.get('hashkeys')
+            if hashkeys:
+                for hashkey in hashkeys:
+                    hashkey_created.add(hashkey)
+            else:
+                logger.warning(f'batch of threats from {batch[0]} to {batch[-1]} failed to be created')
+
+        nb_threats = len(hashkey_created)
+        if nb_threats > 0:
+            ok_sign = '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m'
+            logger.info(f'Created {nb_threats} threats'.ljust(self.terminal_size - 6, ' ') + ok_sign)
+        else:
+            ko_sign = '\x1b[0;30;41m' + '  KO  ' + '\x1b[0m'
+            logger.info(f'Failed to create any threats'.ljust(self.terminal_size - 6, ' ') + ko_sign)
+        return hashkey_created
 
 
 class CommentsPost(PostEngine):

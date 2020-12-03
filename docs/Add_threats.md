@@ -38,6 +38,7 @@ Required:
 
 
 (Optional) 
+> --no-bulk force an api call for each threats, useful to retrieve the details of threats created
 > --tag will add all the following tags to the new threats, here `test0 test32 test320`  
 > -p set the visibility to public default=private  
 > --is_csv  set it to have a csv file as an input  
@@ -45,6 +46,10 @@ Required:
 > -c to select the column (starting at **1**)  
 > --link to provide a link i.e. a URL that will be filled in "external_analysis_link"  
 > --permanent to set override_type to permanent. For scores that should not be updated by the algorithm  
-> -o will set the output file as the API gives it.  
+> -o will set the output file as the API gives it*.  
 > -e to change the environment {preprod, prod},  default is **prod**   
 
+
+*Currently the result outputted with `-o` depends of the API endpoints call:
+* The classic one will return all the details about created threats.
+* The bulk one will only return the hashkeys of the created threats. This is the default behavior, unless option `--link` and/or `--no-bulk` is used 
