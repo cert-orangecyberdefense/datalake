@@ -1,12 +1,10 @@
 """All the engines that use a GET endpoint."""
 import os
-from time import time, sleep
 from typing import Set, Dict, List
-
-import requests
 
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.logger import logger
+from datalake_scripts.common.mixins import HandleBulkTaskMixin
 from datalake_scripts.helper_scripts.utils import split_list
 
 
@@ -196,10 +194,13 @@ class ThreatsPost(PostEngine):
         return return_value
 
 
-class BulkThreatsPost(PostEngine):
+class BulkThreatsPost(PostEngine, HandleBulkTaskMixin):
     """
     Add multiple threats to the API through a single call
     """
+
+    OCD_DTL_MAX_BULK_THREATS_TIME = int(os.getenv('OCD_DTL_MAX_BULK_THREATS_TIME', 600))
+    OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT = int(os.getenv('OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT', 10))
 
     def _batch_size(self):
         return self.endpoint_config['threats-manual-bulk-size']
@@ -235,17 +236,22 @@ class BulkThreatsPost(PostEngine):
         return hashkey_created
 
     def queue_bulk_threats(self, atom_list, payload):
-        hashkey_created = set()
+        hashkey_created = []
+        bulk_in_flight = []  # bulk task uuid unchecked
 
         for batch in split_list(atom_list, self._batch_size()):
+            if len(bulk_in_flight) >= self.OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT:
+                bulk_threat_task_uuid = bulk_in_flight.pop(0)
+                hashkey_created += self.check_bulk_threats_added(bulk_threat_task_uuid)
+
             payload['atom_values'] = '\n'.join(batch)  # Raw csv expected
             response = self.datalake_requests(self.url, 'post', self._post_headers(), payload)
-            hashkeys = response.get('hashkeys')
-            if hashkeys:
-                for hashkey in hashkeys:
-                    hashkey_created.add(hashkey)
-            else:
-                logger.warning(f'batch of threats from {batch[0]} to {batch[-1]} failed to be created')
+            bulk_in_flight.append(response['task_uuid'])
+
+        # Finish to check the other bulk tasks
+        for bulk_threat_task_uuid in bulk_in_flight:
+            hashkey_created += self.check_bulk_threats_added(bulk_threat_task_uuid)
+
         nb_threats = len(hashkey_created)
         if nb_threats > 0:
             ok_sign = '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m'
@@ -253,6 +259,36 @@ class BulkThreatsPost(PostEngine):
         else:
             ko_sign = '\x1b[0;30;41m' + '  KO  ' + '\x1b[0m'
             logger.info(f'Failed to create any threats'.ljust(self.terminal_size - 6, ' ') + ko_sign)
+        return set(hashkey_created)
+
+    def check_bulk_threats_added(self, bulk_threat_task_uuid) -> list:
+        """Check if the bulk manual threat submission completed successfully and if so return the hashkeys created"""
+
+        def is_completed_task(json_response):
+            return json_response['state'] in ('DONE', 'CANCELLED')
+
+        hashkey_created = []
+        url = self._build_url_for_endpoint('retrieve-threats-manual-bulk')
+
+        response = self.handle_bulk_task(
+            bulk_threat_task_uuid,
+            url,
+            timeout=self.OCD_DTL_MAX_BULK_THREATS_TIME,
+            additional_checks=[is_completed_task]
+        )
+
+        hashkeys = response.get('hashkeys')
+        atom_values = response.get('atom_values')
+
+        if hashkeys and response['state'] == 'DONE':  # if the state is CANCELLED we consider the batch a failure
+            for hashkey in hashkeys:
+                hashkey_created.append(hashkey)
+        else:
+            # default values in case the json is missing some fields
+            hashkeys = hashkeys or ['<missing value>']
+            atom_values = atom_values or ['<missing value>']
+            logger.warning(f'batch of threats from {atom_values[0]}({hashkeys[0]}) to {atom_values[-1]}({hashkeys[-1]})'
+                           f' failed to be created')
         return hashkey_created
 
 
@@ -385,12 +421,11 @@ class ScorePost(PostEngine):
         return return_value
 
 
-class BulkSearch(PostEngine):
+class BulkSearch(PostEngine, HandleBulkTaskMixin):
     """
     Bulk search engines
     """
 
-    OCD_DTL_MAX_BACK_OFF_TIME = int(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 120))
     OCD_DTL_MAX_BULK_SEARCH_TIME = int(os.getenv('OCD_DTL_MAX_BULK_SEARCH_TIME', 3600))
 
     def _build_url(self, endpoint_config: dict, environment: str):
@@ -398,30 +433,7 @@ class BulkSearch(PostEngine):
 
     def _handle_bulk_search_task(self, task_uuid):
         retrieve_bulk_result_url = self._build_url_for_endpoint('retrieve-bulk-search')
-        retrieve_bulk_result_url = retrieve_bulk_result_url.format(task_uuid=task_uuid)
-
-        start_time = time()
-        back_off_time = 10
-
-        json_response = None
-        while not json_response:
-            response = requests.get(url=retrieve_bulk_result_url, headers={'Authorization': self.tokens[0]})
-            if response.status_code == 200:
-                json_response = response.json()
-            elif response.status_code == 401:
-                logger.debug('Refreshing expired Token')
-                self._token_update(response.json())
-            elif time() - start_time + back_off_time < self.OCD_DTL_MAX_BULK_SEARCH_TIME:
-                sleep(back_off_time)
-                back_off_time = min(back_off_time * 2, self.OCD_DTL_MAX_BACK_OFF_TIME)
-            else:
-                logger.error()
-                raise TimeoutError(
-                    f'No bulk search result after waiting {self.OCD_DTL_MAX_BULK_SEARCH_TIME / 60:.0f} mins\n'
-                    f'task_uuid: "{task_uuid}"'
-                )
-
-        return json_response
+        return self.handle_bulk_task(task_uuid, retrieve_bulk_result_url, timeout=self.OCD_DTL_MAX_BULK_SEARCH_TIME)
 
     def get_threats(self, query_hash: str, query_fields: List[str] = None) -> dict:
         body = {
