@@ -208,7 +208,7 @@ class BulkThreatsPost(PostEngine):
         return self._build_url_for_endpoint('threats-manual-bulk')
 
     def add_bulk_threats(self, atom_list: list, atom_type: str, is_whitelist: bool, threats_score: Dict[str, int],
-                         is_public: bool, tags: list, override_type: str) -> set:
+                         is_public: bool, tags: list, links: list, override_type: str) -> set:
         """create threats and return their hashkeys"""
         atom_type = atom_type.lower()
         payload = {
@@ -219,7 +219,6 @@ class BulkThreatsPost(PostEngine):
             'tags': tags
         }
 
-        hashkey_created = set()
         # Build score payload
         if is_whitelist:
             for threat in self.authorized_threats_value:
@@ -227,6 +226,16 @@ class BulkThreatsPost(PostEngine):
         else:
             for threat, score in threats_score.items():
                 payload['scores'].append({'score': {'risk': score}, 'threat_type': threat})
+
+        if links:
+            threat_data = {'content': {f'{atom_type}_content': {'external_analysis_link': links}}}
+            payload['threat_data'] = threat_data
+
+        hashkey_created = self.queue_bulk_threats(atom_list, payload)
+        return hashkey_created
+
+    def queue_bulk_threats(self, atom_list, payload):
+        hashkey_created = set()
 
         for batch in split_list(atom_list, self._batch_size()):
             payload['atom_values'] = '\n'.join(batch)  # Raw csv expected
@@ -237,7 +246,6 @@ class BulkThreatsPost(PostEngine):
                     hashkey_created.add(hashkey)
             else:
                 logger.warning(f'batch of threats from {batch[0]} to {batch[-1]} failed to be created')
-
         nb_threats = len(hashkey_created)
         if nb_threats > 0:
             ok_sign = '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m'

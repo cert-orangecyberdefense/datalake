@@ -111,19 +111,7 @@ def main(override_args=None):
 
     # Load api_endpoints and tokens
     endpoint_config, main_url, tokens = starter.load_config(args)
-    if not args.no_bulk and not args.link:  # Bulk endpoint doesn't support external analysis links yet
-        post_engine_add_threats = BulkThreatsPost(endpoint_config, args.env, tokens)
-        hashkeys = post_engine_add_threats.add_bulk_threats(
-            list_new_threats,
-            args.atom_type,
-            args.whitelist,
-            threat_types,
-            args.public,
-            args.tag,
-            permanent
-        )
-        response_dict = {'haskeys': list(hashkeys)}
-    else:
+    if args.no_bulk:
         post_engine_add_threats = ThreatsPost(endpoint_config, args.env, tokens)
         response_dict = post_engine_add_threats.add_threats(
             list_new_threats,
@@ -135,6 +123,19 @@ def main(override_args=None):
             args.link,
             permanent
         )
+    else:
+        post_engine_add_threats = BulkThreatsPost(endpoint_config, args.env, tokens)
+        hashkeys = post_engine_add_threats.add_bulk_threats(
+            list_new_threats,
+            args.atom_type,
+            args.whitelist,
+            threat_types,
+            args.public,
+            args.tag,
+            args.link,
+            permanent
+        )
+        response_dict = {'haskeys': list(hashkeys)}
 
     if args.output:
         starter.save_output(args.output, response_dict)

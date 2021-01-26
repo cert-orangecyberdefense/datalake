@@ -50,6 +50,6 @@ Required:
 > -e to change the environment {preprod, prod},  default is **prod**   
 
 
-*Currently the result outputted with `-o` depends of the API endpoints call:
-* The classic one will return all the details about created threats.
-* The bulk one will only return the hashkeys of the created threats. This is the default behavior, unless option `--link` and/or `--no-bulk` is used 
+*Currently the result outputted with `-o` depends on the API endpoints call:
+* The bulk one will only return the hashkeys of the created threats. This is the default behavior.
+* The classic one will return all the details about created threats. This endpoint can be forced with the option `--no-bulk`
