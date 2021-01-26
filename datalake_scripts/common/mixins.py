@@ -1,6 +1,8 @@
+import logging
 import os
 from time import time, sleep
 from typing import List, Callable, Dict
+from halo import Halo
 
 import requests
 
@@ -28,6 +30,11 @@ class HandleBulkTaskMixin(BaseEngine):
         """
         retrieve_bulk_result_url = retrieve_bulk_result_url.format(task_uuid=task_uuid)
 
+        spinner = None
+        if logger.isEnabledFor(logging.INFO):
+            spinner = Halo(text=f'Waiting for bulk task {task_uuid} response', spinner='dots')
+            spinner.start()
+
         start_time = time()
         back_off_time = 10
 
@@ -38,6 +45,8 @@ class HandleBulkTaskMixin(BaseEngine):
                 potential_json_response = response.json()
                 if additional_checks and not all(check(potential_json_response) for check in additional_checks):
                     continue  # the json isn't valid
+                if spinner:
+                    spinner.succeed(f'bulk task {task_uuid} done')
                 json_response = potential_json_response
             elif response.status_code == 401:
                 logger.debug('Refreshing expired Token')
@@ -46,10 +55,14 @@ class HandleBulkTaskMixin(BaseEngine):
                 sleep(back_off_time)
                 back_off_time = min(back_off_time * 2, self.OCD_DTL_MAX_BACK_OFF_TIME)
             else:
+                if spinner:
+                    spinner.fail(f'bulk task {task_uuid} timeout')
                 logger.error()
                 raise TimeoutError(
                     f'No bulk result after waiting {timeout / 60:.0f} mins\n'
                     f'task_uuid: "{task_uuid}"'
                 )
 
+        if spinner:
+            spinner.stop()
         return json_response

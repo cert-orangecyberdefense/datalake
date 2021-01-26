@@ -9,6 +9,7 @@ v = {version = "*",editable = true}
 [packages]
 datalake-script = {path = ".",editable = true}
 requests = "==2.23.0"
+halo = "*"
 
 [requires]
 python_version = "3.6"
