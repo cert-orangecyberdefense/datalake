@@ -50,6 +50,17 @@ Required:
 > -e to change the environment {preprod, prod},  default is **prod**   
 
 
-*Currently the result outputted with `-o` depends of the API endpoints call:
-* The classic one will return all the details about created threats.
-* The bulk one will only return the hashkeys of the created threats. This is the default behavior, unless option `--link` and/or `--no-bulk` is used 
+*Currently the result outputted with `-o` depends on the API endpoints call:
+* The bulk one will only return the hashkeys of the created threats. This is the default behavior.
+* The classic one will return all the details about created threats. This endpoint can be forced with the option `--no-bulk`
+
+### Environment variables
+
+For the bulk mode, the following environment variable can be used 
+
+* `OCD_DTL_MAX_BACK_OFF_TIME` allow to set the maximum time period to wait between two api 
+calls to check if the bulk submission is complete.  *default is 120 seconds*.
+* `OCD_DTL_MAX_BULK_THREATS_TIME` is the maximum time period, in seconds, to wait for the manual submission to be processed, 
+after which the threats will be considered not successfully added. *default is 600 seconds*.
+* `OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT` is the maximum bulk requests made in parallel, 
+increasing this value may result in your personal queue limit to be reached. *default is 10*.
