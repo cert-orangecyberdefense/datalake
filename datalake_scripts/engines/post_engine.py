@@ -246,7 +246,12 @@ class BulkThreatsPost(PostEngine, HandleBulkTaskMixin):
 
             payload['atom_values'] = '\n'.join(batch)  # Raw csv expected
             response = self.datalake_requests(self.url, 'post', self._post_headers(), payload)
-            bulk_in_flight.append(response['task_uuid'])
+
+            task_uid = response.get('task_uuid')
+            if task_uid:
+                bulk_in_flight.append(response['task_uuid'])
+            else:
+                logger.warning(f'batch of threats from {batch[0]} to {batch[-1]} failed to be created')
 
         # Finish to check the other bulk tasks
         for bulk_threat_task_uuid in bulk_in_flight:
@@ -270,17 +275,21 @@ class BulkThreatsPost(PostEngine, HandleBulkTaskMixin):
         hashkey_created = []
         url = self._build_url_for_endpoint('retrieve-threats-manual-bulk')
 
-        response = self.handle_bulk_task(
-            bulk_threat_task_uuid,
-            url,
-            timeout=self.OCD_DTL_MAX_BULK_THREATS_TIME,
-            additional_checks=[is_completed_task]
-        )
+        try:
+            response = self.handle_bulk_task(
+                bulk_threat_task_uuid,
+                url,
+                timeout=self.OCD_DTL_MAX_BULK_THREATS_TIME,
+                additional_checks=[is_completed_task]
+            )
+        except TimeoutError:
+            response = {}
 
         hashkeys = response.get('hashkeys')
         atom_values = response.get('atom_values')
 
-        if hashkeys and response['state'] == 'DONE':  # if the state is CANCELLED we consider the batch a failure
+        # if the state is not DONE we consider the batch a failure
+        if hashkeys and response.get('state', 'CANCELLED') == 'DONE':
             for hashkey in hashkeys:
                 hashkey_created.append(hashkey)
         else:
@@ -288,7 +297,7 @@ class BulkThreatsPost(PostEngine, HandleBulkTaskMixin):
             hashkeys = hashkeys or ['<missing value>']
             atom_values = atom_values or ['<missing value>']
             logger.warning(f'batch of threats from {atom_values[0]}({hashkeys[0]}) to {atom_values[-1]}({hashkeys[-1]})'
-                           f' failed to be created')
+                           f' failed to be created during task {bulk_threat_task_uuid}')
         return hashkey_created
 
 
