@@ -59,8 +59,8 @@ Required:
 For the bulk mode, the following environment variable can be used 
 
 * `OCD_DTL_MAX_BACK_OFF_TIME` allow to set the maximum time period to wait between two api 
-calls to check if the bulk search is ready.  *default is 120 seconds*.
+calls to check if the bulk submission is complete.  *default is 120 seconds*.
 * `OCD_DTL_MAX_BULK_THREATS_TIME` is the maximum time period, in seconds, to wait for the manual submission to be processed, 
-after which the threats will be considered failed. *default is 600 seconds*.
+after which the threats will be considered not successfully added. *default is 600 seconds*.
 * `OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT` is the maximum bulk requests made in parallel, 
 increasing this value may result in your personal queue limit to be reached. *default is 10*.
