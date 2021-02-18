@@ -11,7 +11,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='datalake-scripts',
-    version='2.2.0',
+    version='2.2.1',
     author='OCD',
     author_email='cert-contact.ocd@orange.com',
     description='A collection of scripts to easily use the API of OCD Datalake',
@@ -24,6 +24,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "requests",
+        "halo"
     ],
     test_suite='nose.collector',
     entry_points={
