@@ -7,6 +7,7 @@
     "bulk-search": "mrti/bulk-search/",
     "retrieve-bulk-search": "mrti/bulk-search/task/{task_uuid}/",
     "threats": "mrti/threats/",
+    "advanced-search": "mrti/advanced-queries/threats/",
     "threats-manual": "mrti/threats-manual/",
     "threats-manual-bulk": "mrti/bulk-manual-threats/",
     "retrieve-threats-manual-bulk": "mrti/bulk-manual-threats/task/{task_uuid}/",

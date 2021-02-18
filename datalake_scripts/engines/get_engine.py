@@ -88,3 +88,21 @@ class LookupThreats(GetEngine):
             complete_response = {} if not complete_response else complete_response
             complete_response[threat] = response
         return complete_response
+
+
+class Threats(GetEngine):
+    """Retrieve threats based on an query hash using the Advanced Search endpoint
+    The endpoint limit the number of result to 5 000 threats but allow more output than the bulk search
+    """
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('advanced-search')
+
+    def get_threats(self, query_hash: str, limit=10, response_format="application/json") -> dict:
+        url = self.url + query_hash
+        params = {'limit': limit}
+        req = PreparedRequest()  # Adding parameters using requests' tool
+        req.prepare_url(url, params)
+        headers = {'Authorization': self.tokens[0], 'Accept': response_format}
+        response = self.datalake_requests(req.url, 'get', headers=headers)
+        return response
