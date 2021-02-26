@@ -4,15 +4,17 @@ from datalake_scripts.common.token_manager import TokenGenerator
 from datalake_scripts.engines.get_engine import LookupThreats, ThreatsSearch
 from datalake_scripts.engines.post_engine import CommentsPost, ThreatsPost, ScorePost, TagsPost, BulkSearch
 
+TEST_ENV = 'my_env'
 TEST_CONFIG = {
     'main': {
-        'my_env': 'https://datalake.com/api/'
+        TEST_ENV: 'https://datalake.com/api/'
     },
     'endpoints': {
         'bulk-search': 'mrti/bulk-search/',
         'threats': 'mrti/threats/',
         'threats-manual': 'mrti/threats-manual/',
         'token': 'auth/token/',
+        "advanced-search": "mrti/advanced-queries/threats/",
         'refresh_token': 'auth/refresh-token/',
         'lookup': 'mrti/threats/lookup/',
         'comment': 'mrti/threats/{hashkey}/comments/',
@@ -23,7 +25,7 @@ TEST_CONFIG = {
 
 
 def test_auth():
-    engine = TokenGenerator(TEST_CONFIG, environment='my_env')
+    engine = TokenGenerator(TEST_CONFIG, environment=TEST_ENV)
     assert engine.url_token == 'https://datalake.com/api/v42/auth/token/'
 
 

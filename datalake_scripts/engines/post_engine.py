@@ -1,6 +1,8 @@
 """All the engines that use a GET endpoint."""
 import os
-from typing import Set, Dict, List
+from typing import Set, Dict, List, Union
+
+from requests import PreparedRequest
 
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.logger import logger
@@ -454,3 +456,21 @@ class BulkSearch(PostEngine, HandleBulkTaskMixin):
             logger.error('No bulk search created, is the query_hash valid as well as the query_fields ?')
             return {}
         return self._handle_bulk_search_task(task_uuid=response['task_uuid'])
+
+
+class AdvancedSearch(PostEngine):
+    """Advanced search engine."""
+    Json = Union[dict, list]  # json like object that can be a dict or root level array
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('advanced-search')
+
+    def get_threats(self, query_body: Json, limit=10) -> dict:
+        if not isinstance(query_body, dict) or not query_body.get('AND'):
+            query_body = {"AND": query_body}  # Add top level AND if needed
+        payload = {
+            "limit": limit,
+            "offset": 0,
+            "query_body": query_body
+        }
+        return self.datalake_requests(self.url, 'post', self._post_headers(), payload)
