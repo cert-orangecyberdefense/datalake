@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 
 from datalake_scripts.common.base_script import BaseScripts
@@ -28,7 +29,7 @@ def main(override_args=None):
     required_named = parser.add_argument_group('required arguments')
     required_named.add_argument(
         'query_hash',
-        help='the query hash from which to retrieve the response hashkeys',
+        help='the query hash from which to retrieve the response hashkeys or a path to the query body json file',
     )
     if override_args:
         args = parser.parse_args(override_args)
@@ -38,13 +39,25 @@ def main(override_args=None):
     if len(args.query_fields) > 1 and args.list:
         parser.error("List output format is only available if a single element is queried (via query_fields)")
 
+    query_body = {}
+    query_hash = args.query_hash
+    if len(query_hash) != 32 or os.path.exists(query_hash):
+        try:
+            with open(query_hash, 'r') as query_body_file:
+                query_body = json.load(query_body_file)
+        except FileNotFoundError:
+            logger.error(f"Couldn't understand the given value as a query hash or path to query body: {query_hash}")
+            exit(1)
+
     # Load api_endpoints and tokens
     endpoint_config, main_url, tokens = starter.load_config(args)
-    logger.debug(f'Start to search for threat from the query hash:{args.query_hash}')
+    logger.debug(f'Start to search for threat from the query hash:{query_hash}')
 
     bulk_search = BulkSearch(endpoint_config, args.env, tokens)
-
-    response = bulk_search.get_threats(args.query_hash, args.query_fields)
+    if query_body:
+        response = bulk_search.get_threats(query_body=query_body, query_fields=args.query_fields)
+    else:
+        response = bulk_search.get_threats(query_hash=query_hash, query_fields=args.query_fields)
     original_count = response.get('count', 0)
     logger.info(f'Number of threat that have been retrieved: {original_count}')
 

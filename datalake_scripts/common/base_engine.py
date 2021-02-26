@@ -5,6 +5,7 @@ Extend this engine to give it more functionality.
 import os
 import json
 from json.decoder import JSONDecodeError
+from typing import Union
 from urllib.parse import urljoin
 
 import requests
@@ -19,6 +20,8 @@ class BaseEngine:
     OCD_DTL_QUOTA_TIME = int(os.getenv('OCD_DTL_QUOTA_TIME', 1))
     OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(os.getenv('OCD_DTL_REQUESTS_PER_QUOTA_TIME', 5))
     logger.debug(f'Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s')
+
+    Json = Union[dict, list]  # json like object that can be a dict or root level array
 
     SET_MAX_RETRY = 3
 
