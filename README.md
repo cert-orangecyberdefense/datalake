@@ -45,7 +45,7 @@ For throttling the request, those two environment variable can be used:
 * `OCD_DTL_QUOTA_TIME` define, in seconds, the time before resetting the requests limit, *default is 1 second*.   
 * `OCD_DTL_REQUESTS_PER_QUOTA_TIME` define the number of request to do at maximum for the given time,  *default is 5 queries*.
 
-> Please don't exceed the quota marked [here](https://datalake.cert.orangecyberdefense.com/api/v1/docs/) for each endpoint
+> Please don't exceed the quota marked [here](https://datalake.cert.orangecyberdefense.com/api/v2/docs/) for each endpoint
 
 ## Cli parameters
 

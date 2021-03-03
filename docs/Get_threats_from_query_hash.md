@@ -27,7 +27,8 @@ Or make a more advanced query, that will return directly the API response (using
 If no value is present, an empty string will replace it
 #### Parameters
 
-> <query_hash\> (positional argument) the query_hash to query   
+> <query_hash\> (positional argument) the query_hash to query
+> if the query hash is a valid local path to a (json) file, it will be used as query body instead
 
 > --query_fields (Optional) fields to be retrieved from the threat (default: threat_hashkey)  
 > --list (Optional)  Turn the output in a list (require query_fields to be **a single element**)
