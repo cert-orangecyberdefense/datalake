@@ -5,7 +5,7 @@ import sys
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
-    add_comments, lookup_threats, add_tags
+    add_comments, lookup_threats, add_tags, get_query_hash
 
 
 class Cli:
@@ -47,6 +47,10 @@ The most commonly used {self.CLI_NAME} commands are:
     def get_threats_from_query_hash(self):
         args = sys.argv[2:]
         get_threats_from_query_hash.main(args)
+
+    def get_query_hash(self):
+        args = sys.argv[2:]
+        get_query_hash.main(args)
 
     def edit_score(self):
         args = sys.argv[2:]

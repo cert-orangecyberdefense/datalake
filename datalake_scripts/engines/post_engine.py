@@ -1,6 +1,8 @@
 """All the engines that use a GET endpoint."""
 import os
-from typing import Set, Dict, List
+from typing import Set, Dict, List, Union
+
+from requests import PreparedRequest
 
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.logger import logger
@@ -65,6 +67,12 @@ class PostEngine(BaseEngine):
             }
         """
         return {'Authorization': self.tokens[0], 'accept': 'application/json', 'Content-Type': 'application/json'}
+
+    @staticmethod
+    def build_full_query_body(query_body):
+        if not isinstance(query_body, dict) or not query_body.get('AND'):
+            query_body = {"AND": query_body}  # Add top level AND if needed
+        return query_body
 
 
 class ThreatsPost(PostEngine):
@@ -444,13 +452,32 @@ class BulkSearch(PostEngine, HandleBulkTaskMixin):
         retrieve_bulk_result_url = self._build_url_for_endpoint('retrieve-bulk-search')
         return self.handle_bulk_task(task_uuid, retrieve_bulk_result_url, timeout=self.OCD_DTL_MAX_BULK_SEARCH_TIME)
 
-    def get_threats(self, query_hash: str, query_fields: List[str] = None) -> dict:
-        body = {
-            "query_hash": query_hash,
-            "query_fields": query_fields
-        }
+    def get_threats(self, query_hash: str = None, query_body: BaseEngine.Json = None, query_fields: List[str] = None) \
+            -> dict:
+        body = {"query_fields": query_fields}
+        if query_body:
+            body['query_body'] = self.build_full_query_body(query_body)
+        else:
+            body['query_hash'] = query_hash
+
         response = self.datalake_requests(self.url, 'post', post_body=body, headers=self._post_headers())
         if not response:
             logger.error('No bulk search created, is the query_hash valid as well as the query_fields ?')
             return {}
         return self._handle_bulk_search_task(task_uuid=response['task_uuid'])
+
+
+class AdvancedSearch(PostEngine):
+    """Advanced search engine."""
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('advanced-search')
+
+    def get_threats(self, query_body: BaseEngine.Json, limit=10) -> dict:
+        query_body = self.build_full_query_body(query_body)
+        payload = {
+            "limit": limit,
+            "offset": 0,
+            "query_body": query_body
+        }
+        return self.datalake_requests(self.url, 'post', self._post_headers(), payload)
