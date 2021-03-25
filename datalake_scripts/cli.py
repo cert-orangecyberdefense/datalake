@@ -5,7 +5,7 @@ import sys
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
-    add_comments, lookup_threats, add_tags, get_query_hash
+    add_comments, lookup_threats, add_tags, get_query_hash, bulk_lookup_threats
 
 
 class Cli:
@@ -67,6 +67,10 @@ The most commonly used {self.CLI_NAME} commands are:
     def lookup_threats(self):
         args = sys.argv[2:]
         lookup_threats.main(args)
+
+    def bulk_lookup_threats(self):
+        args = sys.argv[2:]
+        bulk_lookup_threats.main(args)
 
     def _list_commands_available(self):
         method_list = []

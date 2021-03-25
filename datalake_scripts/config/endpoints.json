@@ -10,6 +10,7 @@
     "threats": "mrti/threats/",
     "advanced-search": "mrti/advanced-queries/threats/",
     "threats-manual": "mrti/threats-manual/",
+    "threats-bulk-lookup": "mrti/threats/bulk-lookup/",
     "threats-manual-bulk": "mrti/bulk-manual-threats/",
     "retrieve-threats-manual-bulk": "mrti/bulk-manual-threats/task/{task_uuid}/",
     "token": "auth/token/",

@@ -481,3 +481,15 @@ class AdvancedSearch(PostEngine):
             "query_body": query_body
         }
         return self.datalake_requests(self.url, 'post', self._post_headers(), payload)
+
+
+class BulkLookupThreats(PostEngine):
+    """Bulk Lookup Threats"""
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('threats-bulk-lookup')
+
+    def bulk_lookup_threats(self, threats: BaseEngine.Json, hashkey_only: bool = True) -> dict:
+        body = threats
+        body['hashkey_only'] = hashkey_only
+        return self.datalake_requests(self.url, 'post', self._post_headers(), body)
