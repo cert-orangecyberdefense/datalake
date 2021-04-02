@@ -15,7 +15,7 @@ query_body_template = [
 
 @pytest.mark.parametrize('query_body', [
     query_body_template,  # Query body as returned in the GUI
-    {'AND': query_body_template},  # Full query body
+    {'AND': [{'AND': query_body_template}]},  # Full query body
 ])
 @responses.activate
 def test_split_list(tokens, query_body):
