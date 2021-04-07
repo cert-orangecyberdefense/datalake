@@ -45,4 +45,4 @@ Or/And directly from the cli:
 
 > -td, --threat_details set if you also want to have access to the threat details in output file
 
-> -e  to change the environment {preprod, prod},  default is **prod**  
+> -e  to change the environment {preprod, prod, dtl2},  default is **prod**  
