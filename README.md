@@ -47,7 +47,7 @@ For throttling the request, those two environment variable can be used:
 
 > Please don't exceed the quota marked [here](https://datalake.cert.orangecyberdefense.com/api/v2/docs/) for each endpoint
 
-## Cli parameters
+## Cli parameters  
 
 Parameters common and optional for all commands:
 > --debug  display more information for debugging purposes   
