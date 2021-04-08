@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 
 import requests
 
+from datalake_scripts.common import suppress_insecure_request_warns
 from datalake_scripts.common.logger import logger
 
 
@@ -17,12 +18,13 @@ class TokenGenerator:
     """
 
     def __init__(self, endpoint_config: dict, *, environment: str):
-        """environment can be either prod or preprod"""
+        """environment can be either prod, dtl2 or preprod"""
         base_url = urljoin(endpoint_config['main'][environment], endpoint_config['api_version'])
-        enpoints = endpoint_config['endpoints']
+        endpoints = endpoint_config['endpoints']
 
-        self.url_token = urljoin(base_url, enpoints['token'], allow_fragments=True)
-        self.url_refresh = urljoin(base_url, enpoints['refresh_token'], allow_fragments=True)
+        self.requests_ssl_verify = suppress_insecure_request_warns(environment)
+        self.url_token = urljoin(base_url, endpoints['token'], allow_fragments=True)
+        self.url_refresh = urljoin(base_url, endpoints['refresh_token'], allow_fragments=True)
 
     def get_token(self):
         """
@@ -33,7 +35,7 @@ class TokenGenerator:
         print()
         data = {'email': username, 'password': password}
 
-        response = requests.post(url=self.url_token, json=data)
+        response = requests.post(url=self.url_token, json=data, verify=self.requests_ssl_verify)
         json_response = json.loads(response.text)
         if 'access_token' in json_response.keys():
             return json_response
@@ -50,7 +52,7 @@ class TokenGenerator:
         """
         logger.debug('Token will be refresh')
         headers = {'Authorization': refresh_token}
-        response = requests.post(url=self.url_refresh, headers=headers)
+        response = requests.post(url=self.url_refresh, headers=headers, verify=self.requests_ssl_verify)
 
         json_response = json.loads(response.text)
         if response.status_code == 401 and json_response.get('msg') == 'Token has expired':

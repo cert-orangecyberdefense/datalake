@@ -4,13 +4,15 @@ Extend this engine to give it more functionality.
 """
 import os
 import json
+import requests
+
 from json.decoder import JSONDecodeError
 from typing import Union
 from urllib.parse import urljoin
 
-import requests
 from requests import Response
 
+from datalake_scripts.common import suppress_insecure_request_warns
 from datalake_scripts.common.logger import logger
 from datalake_scripts.common.throttler import throttle
 from datalake_scripts.common.token_manager import TokenGenerator
@@ -28,12 +30,12 @@ class BaseEngine:
     def __init__(self, endpoint_config: dict, environment: str, tokens: list):
         self.endpoint_config = endpoint_config
         self.environment = environment
+        self.requests_ssl_verify = suppress_insecure_request_warns(environment)
         self.url = self._build_url(endpoint_config, environment)
         self.tokens = tokens
         self.terminal_size = self._get_size_terminal()
         self.token_generator = TokenGenerator(endpoint_config, environment=environment)
         self.headers = None
-
         self.SET_MAX_RETRY = 3
 
     def _get_size_terminal(self) -> int:
@@ -99,16 +101,22 @@ class BaseEngine:
         :param tokens: list
         :return: str
         """
+        common_kwargs = {
+            'url': url,
+            'headers': headers,
+            'verify': self.requests_ssl_verify
+        }
+
         if method == 'get':
-            api_response = requests.get(url=url, headers=headers)
+            api_response = requests.get(**common_kwargs)
         elif method == 'post':
-            api_response = requests.post(url=url, headers=headers, data=json.dumps(data))
+            api_response = requests.post(**common_kwargs, data=json.dumps(data))
         elif method == 'delete':
-            api_response = requests.delete(url=url, headers=headers, data=json.dumps(data))
+            api_response = requests.delete(**common_kwargs, data=json.dumps(data))
         elif method == 'patch':
-            api_response = requests.patch(url=url, headers=headers, data=json.dumps(data))
+            api_response = requests.patch(**common_kwargs, data=json.dumps(data))
         elif method == 'put':
-            api_response = requests.put(url=url, headers=headers, data=json.dumps(data))
+            api_response = requests.put(**common_kwargs, data=json.dumps(data))
         else:
             logger.debug('ERROR : Wrong requests, please only do [get, post, put, patch, delete] method')
             raise TypeError('Unknown method to requests %s', method)

@@ -64,7 +64,6 @@ The most commonly used {self.CLI_NAME} commands are:
         args = sys.argv[2:]
         add_tags.main(args)
 
-
     def lookup_threat(self):
         args = sys.argv[2:]
         lookup_threats.main(args)

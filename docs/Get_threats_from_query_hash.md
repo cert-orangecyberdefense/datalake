@@ -34,7 +34,7 @@ If no value is present, an empty string will replace it
 > --list (Optional)  Turn the output in a list (require query_fields to be **a single element**)
 
 > -o (Optional) will set the output file as the API gives it.  
-> -e (Optional) to change the environment {preprod, prod},  default is **prod**  
+> -e (Optional) to change the environment {preprod, prod, dtl2},  default is **prod**  
 
 ### Environment variables
 
