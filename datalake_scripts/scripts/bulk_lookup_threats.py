@@ -1,15 +1,14 @@
 import json
 import sys
 
-from datalake_scripts.helper_scripts.utils import join_dicts
+from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import BulkLookupThreats
 
 
 # TODO
-# it would be useful to add a flag for filtering not found atoms ? --only-found --only-not-found ?
-# it would be useful to add a flag for pretty print the stdout ? like --pretty-print (take a look lookup)
+# it would be useful to add a flag for filtering found or not-found atoms ? --only-found --only-not-found ?
 
 SUBCOMMAND_NAME = 'bulk_lookup_threats'
 ATOM_TYPES_FLAGS = [
@@ -46,12 +45,27 @@ def main(override_args=None):
         action='append',
         help='read threats to add from FILE. [atomtype:path/to/file.txt]',
     )
+    parser.add_argument(
+        '-ot',
+        '--output-type',
+        help='set to the output type desired {json,csv}. Default is human readable',
+    )
 
     if override_args:
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
     logger.debug(f'START: bulk_lookup_threats.py')
+
+    # create output type header
+    accept_header = {'Accept': None}
+
+    if args.output_type:
+        accept_header['Accept'] = BaseEngine.output_type2header(args.output_type)
+
+        # this means that we validate accept header only if a value was passed with --output-type
+        if not accept_header['Accept']:
+            raise parser.error('output_type : value in {json,csv} expected.')
 
     # to gather all typed atoms passed by arguments and input files
     typed_atoms = {}
@@ -81,8 +95,13 @@ def main(override_args=None):
     endpoints_config, main_url, tokens = starter.load_config(args)
     post_engine_bulk_lookup_threats = BulkLookupThreats(endpoints_config, args.env, tokens)
 
-    response = post_engine_bulk_lookup_threats.bulk_lookup_threats(threats=typed_atoms, hashkey_only=args.hashkey_only)
-    pretty_print(response)
+    response = post_engine_bulk_lookup_threats.bulk_lookup_threats(
+        threats=typed_atoms,
+        additional_headers=accept_header,
+        hashkey_only=args.hashkey_only
+    )
+
+    pretty_print(response, args.output_type)
 
     if args.output:
         starter.save_output(args.output, response)
@@ -106,33 +125,35 @@ def get_atom_type_from_filename(filename, input_delimiter=':'):
     exit(1)
 
 
-# TODO
-    # when --atom-details flag is active we have to show all atom content here ? or only in the output file
-def pretty_print(raw_response, stdout_format='human'):
+def pretty_print(raw_response, stdout_format):
     """
      takes the API raw response and format it for be printed as stdout
-     stdout_format possible values {json, human}
+     stdout_format possible values {json, csv}
     """
     if stdout_format == 'json':
         logger.info(json.dumps(raw_response, indent=4, sort_keys=True))
+        return
 
-    if stdout_format == 'human':
-        blue_bg = '\033[104m'
-        eol = '\x1b[0m'
-        boolean_to_text_and_color = {
-            True: ('FOUND', '\x1b[6;30;42m'),
-            False: ('NOT_FOUND', '\x1b[6;30;41m')
-        }
+    if stdout_format == 'csv':
+        logger.info(raw_response)
+        return
 
-        for atom_type in raw_response.keys():
-            logger.info(f'{blue_bg}{"#" * 60} {atom_type.upper()} {"#" * (60 - len(atom_type))}{eol}')
+    blue_bg = '\033[104m'
+    eol = '\x1b[0m'
+    boolean_to_text_and_color = {
+        True: ('FOUND', '\x1b[6;30;42m'),
+        False: ('NOT_FOUND', '\x1b[6;30;41m')
+    }
 
-            for atom in raw_response[atom_type]:
-                found = atom['threat_found'] if 'threat_found' in atom.keys() else True
-                text, color = boolean_to_text_and_color[found]
-                logger.info(f'{atom_type} {atom["atom_value"]} hashkey: {atom["hashkey"]} {color} {text} {eol}')
+    for atom_type in raw_response.keys():
+        logger.info(f'{blue_bg}{"#" * 60} {atom_type.upper()} {"#" * (60 - len(atom_type))}{eol}')
 
-            logger.info('')
+        for atom in raw_response[atom_type]:
+            found = atom['threat_found'] if 'threat_found' in atom.keys() else True
+            text, color = boolean_to_text_and_color[found]
+            logger.info(f'{atom_type} {atom["atom_value"]} hashkey: {atom["hashkey"]} {color} {text} {eol}')
+
+        logger.info('')
 
 
 if __name__ == '__main__':

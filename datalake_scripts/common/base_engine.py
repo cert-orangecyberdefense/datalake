@@ -77,6 +77,8 @@ class BaseEngine:
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(f'API returned non 2xx response code : {response.status_code}\n{response.text}'
                              f'\n Retrying')
+            elif 'Content-Type' in response.headers and 'text/csv' in response.headers['Content-Type']:
+                return response.text
             else:
                 try:
                     dict_response = self._load_response(response)
@@ -88,6 +90,21 @@ class BaseEngine:
                 logger.error('Request failed: Will return nothing for this request')
                 return {}
             # time.sleep(5)
+
+    @staticmethod
+    def output_type2header(value):
+        """
+        this method gets the CLI input arg value and generate the header content-type
+        :param value: value to header
+        :return: returns content-type or None if there isn't an associated content-type value
+        """
+        if value:
+            if value.lower() == 'json':
+                return 'application/json'
+            elif value.lower() == 'csv':
+                return 'text/csv'
+
+        return None
 
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """

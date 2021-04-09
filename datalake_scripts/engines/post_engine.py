@@ -66,7 +66,7 @@ class PostEngine(BaseEngine):
                 'Content-Type': 'application/json'
             }
         """
-        return {'Authorization': self.tokens[0], 'accept': 'application/json', 'Content-Type': 'application/json'}
+        return {'Authorization': self.tokens[0], 'Accept': 'application/json', 'Content-Type': 'application/json'}
 
     @staticmethod
     def build_full_query_body(query_body):
@@ -489,7 +489,7 @@ class BulkLookupThreats(PostEngine):
     def _build_url(self, endpoint_config: dict, environment: str):
         return self._build_url_for_endpoint('threats-bulk-lookup')
 
-    def bulk_lookup_threats(self, threats: BaseEngine.Json, hashkey_only: bool = True) -> dict:
+    def bulk_lookup_threats(self, threats: BaseEngine.Json, additional_headers, hashkey_only: bool = True) -> dict:
         body = threats
         body['hashkey_only'] = hashkey_only
-        return self.datalake_requests(self.url, 'post', self._post_headers(), body)
+        return self.datalake_requests(self.url, 'post', {**self._post_headers(), **additional_headers}, body)

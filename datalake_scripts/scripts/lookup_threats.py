@@ -1,20 +1,13 @@
 import sys
 
 from collections import OrderedDict
+
+from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.get_engine import LookupThreats
 from datalake_scripts.engines.post_engine import PostEngine
 from datalake_scripts.helper_scripts.output_builder import CsvBuilder
-
-
-def output_type2header(v, parser):
-    if v.lower() == 'json':
-        return 'application/json'
-    elif v.lower() == 'csv':
-        return 'text/csv'
-    else:
-        raise parser.error('output_type : value in {json,csv} expected.')
 
 
 def main(override_args=None):
@@ -84,8 +77,12 @@ def main(override_args=None):
     if args.atom_type not in PostEngine.authorized_atom_value:
         parser.error("atom type must be in {}".format(','.join(PostEngine.authorized_atom_value)))
 
-    args.output_type = output_type2header(args.output_type, parser)
+    args.output_type = BaseEngine.output_type2header(args.output_type)
+    if not args.output_type:
+        raise parser.error('output_type : value in {json,csv} expected.')
+
     hashkey_only = not args.threat_details
+
     # Load api_endpoints and tokens
     endpoint_config, main_url, tokens = starter.load_config(args)
     get_engine_lookup_threats = LookupThreats(endpoint_config, args.env, tokens)
