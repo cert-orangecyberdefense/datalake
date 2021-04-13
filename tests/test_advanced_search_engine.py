@@ -55,4 +55,4 @@ def test_minimal_query_body_no_longer_accepted(tokens):
     query_body = query_body_template  # Query body as previously returned in the GUI
     with pytest.raises(ValueError) as ve:
         make_advanced_search_request(query_body, tokens)
-    assert str(ve.value) == 'query body must be full and valid'
+    assert str(ve.value) == 'Query body is not valid: top level "AND" is missing'
