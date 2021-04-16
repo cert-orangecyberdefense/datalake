@@ -12,7 +12,7 @@ from datalake_scripts import Events
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
 
-SUPPORTED_THREATS_TYPES = ['malware', 'phishing', 'ddos']
+SUPPORTED_THREAT_TYPES = ['malware', 'phishing', 'ddos']
 SUPPORTED_ATOM_TYPES = ['url', 'domain', 'ip']
 
 DATE_FORMAT = '%Y-%m-%d'
@@ -36,7 +36,6 @@ def main(override_args=None):
     if not is_valid:
         parser.error(validation_msg)
 
-    # always loglevel will be INFO
     args.loglevel = logging.INFO
 
     # load api_endpoints, tokens and events engine
@@ -68,20 +67,14 @@ def main(override_args=None):
             for result in response['results']:
                 ioc_uids.append(result['ioc_uid'])
         else:
-            logger.warning('API response hasnt results')
+            logger.warning('API response has not results')
 
         if ioc_uids:
-            filename = _get_output_file_name(args, threat_type, atom_type, min_score, max_score)
+            filename = _make_output_file_name(args, threat_type, atom_type, min_score, max_score)
             starter.save_output(filename, ioc_uids)
             logger.info(f'results saved in {filename}')
         else:
             logger.warning('no uids were retrieved. Output file wont be created')
-
-
-
-    # TODO
-    # log if --max-samples was not satisfied
-    # for example, if --max-samples is 200 but only 10 iocs hashkeys were collected
 
 
 def _set_up_args():
@@ -115,41 +108,6 @@ def _set_up_args():
         help='maximum duration in days'
     )
 
-    # parser.add_argument('-t1', '--from-date', required=True, help='date from which hashkeys are selected YYYY-mm-dd')
-    # parser.add_argument('-t2', '--to-date', required=True, help='date until hashkeys are selected YYYY-mm-dd')
-    # parser.add_argument('-N', '--max-samples', type=int, default=500, help='maximum number of hashkeys to be selected')
-    # parser.add_argument(
-    #     '-T',
-    #     '--threat-type',
-    #     required=True,
-    #     help='threat type to select',
-    #     choices=SUPPORTED_THREATS_TYPES
-    # )
-    # parser.add_argument(
-    #     '-A',
-    #     '--atom-type',
-    #     required=True,
-    #     help='threat type to select',
-    #     choices=SUPPORTED_ATOM_TYPES
-    # )
-    # parser.add_argument(
-    #     '-I',
-    #     '--max-score',
-    #     required=True,
-    #     type=int,
-    #     choices=range(0, 101),
-    #     metavar='[0-100]',
-    #     help='upper score limit to select hashkeys'
-    # )
-    # parser.add_argument(
-    #     '-i',
-    #     '--min-score',
-    #     required=True,
-    #     type=int,
-    #     choices=range(0, 101),
-    #     metavar='[0-100]',
-    #     help='lower score limit to select hashkeys'
-    # )
     return parser
 
 
@@ -223,7 +181,7 @@ def _build_request_payload(args):
     }
 
 
-def _get_output_file_name(args, threat_type, atom_type, min_score, max_score):
+def _make_output_file_name(args, threat_type, atom_type, min_score, max_score):
     date_range = f'{args.created_since.strftime(DATE_FORMAT)}-{args.created_until.strftime(DATE_FORMAT)}'
     score_range = f'{min_score}-{max_score}'
     return f'iocs-{date_range}-{threat_type}-{atom_type}-{score_range}.txt'
