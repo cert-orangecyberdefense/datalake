@@ -106,3 +106,16 @@ class Threats(GetEngine):
         headers = {'Authorization': self.tokens[0], 'Accept': response_format}
         response = self.datalake_requests(req.url, 'get', headers=headers)
         return response
+
+
+class Events(GetEngine):
+    """
+    Gets filtered and paginated list of events
+    """
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('events')
+
+    def get_events(self, payload, response_format="application/json") -> dict:
+        headers = {'Authorization': self.tokens[0], 'Accept': response_format}
+        return self.datalake_requests(self.url, 'get', headers=headers, post_body=payload)

@@ -5,7 +5,7 @@ import sys
 
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
-    add_comments, lookup_threats, add_tags, get_query_hash, iocs_select_hashkeys
+    add_comments, lookup_threats, add_tags, get_query_hash, iocs_select_hashkeys, iocs_select_uids
 
 
 class Cli:
@@ -71,6 +71,10 @@ The most commonly used {self.CLI_NAME} commands are:
     def iocs_select_hashkeys(self):
         args = sys.argv[2:]
         iocs_select_hashkeys.main(args)
+
+    def iocs_select_uids(self):
+        args = sys.argv[2:]
+        iocs_select_uids.main(args)
 
     def _list_commands_available(self):
         method_list = []
