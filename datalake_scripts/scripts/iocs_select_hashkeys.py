@@ -168,10 +168,10 @@ def _build_query_body(args):
 
 
 def _make_output_file_name(args):
-    date_range = f'{args.from_date}-{args.to_date}'
-    score_range = f'{args.min_score}-{args.max_score}'
+    date_range = f'{args.from_date}_{args.to_date}'
+    score_range = f'{args.min_score}_{args.max_score}'
 
-    return f'hashkeys-{date_range}-{args.threat_type}-{args.atom_type}-{score_range}.txt'
+    return f'hashkeys_{date_range}_{args.threat_type}_{args.atom_type}_{score_range}.txt'
 
 
 if __name__ == '__main__':

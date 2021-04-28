@@ -51,14 +51,14 @@ def main(override_args=None):
         args.hashkeys = starter._load_list(file)
 
         # get data from input filename
-        file_parts = file.split('-')
+        file_parts = file.split('_')
         max_score = file_parts[-1][:-4]
         min_score = file_parts[-2]
         atom_type = file_parts[-3]
         threat_type = file_parts[-4]
 
         # get dates from input filename
-        args.created_until = datetime.datetime.strptime('-'.join(file_parts[-7:-4]), DATE_FORMAT)
+        args.created_until = datetime.datetime.strptime(file_parts[-5], DATE_FORMAT)
         args.created_since = args.created_until - timedelta(days=args.max_duration)
 
         response = events.get_events(_build_request_payload(args))
@@ -151,18 +151,18 @@ def _validate_input_filename(filename):
     :param filename: str
     :return: (bool, str)
 
-    'hashkeys-2021-01-31-2021-04-13-malware-ip-10-80.txt'                             relative
-    '/some/path/to_file/hashkeys-2021-01-31-2021-04-13-malware-ip-10-80.txt'          absolut
+    'hashkeys_2021-01-31_2021-04-13_malware_ip_10_80.txt'                             relative
+    '/some/path/to_file/hashkeys_2021-01-31_2021-04-13_malware_ip_10_80.txt'          absolut
     """
     is_valid, validation_msg = True, 'ok'
-    input_filename_regex_validation = r'hashkeys-' \
-                                      r'(\d{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])-?){2}-' \
-                                      r'(\w+-?){2}-' \
-                                      r'(\d{1,2}-?){2}\.txt$'
+    input_filename_regex_validation = r'hashkeys_' \
+                                      r'(\d{4}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])_?){2}_' \
+                                      r'(\w+-?){2}_' \
+                                      r'((\d{1,2}|100)_?){2}\.txt$'
 
     regex_results = re.search(input_filename_regex_validation, filename)
     if not regex_results:
-        return False, f'{filename} should be formatted as following `hashkeys-t1-t2-T-A-I.txt`'
+        return False, f'{filename} should be formatted as following `hashkeys_t1_t2_T_A_I.txt`'
     elif not os.path.exists(filename):
         return False, f'{filename} doesnt exist'
     return is_valid, validation_msg
@@ -182,9 +182,9 @@ def _build_request_payload(args):
 
 
 def _make_output_file_name(args, threat_type, atom_type, min_score, max_score):
-    date_range = f'{args.created_since.strftime(DATE_FORMAT)}-{args.created_until.strftime(DATE_FORMAT)}'
-    score_range = f'{min_score}-{max_score}'
-    return f'iocs-{date_range}-{threat_type}-{atom_type}-{score_range}.txt'
+    date_range = f'{args.created_since.strftime(DATE_FORMAT)}_{args.created_until.strftime(DATE_FORMAT)}'
+    score_range = f'{min_score}_{max_score}'
+    return f'iocs_{date_range}_{threat_type}_{atom_type}_{score_range}.txt'
 
 
 if __name__ == '__main__':
