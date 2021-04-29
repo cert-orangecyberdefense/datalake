@@ -70,8 +70,8 @@ class PostEngine(BaseEngine):
 
     @staticmethod
     def build_full_query_body(query_body):
-        if not isinstance(query_body, dict) or not query_body.get('AND'):
-            query_body = {"AND": query_body}  # Add top level AND if needed
+        if not isinstance(query_body, dict) or 'AND' not in query_body:
+            raise ValueError('Query body is not valid: top level "AND" is missing')
         return query_body
 
 
