@@ -1,4 +1,5 @@
 """All the engines that use a GET endpoint."""
+from typing import List
 
 from requests import PreparedRequest
 
@@ -116,6 +117,34 @@ class Events(GetEngine):
     def _build_url(self, endpoint_config: dict, environment: str):
         return self._build_url_for_endpoint('events')
 
-    def get_events(self, payload, response_format="application/json") -> dict:
+    def get_events(
+            self,
+            hashkeys: List,
+            limit=10,
+            offset=0,
+            ordering=[],
+            created_since=None,
+            created_until=None,
+            response_format="application/json",
+    ) -> dict:
+
+        params = {
+            'hashkey': hashkeys,
+            'limit': limit,
+            'offset': offset
+        }
+
+        if ordering:
+            params['ordering'] = ordering
+
+        if created_until:
+            params['created_until'] = created_until
+
+        if created_since:
+            params['created_since'] = created_since
+
+        req = PreparedRequest()  # Adding parameters using requests' tool
+        req.prepare_url(self.url, params)
         headers = {'Authorization': self.tokens[0], 'Accept': response_format}
-        return self.datalake_requests(self.url, 'get', headers=headers, post_body=payload)
+
+        return self.datalake_requests(req.url, 'get', headers=headers)

@@ -4,9 +4,11 @@ import logging
 import os
 import re
 import sys
+
 from datetime import timedelta
 from os import listdir
 from os.path import isfile, join
+from tqdm import tqdm
 
 from datalake_scripts import Events
 from datalake_scripts.common.base_script import BaseScripts
@@ -61,13 +63,27 @@ def main(override_args=None):
         args.created_until = datetime.datetime.strptime(file_parts[-5], DATE_FORMAT)
         args.created_since = args.created_until - timedelta(days=args.max_duration)
 
-        response = events.get_events(_build_request_payload(args))
+        # request event history for each hashkey
         ioc_uids = []
-        if 'results' in response:
-            for result in response['results']:
-                ioc_uids.append(result['ioc_uid'])
-        else:
-            logger.warning('API response has not results')
+        with tqdm(total=len(args.hashkeys)) as progress_bar:
+            for hashkey in args.hashkeys:
+                progress_bar.set_description(f'getting uids from hashkey `{hashkey}` from input file `{file}`')
+                response = events.get_events(
+                    hashkey,
+                    limit=EVENTS_LIMIT,
+                    offset=0,
+                    ordering=['timestamp_created'],
+                    created_since=args.created_since,
+                    created_until=args.created_until
+                )
+
+                if 'results' in response:
+                    for result in response['results']:
+                        ioc_uids.append(result['ioc_uid'])
+                else:
+                    logger.warning('API response has not results')
+
+                progress_bar.update(1)
 
         if ioc_uids:
             filename = _make_output_file_name(args, threat_type, atom_type, min_score, max_score)
@@ -91,13 +107,11 @@ def _set_up_args():
     parser.add_argument(
         '-f',
         '--file',
-        required=True,
         help='path to hashkey file. Filename must match with `hashkeys-t1-t2-T-A-I.txt` format'
     )
     parser.add_argument(
         '-d',
         '--directory',
-        required=True,
         help='path to dir containing hashkey files. All files matching `hashkeys-t1-t2-T-A-I.txt` format will be loaded'
     )
     parser.add_argument(
@@ -118,6 +132,9 @@ def _validate_args(args):
     :return: (bool, str)
     """
     global INPUT_FILES
+
+    if not args.file and not args.directory:
+        return False, f'you must define at least one of --file or --directory'
 
     # validate input filename format and existence
     is_valid, validation_msg = _validate_input_filename(args.file)
@@ -166,19 +183,6 @@ def _validate_input_filename(filename):
     elif not os.path.exists(filename):
         return False, f'{filename} doesnt exist'
     return is_valid, validation_msg
-
-
-def _build_request_payload(args):
-    """ this method builds dynamically the request payload """
-    return {
-        'limit': EVENTS_LIMIT,
-        "created_since": args.created_since,
-        "created_until": args.created_until,
-        'ordering': [
-            'first_seen'
-        ],
-        'hashkeys': args.hashkeys
-    }
 
 
 def _make_output_file_name(args, threat_type, atom_type, min_score, max_score):

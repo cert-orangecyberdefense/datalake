@@ -24,7 +24,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         "requests",
-        "halo"
+        "halo",
+        "tqdm"
     ],
     test_suite='nose.collector',
     entry_points={
