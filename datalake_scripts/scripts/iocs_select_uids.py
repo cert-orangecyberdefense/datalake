@@ -132,26 +132,28 @@ def _validate_args(args):
     :return: (bool, str)
     """
     global INPUT_FILES
+    is_valid, validation_msg = True, 'ok'
 
     if not args.file and not args.directory:
         return False, f'you must define at least one of --file or --directory'
 
     # validate input filename format and existence
-    is_valid, validation_msg = _validate_input_filename(args.file)
-    if not is_valid:
-        return is_valid, validation_msg
-
-    INPUT_FILES += [args.file]
+    if args.file:
+        is_valid, validation_msg = _validate_input_filename(args.file)
+        if not is_valid:
+            return is_valid, validation_msg
+        INPUT_FILES += [args.file]
 
     # validate if input directory exists
-    if not os.path.isdir(args.directory):
-        return False, f'--directory {args.directory} doesnt exists'
+    if args.directory:
+        if not os.path.isdir(args.directory):
+            return False, f'--directory {args.directory} doesnt exists'
 
-    # validate if input directory has files with correct name format
-    for f in listdir(args.directory):
-        file_path = join(args.directory, f)
-        if isfile(file_path) and _validate_input_filename(file_path)[0]:
-            INPUT_FILES += [file_path]
+        # validate if input directory has files with correct name format
+        for f in listdir(args.directory):
+            file_path = join(args.directory, f)
+            if isfile(file_path) and _validate_input_filename(file_path)[0]:
+                INPUT_FILES += [file_path]
 
     if not INPUT_FILES:
         return False, f'--directory {args.directory} doesnt contain valid input files'
