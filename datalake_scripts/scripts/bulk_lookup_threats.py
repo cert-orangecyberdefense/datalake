@@ -126,6 +126,7 @@ def main(override_args=None):
 
             logger.warning(f'\x1b[6;37;43m{"#" * 60} UNTYPED ATOMS {"#" * 47}\x1b[0m')
             logger.warning('\n'.join(args.untyped_atoms))
+            logger.warning('')
 
     response = post_engine_bulk_lookup_threats.bulk_lookup_threats(
         threats=typed_atoms,
