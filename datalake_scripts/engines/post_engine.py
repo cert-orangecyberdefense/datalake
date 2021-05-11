@@ -493,3 +493,16 @@ class BulkLookupThreats(PostEngine):
         body = threats
         body['hashkey_only'] = hashkey_only
         return self.datalake_requests(self.url, 'post', {**self._post_headers(), **additional_headers}, body)
+
+
+class AtomValuesExtractor(PostEngine):
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint('atom-values-extract')
+
+    def atom_values_extract(self, untyped_atoms: List[str], treat_hashes_like='file') -> dict:
+        payload = {
+            'content': ' '.join(untyped_atoms),
+            'treat_hashes_like': treat_hashes_like
+        }
+        return self.datalake_requests(self.url, 'post', self._post_headers(), payload)

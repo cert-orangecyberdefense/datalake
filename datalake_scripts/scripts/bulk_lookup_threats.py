@@ -1,6 +1,7 @@
 import json
 import sys
 
+from datalake_scripts import AtomValuesExtractor
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
@@ -9,6 +10,7 @@ from datalake_scripts.engines.post_engine import BulkLookupThreats
 
 # TODO
 # it would be useful to add a flag for filtering found or not-found atoms ? --only-found --only-not-found ?
+from datalake_scripts.helper_scripts.utils import join_dicts
 
 SUBCOMMAND_NAME = 'bulk_lookup_threats'
 ATOM_TYPES_FLAGS = [
@@ -25,6 +27,11 @@ def main(override_args=None):
     parser = starter.start('Gets threats or hashkeys from given atom types and atom values.')
     supported_atom_types = parser.add_argument_group('Supported Atom Types')
 
+    parser.add_argument(
+        'untyped_atoms',
+        help='untyped atom values to lookup. Useful when you do not know what is the atom type',
+        nargs='*',
+    )
     for atom_type in ATOM_TYPES_FLAGS:
         supported_atom_types.add_argument(
             f'--{atom_type}',
@@ -80,20 +87,45 @@ def main(override_args=None):
             has_flag = True
 
     # validate that at least there is one untyped atom or one atom or one input file
-    if not has_flag and not has_file:
-        parser.error("you must provide at least one of following: atom type, input file.")
+    if (not has_flag and not has_file and not args.untyped_atoms) or (SUBCOMMAND_NAME in args.untyped_atoms):
+        parser.error("you must provide at least one of following: untyped atom, atom type, input file.")
 
     # process input files
     if has_file:
         for input_file in args.input:
             input_file = get_atom_type_from_filename(input_file)
+
             if input_file:
                 logger.debug(f'file {input_file[1]} was recognized as {input_file[0]}')
-                typed_atoms.setdefault(input_file[0], []).extend(starter._load_list(input_file[1]))
+
+                if input_file[0] == 'untyped':
+                    args.untyped_atoms += starter._load_list(input_file[1])
+                else:
+                    typed_atoms.setdefault(input_file[0], []).extend(starter._load_list(input_file[1]))
 
     # load api_endpoints and tokens
     endpoints_config, main_url, tokens = starter.load_config(args)
     post_engine_bulk_lookup_threats = BulkLookupThreats(endpoints_config, args.env, tokens)
+    post_engine_atom_values_extractor = AtomValuesExtractor(endpoints_config, args.env, tokens)
+
+    # lookup for atom types
+    if args.untyped_atoms:
+        atoms_values_extractor_response = post_engine_atom_values_extractor.atom_values_extract(args.untyped_atoms)
+        if atoms_values_extractor_response['found'] > 0:
+            typed_atoms = join_dicts(typed_atoms, atoms_values_extractor_response['results'])
+        else:
+            logger.warning('none of your untyped atoms could be typed')
+
+        # find out what atoms couldn't be typed for printing them
+        if atoms_values_extractor_response['not_found'] > 0:
+            for atom_type, atom_list in atoms_values_extractor_response['results'].items():
+                args.untyped_atoms = [
+                    untyped_atom for untyped_atom in args.untyped_atoms
+                    if untyped_atom not in atoms_values_extractor_response['results'][atom_type]
+                ]
+
+            logger.warning(f'\x1b[6;37;43m{"#" * 60} UNTYPED ATOMS {"#" * 47}\x1b[0m')
+            logger.warning('\n'.join(args.untyped_atoms))
 
     response = post_engine_bulk_lookup_threats.bulk_lookup_threats(
         threats=typed_atoms,
@@ -121,7 +153,11 @@ def get_atom_type_from_filename(filename, input_delimiter=':'):
     if len(parts) == 2 and parts[0] in ATOM_TYPES_FLAGS:
         return parts
 
-    logger.error(f'{filename} filename could not be treated as input file, please specify its atom type')
+    # untyped files
+    if len(parts) == 1:
+        return ['untyped', parts[0]]
+
+    logger.error(f'{filename} filename could not be treated `atomtype:path/to/file.txt`')
     exit(1)
 
 
@@ -154,6 +190,11 @@ def pretty_print(raw_response, stdout_format):
             logger.info(f'{atom_type} {atom["atom_value"]} hashkey: {atom["hashkey"]} {color} {text} {eol}')
 
         logger.info('')
+
+
+def discover_atom_type(atom_values: list) -> dict:
+    """ takes a list of untyped atoms and find out its type based on the values """
+    pass
 
 
 if __name__ == '__main__':
