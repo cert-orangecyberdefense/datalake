@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Generator
+from typing import Generator, Dict
 
 
 def split_list(list_to_split: list, slice_size: int) -> Generator[list, None, None]:
@@ -7,7 +7,7 @@ def split_list(list_to_split: list, slice_size: int) -> Generator[list, None, No
         yield list_to_split[i:i + slice_size]
 
 
-def join_dicts(*dicts: dict) -> dict:
+def join_dicts(*dicts: dict) -> Dict[str, list]:
     """ takes two or more dictionaries and join them """
     if len(dicts) == 0:
         return {}

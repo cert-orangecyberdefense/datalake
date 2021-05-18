@@ -34,7 +34,7 @@ You can pass files as typed or untyped, it means that you will indicate which ki
 ### Passing atoms by CLI
 As input files, you can pass one or multiple **typed** or **untyped** atoms by CLI.
 
-* **typed atoms**: Each atom has its own flag called exactly the same as th atom type.
+* **typed atoms**: Each atom has its own flag called exactly the same as the atom type.
   ```shell
   $ ocd-dt bulk_lookup_threats --ip 113.223.40.103 --ip 5.78.23.158 --domain reverso.net  --file f0f5d30e91006c8ca7a528f26432ftt5 
   ```     
@@ -78,7 +78,7 @@ $ ocd-dt bulk_lookup_threats reverso.net 113.223.40.103 --domain paiza.com --ip 
 * Typed atom flags
     > --apk APK             
     --asn ASN             
-    -cc CC               
+    --cc CC               
     --crypto CRYPTO       
     --cve CVE             
     --domain DOMAIN       

@@ -104,8 +104,6 @@ class BaseEngine:
             elif value.lower() == 'csv':
                 return 'text/csv'
 
-        return None
-
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """
         Send the correct http request to url from method [get, post, delete, patch, put].

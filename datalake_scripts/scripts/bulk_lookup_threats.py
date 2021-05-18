@@ -6,13 +6,11 @@ from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import BulkLookupThreats
-
-
-# TODO
-# it would be useful to add a flag for filtering found or not-found atoms ? --only-found --only-not-found ?
 from datalake_scripts.helper_scripts.utils import join_dicts
 
+
 SUBCOMMAND_NAME = 'bulk_lookup_threats'
+UNTYPED_ATOM_TYPE = 'untyped'
 ATOM_TYPES_FLAGS = [
     'apk', 'asn', 'cc', 'crypto', 'cve', 'domain', 'email', 'file', 'fqdn',
     'iban', 'ip', 'ip_range', 'paste', 'phone_number', 'regkey', 'ssl', 'url'
@@ -93,15 +91,13 @@ def main(override_args=None):
     # process input files
     if has_file:
         for input_file in args.input:
-            input_file = get_atom_type_from_filename(input_file)
+            file_atom_type, filename = get_atom_type_from_filename(input_file)
+            logger.debug(f'file {filename} was recognized as {file_atom_type}')
 
-            if input_file:
-                logger.debug(f'file {input_file[1]} was recognized as {input_file[0]}')
-
-                if input_file[0] == 'untyped':
-                    args.untyped_atoms += starter._load_list(input_file[1])
-                else:
-                    typed_atoms.setdefault(input_file[0], []).extend(starter._load_list(input_file[1]))
+            if file_atom_type == UNTYPED_ATOM_TYPE:
+                args.untyped_atoms += starter._load_list(filename)
+            else:
+                typed_atoms.setdefault(file_atom_type, []).extend(starter._load_list(filename))
 
     # load api_endpoints and tokens
     endpoints_config, main_url, tokens = starter.load_config(args)
@@ -156,7 +152,7 @@ def get_atom_type_from_filename(filename, input_delimiter=':'):
 
     # untyped files
     if len(parts) == 1:
-        return ['untyped', parts[0]]
+        return [UNTYPED_ATOM_TYPE, parts[0]]
 
     logger.error(f'{filename} filename could not be treated `atomtype:path/to/file.txt`')
     exit(1)
@@ -186,16 +182,11 @@ def pretty_print(raw_response, stdout_format):
         logger.info(f'{blue_bg}{"#" * 60} {atom_type.upper()} {"#" * (60 - len(atom_type))}{eol}')
 
         for atom in raw_response[atom_type]:
-            found = atom['threat_found'] if 'threat_found' in atom.keys() else True
+            found = atom.get('threat_found', True) if 'threat_found' in atom.keys() else True
             text, color = boolean_to_text_and_color[found]
             logger.info(f'{atom_type} {atom["atom_value"]} hashkey: {atom["hashkey"]} {color} {text} {eol}')
 
         logger.info('')
-
-
-def discover_atom_type(atom_values: list) -> dict:
-    """ takes a list of untyped atoms and find out its type based on the values """
-    pass
 
 
 if __name__ == '__main__':
