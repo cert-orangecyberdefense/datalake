@@ -122,7 +122,7 @@ class Events(GetEngine):
             hashkeys: List,
             limit=10,
             offset=0,
-            ordering=[],
+            ordering=None,
             created_since=None,
             created_until=None,
             response_format="application/json",
