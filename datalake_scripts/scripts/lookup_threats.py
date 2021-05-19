@@ -1,6 +1,7 @@
 import sys
 
 from collections import OrderedDict
+from parser import ParserError
 
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
@@ -77,9 +78,12 @@ def main(override_args=None):
     if args.atom_type not in PostEngine.authorized_atom_value:
         parser.error("atom type must be in {}".format(','.join(PostEngine.authorized_atom_value)))
 
-    args.output_type = BaseEngine.output_type2header(args.output_type)
-    if not args.output_type:
-        raise parser.error('output_type : value in {json,csv} expected.')
+    if args.output_type:
+        try:
+            args.output_type = BaseEngine.output_type2header(args.output_type)
+        except ParserError as e:
+            logger.exception(f'Exception raised while getting output type from headers # {str(e)}', exc_info=False)
+            exit(1)
 
     hashkey_only = not args.threat_details
 

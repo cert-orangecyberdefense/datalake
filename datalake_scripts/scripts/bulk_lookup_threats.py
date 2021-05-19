@@ -1,5 +1,6 @@
 import json
 import sys
+from parser import ParserError
 
 from datalake_scripts import AtomValuesExtractor
 from datalake_scripts.common.base_engine import BaseEngine
@@ -53,7 +54,7 @@ def main(override_args=None):
     parser.add_argument(
         '-ot',
         '--output-type',
-        help='set to the output type desired {json,csv}. Default is human readable',
+        help='set to the output type desired {json,csv}. Default is json',
     )
 
     if override_args:
@@ -66,11 +67,11 @@ def main(override_args=None):
     accept_header = {'Accept': None}
 
     if args.output_type:
-        accept_header['Accept'] = BaseEngine.output_type2header(args.output_type)
-
-        # this means that we validate accept header only if a value was passed with --output-type
-        if not accept_header['Accept']:
-            raise parser.error('output_type : value in {json,csv} expected.')
+        try:
+            accept_header['Accept'] = BaseEngine.output_type2header(args.output_type)
+        except ParserError as e:
+            logger.exception(f'Exception raised while getting output type headers # {str(e)}', exc_info=False)
+            exit(1)
 
     # to gather all typed atoms passed by arguments and input files
     typed_atoms = {}

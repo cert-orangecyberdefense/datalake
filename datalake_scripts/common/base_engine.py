@@ -4,6 +4,7 @@ Extend this engine to give it more functionality.
 """
 import os
 import json
+import parser
 import requests
 
 from json.decoder import JSONDecodeError
@@ -19,6 +20,10 @@ from datalake_scripts.common.token_manager import TokenGenerator
 
 
 class BaseEngine:
+    ACCEPTED_HEADERS = {
+        'json': 'application/json',
+        'csv': 'text/csv'
+    }
     OCD_DTL_QUOTA_TIME = int(os.getenv('OCD_DTL_QUOTA_TIME', 1))
     OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(os.getenv('OCD_DTL_REQUESTS_PER_QUOTA_TIME', 5))
     logger.debug(f'Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s')
@@ -96,13 +101,12 @@ class BaseEngine:
         """
         this method gets the CLI input arg value and generate the header content-type
         :param value: value to header
-        :return: returns content-type or None if there isn't an associated content-type value
+        :return: returns content-type header or raise an exception if there isn't an associated content-type value
         """
-        if value:
-            if value.lower() == 'json':
-                return 'application/json'
-            elif value.lower() == 'csv':
-                return 'text/csv'
+        if value.lower() in BaseEngine.ACCEPTED_HEADERS:
+            return BaseEngine.ACCEPTED_HEADERS[value.lower()]
+
+        raise parser.ParserError(f'{value.lower()} is not a valid. Use some of {BaseEngine.ACCEPTED_HEADERS.keys()}')
 
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """

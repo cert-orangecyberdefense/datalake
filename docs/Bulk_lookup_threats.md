@@ -60,6 +60,9 @@ $ ocd-dt bulk_lookup_threats reverso.net 113.223.40.103 --domain paiza.com --ip 
 
     > -o [OUTPUT], --output [OUTPUT]  
     file path from script
+
+    > -ot OUTPUT_TYPE, --output-type OUTPUT_TYPE  
+    set to the output type desired {json,csv}. Default is json
   
     > -e {prod,preprod}, --env {prod,preprod}     
     execute on specified environment (Default: prod)
