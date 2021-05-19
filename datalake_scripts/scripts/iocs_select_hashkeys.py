@@ -40,7 +40,7 @@ def main(override_args=None):
     hashkeys = [result['hashkey'] for result in response['results']]
 
     if hashkeys:
-        filename = _make_output_file_name(args)
+        filename = make_output_file_name(args)
         starter.save_output(filename, hashkeys)
         logger.info(f'results saved in {filename}')
     else:
@@ -167,7 +167,7 @@ def _build_query_body(args):
     }
 
 
-def _make_output_file_name(args):
+def make_output_file_name(args):
     date_range = f'{args.from_date}_{args.to_date}'
     score_range = f'{args.min_score}_{args.max_score}'
 
