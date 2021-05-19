@@ -182,7 +182,7 @@ def pretty_print(raw_response, stdout_format):
         logger.info(f'{blue_bg}{"#" * 60} {atom_type.upper()} {"#" * (60 - len(atom_type))}{eol}')
 
         for atom in raw_response[atom_type]:
-            found = atom.get('threat_found', True) if 'threat_found' in atom.keys() else True
+            found = atom.get('threat_found', False)
             text, color = boolean_to_text_and_color[found]
             logger.info(f'{atom_type} {atom["atom_value"]} hashkey: {atom["hashkey"]} {color} {text} {eol}')
 
