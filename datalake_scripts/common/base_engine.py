@@ -4,6 +4,7 @@ Extend this engine to give it more functionality.
 """
 import os
 import json
+import parser
 import requests
 
 from json.decoder import JSONDecodeError
@@ -19,6 +20,10 @@ from datalake_scripts.common.token_manager import TokenGenerator
 
 
 class BaseEngine:
+    ACCEPTED_HEADERS = {
+        'json': 'application/json',
+        'csv': 'text/csv'
+    }
     OCD_DTL_QUOTA_TIME = int(os.getenv('OCD_DTL_QUOTA_TIME', 1))
     OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(os.getenv('OCD_DTL_REQUESTS_PER_QUOTA_TIME', 5))
     logger.debug(f'Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s')
@@ -77,6 +82,8 @@ class BaseEngine:
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(f'API returned non 2xx response code : {response.status_code}\n{response.text}'
                              f'\n Retrying')
+            elif 'Content-Type' in response.headers and 'text/csv' in response.headers['Content-Type']:
+                return response.text
             else:
                 try:
                     dict_response = self._load_response(response)
@@ -88,6 +95,18 @@ class BaseEngine:
                 logger.error('Request failed: Will return nothing for this request')
                 return {}
             # time.sleep(5)
+
+    @staticmethod
+    def output_type2header(value):
+        """
+        this method gets the CLI input arg value and generate the header content-type
+        :param value: value to header
+        :return: returns content-type header or raise an exception if there isn't an associated content-type value
+        """
+        if value.lower() in BaseEngine.ACCEPTED_HEADERS:
+            return BaseEngine.ACCEPTED_HEADERS[value.lower()]
+
+        raise parser.ParserError(f'{value.lower()} is not a valid. Use some of {BaseEngine.ACCEPTED_HEADERS.keys()}')
 
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """
