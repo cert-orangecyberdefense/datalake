@@ -1,11 +1,9 @@
 import argparse
 import logging
-import subprocess
 import sys
 
 from datalake_scripts.common.logger import configure_logging
-from datalake_scripts.common.logger import logger
-from datalake_scripts.scripts import iocs_select_hashkeys
+from datalake_scripts.scripts import iocs_select_hashkeys, iocs_select_uids
 from datalake_scripts.scripts.iocs_select_hashkeys import make_output_file_name
 
 
@@ -22,19 +20,23 @@ def main(override_args=None):
     for args.threat_type in args.threat_types:
         for args.atom_type in args.atom_types:
             for args.min_score, args.max_score in args.score_ranges:
-                hashkeys_cmd = f'ocd-dtl iocs_select_hashkeys ' \
-                               f'--from-date {args.from_date} --to-date {args.to_date} ' \
-                               f'--threat-type {args.threat_type} --atom-type {args.atom_type} ' \
-                               f'--min-score {args.min_score} --max-score {args.max_score} ' \
-                               f'--max-samples {args.max_samples}'
-                logger.info(hashkeys_cmd)
-                subprocess.run(hashkeys_cmd, shell=True)
+                hashkeys_cmd = [
+                    '--from-date', args.from_date,
+                    '--to-date', args.to_date,
+                    '--threat-type', args.threat_type,
+                    '--atom-type', args.atom_type,
+                    '--min-score', str(args.min_score),
+                    '--max-score', str(args.max_score),
+                    '--max-samples', str(args.max_samples)
+                ]
+                iocs_select_hashkeys.main(hashkeys_cmd)
 
                 hashkey_output_filename = make_output_file_name(args)
-                uids_cmd = f'ocd-dtl iocs_select_uids ' \
-                           f'--file {hashkey_output_filename} --max-duration {args.max_duration}'
-                logger.info(uids_cmd)
-                subprocess.run(uids_cmd, shell=True)
+                uids_cmd = [
+                    '--file', hashkey_output_filename,
+                    '--max-duration', str(args.max_duration)
+                ]
+                iocs_select_uids.main(uids_cmd)
 
 
 def _set_up_args():
