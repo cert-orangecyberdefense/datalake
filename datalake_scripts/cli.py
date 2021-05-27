@@ -10,6 +10,7 @@ from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_s
 
 class Cli:
     CLI_NAME = BaseScripts.PACKAGE_NAME
+    VERSION = '2.3.1'
 
     def __init__(self):
         parser = argparse.ArgumentParser(
@@ -25,10 +26,17 @@ The most commonly used {self.CLI_NAME} commands are:
             epilog='Don\'t hesitate to leave a feedback on https://datalake.cert.orangecyberdefense.com/gui/ using the '
                    '"Add Feedback" button '
         )
-        parser.add_argument('command', help='Subcommand to run', choices=self._list_commands_available())
+
+        parser.add_argument('--version', default=False, action='store_true', help='prints the current version')
+        parser.add_argument('command', nargs='?', help='Subcommand to run', choices=self._list_commands_available())
         # parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
         args = parser.parse_args(sys.argv[1:2])
+
+        if args.version:
+            print(self.VERSION)
+            exit(0)
+
         if not hasattr(self, args.command):
             print('Unrecognized command')
             parser.print_help()
