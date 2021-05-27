@@ -473,14 +473,16 @@ class AdvancedSearch(PostEngine):
     def _build_url(self, endpoint_config: dict, environment: str):
         return self._build_url_for_endpoint('advanced-search')
 
-    def get_threats(self, query_body: BaseEngine.Json, limit=10) -> dict:
+    def get_threats(self, query_body: BaseEngine.Json, limit=10, response_format="application/json") -> dict:
         query_body = self.build_full_query_body(query_body)
         payload = {
             "limit": limit,
             "offset": 0,
             "query_body": query_body
         }
-        return self.datalake_requests(self.url, 'post', self._post_headers(), payload)
+        headers = self._post_headers()
+        headers['Accept'] = response_format
+        return self.datalake_requests(self.url, 'post', headers, payload)
 
 
 class BulkLookupThreats(PostEngine):
