@@ -27,7 +27,7 @@ The most commonly used {self.CLI_NAME} commands are:
                    '"Add Feedback" button '
         )
 
-        parser.add_argument('--version', default=False, action='store_true', help='prints the current version')
+        parser.add_argument('--version', '-V', default=False, action='store_true', help='prints the current version')
         parser.add_argument('command', nargs='?', help='Subcommand to run', choices=self._list_commands_available())
         # parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
