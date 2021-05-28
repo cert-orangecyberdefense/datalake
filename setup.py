@@ -2,6 +2,7 @@ import os
 
 from setuptools import find_packages, setup
 
+from datalake_scripts.cli import Cli
 from datalake_scripts.common.base_script import BaseScripts
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -11,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='datalake-scripts',
-    version='2.3.1',
+    version=Cli.VERSION,
     author='OCD',
     author_email='cert-contact.ocd@orange.com',
     description='A collection of scripts to easily use the API of OCD Datalake',
