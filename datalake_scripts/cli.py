@@ -37,10 +37,11 @@ The most commonly used {self.CLI_NAME} commands are:
             print(self.VERSION)
             exit(0)
 
-        if not hasattr(self, args.command):
+        if not args.command or not hasattr(self, args.command):
             print('Unrecognized command')
             parser.print_help()
             exit(1)
+
         # use dispatch pattern to invoke method with same name
         getattr(self, args.command)()
 
