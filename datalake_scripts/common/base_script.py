@@ -106,6 +106,12 @@ class BaseScripts:
         """
         return [line.rstrip('\n') for line in open(file_name)]
 
+    def split_input_file(self, input_file, n):
+        """Yield successive n-sized chunks from the input file if it exceeds the limit (n)."""
+        l = [line.rstrip('\n') for line in open(input_file)]
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+    
     def _load_csv(self, file_name: str, delimiter: str = ',', column: int = 0) -> List[str]:
         """
         Load a CSV file and return one column in a list
