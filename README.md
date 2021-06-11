@@ -19,8 +19,10 @@ With Python 3.6+:
 $ pip install datalake-scripts
 $ pip3 install datalake-scripts
 ```
+### Using as a library
+see [the following link](tutorial.md)
 
-### Using a script
+### Using as a CLI 
 
 The cli can be used with:
 ```shell script

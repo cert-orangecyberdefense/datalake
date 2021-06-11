@@ -454,7 +454,7 @@ class BulkSearch(PostEngine, HandleBulkTaskMixin):
 
     def get_threats(self, query_hash: str = None, query_body: BaseEngine.Json = None, query_fields: List[str] = None) \
             -> dict:
-        body = {"query_fields": query_fields}
+        body = {"query_fields": query_fields} if query_fields else {}
         if query_body:
             body['query_body'] = self.build_full_query_body(query_body)
         else:

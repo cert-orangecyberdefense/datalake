@@ -26,12 +26,12 @@ class TokenGenerator:
         self.url_token = urljoin(base_url, endpoints['token'], allow_fragments=True)
         self.url_refresh = urljoin(base_url, endpoints['refresh_token'], allow_fragments=True)
 
-    def get_token(self):
+    def get_token(self, username=None, password=None):
         """
         Generate token from user input, with email and password
         """
-        username = os.getenv('OCD_DTL_USERNAME') or input('Email: ')
-        password = os.getenv('OCD_DTL_PASSWORD') or getpass()
+        username = username or os.getenv('OCD_DTL_USERNAME') or input('Email: ')
+        password = password or os.getenv('OCD_DTL_PASSWORD') or getpass()
         print()
         data = {'email': username, 'password': password}
 
