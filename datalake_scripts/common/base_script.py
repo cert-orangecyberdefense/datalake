@@ -74,7 +74,7 @@ class BaseScripts:
         )
         return parser
 
-    def load_config(self, args):
+    def load_config(self, args, username=None, password=None):
         """
         Load correct config and generate first tokens
 
@@ -84,7 +84,7 @@ class BaseScripts:
         endpoint_config = self._load_config(self._CONFIG_ENDPOINTS)
         main_url = endpoint_config['main'][args.env]
         token_generator = TokenGenerator(endpoint_config, environment=args.env)
-        token_json = token_generator.get_token()
+        token_json = token_generator.get_token(username, password)
         if token_json:
             tokens = [f'Token {token_json["access_token"]}', f'Token {token_json["refresh_token"]}']
             return endpoint_config, main_url, tokens
