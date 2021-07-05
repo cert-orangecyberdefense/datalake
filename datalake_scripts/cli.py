@@ -10,7 +10,7 @@ from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_s
 
 class Cli:
     CLI_NAME = BaseScripts.PACKAGE_NAME
-    VERSION = '2.4.0'
+    VERSION = '2.4.1'
 
     def __init__(self):
         parser = argparse.ArgumentParser(
