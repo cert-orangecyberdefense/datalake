@@ -39,16 +39,16 @@ datalake = Datalake(username, password)
 
 ## lookup a threat in api
 
-please note that the parameters atome_type and hashkey_only are optional.
+please note that the parameters atom_type and hashkey_only are optional.
 
-    datalake.look_up_threat(
+    datalake.lookup_threat(
         threat = 'mayoclinic.org',
-        atome_type = 'domain',
+        atom_type = 'domain',
         hashkey_only = False,
     )
 
 or also: 
-    datalake.look_up_threat(threat)
+    datalake.lookup_threat(threat)
 
 ## Bulk look up
 # Use to look up threats in api
@@ -58,7 +58,7 @@ or also:
         'commentcamarche.net',
         'gawker.com'
     ]
-    atome_type = 'domain'
+    atom_type = 'domain'
     hashkey_only = False
 
     datalake.bulk_lookup_threats(threats, atom_type, hashkey_only)
