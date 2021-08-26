@@ -1,0 +1,25 @@
+{
+  "main": {
+    "preprod": "https://ti.extranet.mrti-center.com/api/",
+    "prod": "https://datalake.cert.orangecyberdefense.com/api/",
+    "dtl2": "https://datalake2.cert.orangecyberdefense.com/api/"
+  },
+  "endpoints": {
+    "bulk-search": "mrti/bulk-search/",
+    "retrieve-bulk-search": "mrti/bulk-search/task/{task_uuid}/",
+    "threats": "mrti/threats/",
+    "advanced-search": "mrti/advanced-queries/threats/",
+    "threats-manual": "mrti/threats-manual/",
+    "threats-bulk-lookup": "mrti/threats/bulk-lookup/",
+    "threats-manual-bulk": "mrti/bulk-manual-threats/",
+    "retrieve-threats-manual-bulk": "mrti/bulk-manual-threats/task/{task_uuid}/",
+    "token": "auth/token/",
+    "refresh_token": "auth/refresh-token/",
+    "lookup": "mrti/threats/lookup/",
+    "comment": "mrti/threats/{hashkey}/comments/",
+    "tag": "mrti/threats/{hashkey}/tags/",
+    "atom-values-extract": "mrti/threats/atom-values-extract/"
+  },
+  "threats-manual-bulk-size": 100,
+  "api_version": "v2/"
+}

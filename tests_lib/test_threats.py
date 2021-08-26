@@ -1,8 +1,8 @@
 import responses
-from datalake_scripts import Datalake
+from datalake_lib import Datalake
 import pytest
 
-threats = [
+atoms = [
     'mayoclinic.org',
     'commentcamarche.net',
     'gawker.com'
@@ -30,12 +30,13 @@ def test_token_auth(datalake):
         "access_token": "12345",
         "refresh_token": "123456"
     }
-    assert datalake._lookup_threats_api.tokens[0] == f"Token {auth_response['access_token']}"
-    assert datalake._lookup_threats_api.tokens[1] == f"Token {auth_response['refresh_token']}"
+    assert datalake.tokens[0] == f"Token {auth_response['access_token']}"
+    assert datalake.tokens[1] == f"Token {auth_response['refresh_token']}"
 
 
 @responses.activate
 def test_lookup_threat(datalake):
+    lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/'
     resp_json = {'atom_type': 'domain',
                  'content': {'domain_content': {'atom_value': 'mayoclinic.org',
                                                 'depth': 1,
@@ -88,10 +89,10 @@ def test_lookup_threat(datalake):
     }
     responses.add(responses.POST, datalake._post_engine_atom_values_extractor.url,
                   json=extractor_response, status=200)
-    responses.add(responses.GET, datalake._lookup_threats_api.url,
+    responses.add(responses.GET, lookup_url,
                   json=resp_json, status=200)
 
-    lookup_response = datalake.lookup_threat(threats[0])
+    lookup_response = datalake.Threats.lookup(atoms[0])
 
     assert lookup_response == resp_json
 
@@ -107,6 +108,7 @@ def test_bulk_lookup_threats(datalake):
             ]
         }
     }
+    bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
     responses.add(responses.POST, datalake._post_engine_atom_values_extractor.url,
                   json=extractor_response, status=200)
 
@@ -166,7 +168,5 @@ def test_bulk_lookup_threats(datalake):
                              'threat_found': False}
                              ]}
 
-    responses.add(responses.POST, datalake._bulk_lookup_threats_api.url,
-                  json=bulk_resp, status=200)
-
-    assert datalake.bulk_lookup_threats(threats) == bulk_resp
+    responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
+    assert datalake.Threats.bulk_lookup(atoms = atoms) == bulk_resp
