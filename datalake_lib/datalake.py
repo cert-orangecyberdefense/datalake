@@ -1,4 +1,3 @@
-from datalake_lib.engines.get_engine import Threats
 import logging
 
 
@@ -8,14 +7,14 @@ from datalake_lib.scripts.threats import Threats
 
 
 class ConfigArg:
-    def __init__(self, loglevel:int, env: str) -> None:
+    def __init__(self, loglevel: int, env: str) -> None:
         self.loglevel = loglevel
         self.env = env
 
 
 class Datalake:
     """ Base Datalake class
-    
+
     Usage:
     >>> datalake = Datalake(username='some username',
                         password='some password')
@@ -29,11 +28,10 @@ class Datalake:
         self.username = username
         self.password = password
         self.env = env
-        args = ConfigArg(loglevel=logging.WARNING, env= env)
+        args = ConfigArg(loglevel=logging.WARNING, env=env)
         self.starter = BaseScripts()
         endpoint_config, _, tokens = self.starter.load_config(args=args, username=self.username, password=self.password)
         self.tokens = tokens
         self.endpoint_config = endpoint_config
         self._post_engine_atom_values_extractor = AtomValuesExtractor(endpoint_config, args.env, tokens)
         self.Threats = Threats(endpoint_config, env, tokens, self._post_engine_atom_values_extractor)
-
