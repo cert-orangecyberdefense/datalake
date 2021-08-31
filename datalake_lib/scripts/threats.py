@@ -14,7 +14,7 @@ class Threats(BaseEngine):
     def _build_url(self, endpoint_config: dict, environment: str):
         return self._build_url_for_endpoint('threats')
 
-    def _post_headers(self) -> dict:
+    def _post_headers(self, output = 'application/json') -> dict:
         """
         Get headers for POST endpoints.
 
@@ -24,19 +24,19 @@ class Threats(BaseEngine):
                 'Content-Type': 'application/json'
             }
         """
-        return {'Authorization': self.tokens[0], 'Accept': 'application/json', 'Content-Type': 'application/json'}
+        return {'Authorization': self.tokens[0], 'Accept': output, 'Content-Type': 'application/json'}
 
-    def _get_headers(self) -> dict:
+    def _get_headers(self, output = 'application/json') -> dict:
         """
         Get headers for GET endpoints.
 
             {
                 'Authorization': self.tokens[0],
-                'accept': 'application/json'
+                'accept': output
             }
 
         """
-        return {'Authorization': self.tokens[0], 'accept': 'application/json'}
+        return {'Authorization': self.tokens[0], 'accept': output}
 
     def bulk_lookup(self, atoms: list, atom_type=None, hashkey_only=False, output="application/json") -> dict:
         """
@@ -46,6 +46,8 @@ class Threats(BaseEngine):
         :param atom_type: must be one of the authorized_atom_value
         """
         typed_atoms = {}
+        authorized_output = ['application/json', 'text/csv']
+
         if not atom_type:
             atoms_values_extractor_response = self.post_engine_atom_values_extractor.atom_values_extract(
                 atoms)
@@ -58,6 +60,9 @@ class Threats(BaseEngine):
             raise ValueError(f'{atom_type} atom_type could not be treated')
         else:
             typed_atoms[atom_type] = atoms
+        if output and output not in authorized_output:
+            raise ValueError(f'{output} output type not authorized')
+
         accept_header = {'Accept': output}
         body = typed_atoms
         body['hashkey_only'] = hashkey_only
@@ -65,7 +70,7 @@ class Threats(BaseEngine):
         response = self.datalake_requests(url, 'post', {**self._post_headers(), **accept_header}, body)
         return response
 
-    def lookup(self, atom_value, atom_type=None, hashkey_only=False, output = "json"):
+    def lookup(self, atom_value, atom_type=None, hashkey_only=False, output = "application/json"):
 
         """
         Use to look up a threat in API.
@@ -74,6 +79,13 @@ class Threats(BaseEngine):
         :param atom_type: must be one of the authorized_atom_value.
                         if this atom_type is not given, it'll be defined at the cost of an API call.
         """
+        authorized_output = [
+        'application/json',
+        'text/csv',
+        'application/x-misp+json'
+        'applicatin/stix+json'
+        ]
+
         if not atom_type:
             threats = [atom_value]
             atoms_values_extractor_response = self.post_engine_atom_values_extractor.atom_values_extract(
@@ -85,7 +97,9 @@ class Threats(BaseEngine):
                 raise ValueError('your atom could not be typed')
         elif atom_type not in self.post_engine_atom_values_extractor.authorized_atom_value:
             raise ValueError(f'{atom_type} atom_type could not be treated')
-    
+        if output and output not in authorized_output:
+            raise ValueError(f'{output} output type not authorized')
+
         url = self._build_url_for_endpoint('lookup')
         params = {'atom_value': atom_value, 'atom_type': atom_type, 'hashkey_only': hashkey_only}
         req = PreparedRequest()
