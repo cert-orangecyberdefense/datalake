@@ -77,41 +77,42 @@ def main(override_args=None):
     typed_atoms = {}
 
     # set validations flags regarding the presence or absence of cli arguments
-    has_file = False if args.input is None else True
-    has_flag = False
+    has_file = args.input is not None
+    has_typed_atoms = False
     for flag in ATOM_TYPES_FLAGS:
         atom_values = getattr(args, flag)
         if atom_values is not None:
             typed_atoms[flag] = atom_values
-            has_flag = True
+            has_typed_atoms = True
     # validate that at least there is one untyped atom or one atom or one input file
-    if (not has_flag and not has_file and not args.untyped_atoms) or (SUBCOMMAND_NAME in args.untyped_atoms):
+    if (not has_typed_atoms and not has_file and not args.untyped_atoms) or (SUBCOMMAND_NAME in args.untyped_atoms):
         parser.error("you must provide at least one of following: untyped atom, atom type, input file.")
 
     # load api_endpoints and tokens
     endpoints_config, main_url, tokens = starter.load_config(args)
-    post_engine_bulk_lookup_threats = BulkLookupThreats(
-        endpoints_config, args.env, tokens)
-    post_engine_atom_values_extractor = AtomValuesExtractor(
-        endpoints_config, args.env, tokens)
+    post_engine_bulk_lookup_threats = BulkLookupThreats(endpoints_config, args.env, tokens)
+    post_engine_atom_values_extractor = AtomValuesExtractor(endpoints_config, args.env, tokens)
     hashkey_only = args.hashkey_only
-    untyped_atoms = args.untyped_atoms
+    untyped_atoms = args.untyped_atoms or []
     full_response = {}
     size_limit = 100
 
     # process command line arguments inputs.
-    if untyped_atoms:
-        untyped = []
-        for input in untyped_atoms:
-            input_atom_type, atom = get_atom_type_from_filename(input)
-            if input_atom_type == UNTYPED_ATOM_TYPE:
-                untyped.append(atom)
-        current_typed_atoms = lookup_atom_types(
-            post_engine_atom_values_extractor, untyped, typed_atoms)
+    untyped = []
+    for untyped_atom in untyped_atoms:
+        input_atom_type, atom = get_atom_type_from_filename(untyped_atom)
+        if input_atom_type == UNTYPED_ATOM_TYPE:
+            untyped.append(atom)
+    current_typed_atoms = lookup_atom_types(post_engine_atom_values_extractor, untyped, typed_atoms)
+    if current_typed_atoms:
         response = bulk_lookup_request(
-            post_engine_bulk_lookup_threats, current_typed_atoms, accept_header, hashkey_only)
+            post_engine_bulk_lookup_threats,
+            current_typed_atoms,
+            accept_header,
+            hashkey_only,
+        )
         full_response = add_to_full_response(full_response, response)
-        typed_atoms.clear()
+    typed_atoms.clear()
 
     # process input files
     if has_file:
