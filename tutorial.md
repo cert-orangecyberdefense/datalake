@@ -15,7 +15,7 @@ $ pip3 install datalake-scripts
 ### step 2: Create a Datalake instance
 Usually you create a Datalake instance in your main module or in the __init__.py file of your package like this:
 
-    from datalake-scripts import Datalake
+    from datalake_scripts import Datalake
     datalake = Datalake()
 
 ## About the parameters
