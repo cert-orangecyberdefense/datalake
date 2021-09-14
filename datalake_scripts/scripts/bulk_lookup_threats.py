@@ -9,7 +9,6 @@ from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import BulkLookupThreats
 from datalake_scripts.helper_scripts.utils import join_dicts
 
-
 SUBCOMMAND_NAME = 'bulk_lookup_threats'
 UNTYPED_ATOM_TYPE = 'untyped'
 ATOM_TYPES_FLAGS = [
@@ -78,41 +77,42 @@ def main(override_args=None):
     typed_atoms = {}
 
     # set validations flags regarding the presence or absence of cli arguments
-    has_file = False if args.input is None else True
-    has_flag = False
+    has_file = args.input is not None
+    has_typed_atoms = False
     for flag in ATOM_TYPES_FLAGS:
         atom_values = getattr(args, flag)
         if atom_values is not None:
             typed_atoms[flag] = atom_values
-            has_flag = True
+            has_typed_atoms = True
     # validate that at least there is one untyped atom or one atom or one input file
-    if (not has_flag and not has_file and not args.untyped_atoms) or (SUBCOMMAND_NAME in args.untyped_atoms):
+    if (not has_typed_atoms and not has_file and not args.untyped_atoms) or (SUBCOMMAND_NAME in args.untyped_atoms):
         parser.error("you must provide at least one of following: untyped atom, atom type, input file.")
-    
+
     # load api_endpoints and tokens
     endpoints_config, main_url, tokens = starter.load_config(args)
-    post_engine_bulk_lookup_threats = BulkLookupThreats(
-        endpoints_config, args.env, tokens)
-    post_engine_atom_values_extractor = AtomValuesExtractor(
-        endpoints_config, args.env, tokens)
+    post_engine_bulk_lookup_threats = BulkLookupThreats(endpoints_config, args.env, tokens)
+    post_engine_atom_values_extractor = AtomValuesExtractor(endpoints_config, args.env, tokens)
     hashkey_only = args.hashkey_only
-    untyped_atoms = args.untyped_atoms
+    untyped_atoms = args.untyped_atoms or []
     full_response = {}
     size_limit = 100
-    
-    # process command line arguments iputs.
-    if untyped_atoms:
-        untyped = []
-        for input in untyped_atoms:
-            input_atom_type, atom = get_atom_type_from_filename(input)
-            if input_atom_type==UNTYPED_ATOM_TYPE:
-                untyped.append(atom)
-        current_typed_atoms = lookup_atom_types(
-            post_engine_atom_values_extractor, untyped, typed_atoms)
+
+    # process command line arguments inputs.
+    untyped = []
+    for untyped_atom in untyped_atoms:
+        input_atom_type, atom = get_atom_type_from_filename(untyped_atom)
+        if input_atom_type == UNTYPED_ATOM_TYPE:
+            untyped.append(atom)
+    current_typed_atoms = lookup_atom_types(post_engine_atom_values_extractor, untyped, typed_atoms)
+    if current_typed_atoms:
         response = bulk_lookup_request(
-            post_engine_bulk_lookup_threats, current_typed_atoms, accept_header, hashkey_only)
+            post_engine_bulk_lookup_threats,
+            current_typed_atoms,
+            accept_header,
+            hashkey_only,
+        )
         full_response = add_to_full_response(full_response, response)
-        typed_atoms.clear()
+    typed_atoms.clear()
 
     # process input files
     if has_file:
@@ -135,14 +135,15 @@ def main(override_args=None):
                         file_atom_type, []).extend(atom_chunk)
                     response = bulk_lookup_request(
                         post_engine_bulk_lookup_threats, typed_atoms, accept_header, hashkey_only)
-                    full_response = add_to_full_response(full_response, response) 
+                    full_response = add_to_full_response(full_response, response)
                     typed_atoms.clear()
     if args.output:
         starter.save_output(args.output, full_response)
         logger.debug(f'Results saved in {args.output}\n')
     else:
-        pretty_print(response, args.output_type)  
+        pretty_print(full_response, args.output_type)
     logger.debug(f'END: lookup_threats.py')
+
 
 def add_to_full_response(full_response, response):
     if isinstance(response, dict):
@@ -154,9 +155,9 @@ def add_to_full_response(full_response, response):
         full_response += csv_lines[1:]
     return full_response
 
+
 def bulk_lookup_request(post_engine_bulk_lookup_threats, typed_atoms,
                         accept_header, hashkey_only):
-
     response = post_engine_bulk_lookup_threats.bulk_lookup_threats(
         threats=typed_atoms,
         additional_headers=accept_header,
@@ -167,7 +168,6 @@ def bulk_lookup_request(post_engine_bulk_lookup_threats, typed_atoms,
 
 
 def lookup_atom_types(post_engine_atom_values_extractor, untyped_atoms, typed_atoms):
-
     # lookup for atom types
     if untyped_atoms:
         atoms_values_extractor_response = post_engine_atom_values_extractor.atom_values_extract(
@@ -178,18 +178,11 @@ def lookup_atom_types(post_engine_atom_values_extractor, untyped_atoms, typed_at
         else:
             logger.warning('none of your untyped atoms could be typed')
 
-        # find out what atoms couldn't be typed for printing them
-        if atoms_values_extractor_response['not_found'] > 0:
-            for atom_type, atom_list in atoms_values_extractor_response['results'].items():
-                untyped_atoms = [
-                    untyped_atom for untyped_atom in untyped_atoms
-                    if untyped_atom not in atoms_values_extractor_response['results'][atom_type]
-                ]
-
-            logger.warning(
-                f'\x1b[46m{"#" * 60} UNTYPED ATOMS {"#" * 47}\x1b[46m')
-            logger.warning('\n'.join(untyped_atoms))
-            logger.warning('')
+        # find out which atoms couldn't be typed to display them
+        failed_to_type_atoms = atoms_values_extractor_response['not_found']
+        if len(failed_to_type_atoms) > 0:
+            logger.warning(f'\x1b[46m{"#" * 60} FAILED TO IDENTIFY ATOMS {"#" * 36}\x1b[46m')
+            logger.warning('\n'.join(failed_to_type_atoms) + '\n')
 
     return typed_atoms
 
