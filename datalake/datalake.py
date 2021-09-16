@@ -1,10 +1,10 @@
 import logging
 
+from datalake import AtomValuesExtractor
+from datalake.common.base_script import BaseScripts
+from datalake.scripts.threats import Threats
+from datalake.scripts.bulk_search import BulkSearch
 
-from datalake_lib import AtomValuesExtractor
-from datalake_lib.common.base_script import BaseScripts
-from datalake_lib.scripts.threats import Threats
-from datalake_lib.scripts.bulk_search import BulkSearch
 
 class ConfigArg:
     def __init__(self, loglevel: int, env: str) -> None:
@@ -16,14 +16,11 @@ class Datalake:
     """ Base Datalake class
 
     Usage:
-    >>> datalake = Datalake(username='some username', password='some password')
-    >>> datalake.Threats.lookup(
-    ... threat = 'mayoclinic.org',
-    ... atome_type = 'domain',
-    ... hashkey_only = False,
-    ... )
+    >>> dtl = Datalake(username='some username', password='some password')
+    >>> dtl.Threats.lookup(atom_value='mayoclinic.org', atom_type='domain', hashkey_only=False)
     """
-    def __init__(self, username: str, password: str, env='prod'):
+
+    def __init__(self, username: str = None, password: str = None, env='prod'):
         self.username = username
         self.password = password
         self.env = env

@@ -1,8 +1,8 @@
-from datalake_lib.common.base_engine import BaseEngine
+from datalake.common.base_engine import BaseEngine
 import os
 from typing import List
 
-from datalake_lib.common.logger import logger
+from datalake.common.logger import logger
 
 
 class BulkSearch(BaseEngine):

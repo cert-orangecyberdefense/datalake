@@ -8,8 +8,8 @@ import logging
 import os
 from typing import List
 
-from datalake_lib.common.logger import configure_logging, logger
-from datalake_lib.common.token_manager import TokenGenerator
+from datalake.common.logger import configure_logging, logger
+from datalake.common.token_manager import TokenGenerator
 
 FOLDER_ABSOLUTE_PATH = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
 

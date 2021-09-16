@@ -13,10 +13,10 @@ from urllib.parse import urljoin
 
 from requests import Response
 
-from datalake_lib.common import suppress_insecure_request_warns
-from datalake_lib.common.logger import logger
-from datalake_lib.common.throttler import throttle
-from datalake_lib.common.token_manager import TokenGenerator
+from datalake.common import suppress_insecure_request_warns
+from datalake.common.logger import logger
+from datalake.common.throttler import throttle
+from datalake.common.token_manager import TokenGenerator
 
 
 class BaseEngine:

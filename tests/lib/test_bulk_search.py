@@ -1,5 +1,5 @@
 import responses
-from datalake_lib import Datalake
+from datalake import Datalake
 import pytest
 
 

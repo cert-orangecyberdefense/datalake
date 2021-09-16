@@ -4,10 +4,10 @@ from typing import Set, Dict, List, Union
 
 from requests import PreparedRequest
 
-from datalake_lib.common.base_engine import BaseEngine
-from datalake_lib.common.logger import logger
-from datalake_lib.common.mixins import HandleBulkTaskMixin
-from datalake_lib.helper_scripts.utils import split_list
+from datalake.common.base_engine import BaseEngine
+from datalake.common.logger import logger
+from datalake.common.mixins import HandleBulkTaskMixin
+from datalake.helper_scripts.utils import split_list
 
 
 class PostEngine(BaseEngine):

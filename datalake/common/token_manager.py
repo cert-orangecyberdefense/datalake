@@ -8,8 +8,8 @@ from urllib.parse import urljoin
 
 import requests
 
-from datalake_lib.common import suppress_insecure_request_warns
-from datalake_lib.common.logger import logger
+from datalake.common import suppress_insecure_request_warns
+from datalake.common.logger import logger
 
 
 class TokenGenerator:

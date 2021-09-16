@@ -1,8 +1,8 @@
 from requests.sessions import PreparedRequest
 
 
-from datalake_lib.common.base_engine import BaseEngine
-from datalake_lib.helper_scripts.utils import join_dicts
+from datalake.common.base_engine import BaseEngine
+from datalake.helper_scripts.utils import join_dicts
 
 
 class Threats(BaseEngine):
