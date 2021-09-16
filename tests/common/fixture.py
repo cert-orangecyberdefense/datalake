@@ -1,6 +1,14 @@
-import responses
-from datalake_lib import Datalake
 import pytest
+import responses
+
+from datalake_lib import Datalake
+
+
+@pytest.fixture
+def tokens():
+    """Fake tokens to be used in mocked requests"""
+    return ['access token', 'refresh token']
+
 
 @pytest.fixture
 @responses.activate

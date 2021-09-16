@@ -16,13 +16,12 @@ class Datalake:
     """ Base Datalake class
 
     Usage:
-    >>> datalake = Datalake(username='some username',
-                        password='some password')
-    >>> datalake.Threats.look_up(
-        threat = 'mayoclinic.org',
-        atome_type = 'domain',
-        hashkey_only = False,
-    )
+    >>> datalake = Datalake(username='some username', password='some password')
+    >>> datalake.Threats.lookup(
+    ... threat = 'mayoclinic.org',
+    ... atome_type = 'domain',
+    ... hashkey_only = False,
+    ... )
     """
     def __init__(self, username: str, password: str, env='prod'):
         self.username = username

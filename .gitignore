@@ -41,5 +41,3 @@ tests/**/expected
 
 # virtualenv
 /.venv
-/.venv-j2
-/datalake_lib/venv

@@ -1,28 +1,12 @@
 import responses
-from datalake_lib import Datalake
-import pytest
+
+from tests.common.fixture import datalake  # noqa needed fixture import
 
 atoms = [
     'mayoclinic.org',
     'commentcamarche.net',
     'gawker.com'
 ]
-
-
-@pytest.fixture
-@responses.activate
-def datalake():
-    url = 'https://datalake.cert.orangecyberdefense.com/api/v2/auth/token/'
-
-    auth_response = {
-        "access_token": "12345",
-        "refresh_token": "123456"
-    }
-
-    responses.add(responses.POST, url,
-                  json=auth_response, status=200)
-
-    return Datalake(username='lesid', password='getget')
 
 
 def test_token_auth(datalake):
@@ -126,14 +110,15 @@ def test_bulk_lookup_threats(datalake):
                                                 'href_history': 'https://ti.extranet.mrti-center.com/api/v2/mrti/threats-history/13166b76877347b83ec060f44b847071/',
                                                 'href_threat': 'https://ti.extranet.mrti-center.com/api/v2/mrti/threats/13166b76877347b83ec060f44b847071/',
                                                 'last_updated': '2021-05-12T10:55:49Z',
-                                                'metadata': {'virustotal_url_feed': {'last_analysis_stats': {'harmless': 80,
-                                                                                                             'malicious': 0,
-                                                                                                             'suspicious': 0,
-                                                                                                             'timeout': 0,
-                                                                                                             'undetected': 7},
-                                                                                     'permalink': 'https://www.virustotal.com/gui/url/af017a61fedd9c7002db06689a43b28fb14ef76d590f67694506bfc0815fd667',
-                                                                                     'positives': 0,
-                                                                                     'total': 87}},
+                                                'metadata': {
+                                                    'virustotal_url_feed': {'last_analysis_stats': {'harmless': 80,
+                                                                                                    'malicious': 0,
+                                                                                                    'suspicious': 0,
+                                                                                                    'timeout': 0,
+                                                                                                    'undetected': 7},
+                                                                            'permalink': 'https://www.virustotal.com/gui/url/af017a61fedd9c7002db06689a43b28fb14ef76d590f67694506bfc0815fd667',
+                                                                            'positives': 0,
+                                                                            'total': 87}},
                                                 'scores': [{'score': {'reliability': 16,
                                                                       'risk': 0},
                                                             'threat_type': 'malware'},
@@ -149,14 +134,15 @@ def test_bulk_lookup_threats(datalake):
                                                              'max_depth': 1,
                                                              'min_depth': 1,
                                                              'source_id': 'virustotal_url_feed '
-                                                             '(notify)',
+                                                                          '(notify)',
                                                              'source_policy': {'source_categories': ['threatintell',
                                                                                                      'reputation',
                                                                                                      'antivirus'],
                                                                                'source_conditions': 'yes',
-                                                                               'source_name_display': ['restricted_internal'],
+                                                                               'source_name_display': [
+                                                                                   'restricted_internal'],
                                                                                'source_references_conditions': 'no '
-                                                                               'resell',
+                                                                                                               'resell',
                                                                                'source_uses': ['notify']},
                                                              'tlp': 'amber'}],
                                                 'system_first_seen': '2021-04-05T22:02:33Z',
@@ -166,7 +152,7 @@ def test_bulk_lookup_threats(datalake):
                             {'atom_value': 'gawker.com',
                              'hashkey': '664d2e13bff4ac355c94b4f62ac0b92a',
                              'threat_found': False}
-                             ]}
+                            ]}
 
     responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
-    assert datalake.Threats.bulk_lookup(atoms = atoms) == bulk_resp
+    assert datalake.Threats.bulk_lookup(atoms=atoms) == bulk_resp

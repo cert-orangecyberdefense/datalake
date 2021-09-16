@@ -4,8 +4,8 @@ import pytest
 import responses
 
 from datalake_scripts import AdvancedSearch
-from tests.test_endpoint_config import TEST_CONFIG, TEST_ENV
-from fixture import tokens  # noqa needed fixture import
+from tests.scripts.test_endpoint_config import TEST_CONFIG, TEST_ENV
+from tests.common.fixture import tokens  # noqa needed fixture import
 
 query_body_template = [
     {'field': 'atom_type', 'multi_values': ['phone_number'], 'type': 'filter'},
