@@ -104,5 +104,5 @@ class Threats(BaseEngine):
         params = {'atom_value': atom_value, 'atom_type': atom_type, 'hashkey_only': hashkey_only}
         req = PreparedRequest()
         req.prepare_url(url, params)
-        response = self.datalake_requests(url, 'get', {**self._get_headers()})
+        response = self.datalake_requests(req.url, 'get', {**self._get_headers()})
         return response
