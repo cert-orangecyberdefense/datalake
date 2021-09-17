@@ -20,7 +20,8 @@ def test_token_auth(datalake):
 
 @responses.activate
 def test_lookup_threat(datalake):
-    lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/'
+    lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/' \
+                 '?atom_value=mayoclinic.org&atom_type=domain&hashkey_only=False'
     resp_json = {'atom_type': 'domain',
                  'content': {'domain_content': {'atom_value': 'mayoclinic.org',
                                                 'depth': 1,
@@ -71,10 +72,8 @@ def test_lookup_threat(datalake):
             ]
         }
     }
-    responses.add(responses.POST, datalake._post_engine_atom_values_extractor.url,
-                  json=extractor_response, status=200)
-    responses.add(responses.GET, lookup_url,
-                  json=resp_json, status=200)
+    responses.add(responses.POST, datalake._post_engine_atom_values_extractor.url, json=extractor_response, status=200)
+    responses.add(responses.GET, lookup_url, match_querystring=True, json=resp_json, status=200)
 
     lookup_response = datalake.Threats.lookup(atoms[0])
 
@@ -156,3 +155,13 @@ def test_bulk_lookup_threats(datalake):
 
     responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
     assert datalake.Threats.bulk_lookup(atoms=atoms) == bulk_resp
+
+
+@responses.activate
+def test_bulk_lookup_threats_on_typed_atoms(datalake):
+    bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
+
+    bulk_resp = {'some value': True}  # Only check the API response is returned as is
+
+    responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
+    assert datalake.Threats.bulk_lookup(atoms=atoms, atom_type='domain') == bulk_resp

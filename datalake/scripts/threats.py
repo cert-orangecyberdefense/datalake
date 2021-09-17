@@ -56,7 +56,7 @@ class Threats(BaseEngine):
                     typed_atoms, atoms_values_extractor_response['results'])
             else:
                 raise ValueError('none of your atoms could be typed')
-        elif atom_type not in self.datalake.post_engine_atom_values_extractor.authorized_atom_value:
+        elif atom_type not in self.post_engine_atom_values_extractor.authorized_atom_value:
             raise ValueError(f'{atom_type} atom_type could not be treated')
         else:
             typed_atoms[atom_type] = atoms
