@@ -1,6 +1,5 @@
 import logging
 
-from datalake import AtomValuesExtractor
 from datalake.common.base_script import BaseScripts
 from datalake.scripts.threats import Threats
 from datalake.scripts.bulk_search import BulkSearch

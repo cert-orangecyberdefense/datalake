@@ -47,6 +47,8 @@ class Threats(BaseEngine):
         """
         typed_atoms = {}
         authorized_output = ['application/json', 'text/csv']
+        if output not in authorized_output:
+            raise ValueError(f'{output} output type is not supported')
 
         if not atom_type:
             atoms_values_extractor_response = self._post_engine_atom_values_extractor.atom_values_extract(
@@ -60,8 +62,6 @@ class Threats(BaseEngine):
             raise ValueError(f'{atom_type} atom_type could not be treated')
         else:
             typed_atoms[atom_type] = atoms
-        if output and output not in authorized_output:
-            raise ValueError(f'{output} output type not authorized')
 
         accept_header = {'Accept': output}
         body = typed_atoms
@@ -83,8 +83,10 @@ class Threats(BaseEngine):
             'application/json',
             'text/csv',
             'application/x-misp+json'
-            'applicatin/stix+json'
+            'application/stix+json'
         ]
+        if output not in authorized_output:
+            raise ValueError(f'{output} output type is not supported')
 
         if not atom_type:
             threats = [atom_value]
@@ -97,8 +99,6 @@ class Threats(BaseEngine):
                 raise ValueError('your atom could not be typed')
         elif atom_type not in self._post_engine_atom_values_extractor.authorized_atom_value:
             raise ValueError(f'{atom_type} atom_type could not be treated')
-        if output and output not in authorized_output:
-            raise ValueError(f'{output} output type not authorized')
 
         url = self._build_url_for_endpoint('lookup')
         params = {'atom_value': atom_value, 'atom_type': atom_type, 'hashkey_only': hashkey_only}

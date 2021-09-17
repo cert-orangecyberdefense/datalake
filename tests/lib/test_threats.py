@@ -1,5 +1,7 @@
+import pytest
 import responses
 
+from datalake import Datalake
 from tests.common.fixture import datalake  # noqa needed fixture import
 
 atoms = [
@@ -78,6 +80,14 @@ def test_lookup_threat(datalake):
     lookup_response = datalake.Threats.lookup(atoms[0])
 
     assert lookup_response == resp_json
+
+
+@responses.activate
+def test_lookup_threat_invalid_output(datalake: Datalake):
+    wrong_output = "123"
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.lookup(atoms[0], output=wrong_output)
+    assert str(err.value) == f'{wrong_output} output type is not supported'
 
 
 @responses.activate
@@ -165,3 +175,11 @@ def test_bulk_lookup_threats_on_typed_atoms(datalake):
 
     responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
     assert datalake.Threats.bulk_lookup(atoms=atoms, atom_type='domain') == bulk_resp
+
+
+@responses.activate
+def test_lookup_threat_invalid_output(datalake: Datalake):
+    wrong_output = "123"
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.bulk_lookup(atoms, output=wrong_output)
+    assert str(err.value) == f'{wrong_output} output type is not supported'
