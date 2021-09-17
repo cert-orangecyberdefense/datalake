@@ -38,20 +38,21 @@ class BaseEngine:
         self.requests_ssl_verify = suppress_insecure_request_warns(environment)
         self.url = self._build_url(endpoint_config, environment)
         self.tokens = tokens
-        self.terminal_size = self._get_size_terminal()
+        self.terminal_size = self._get_terminal_size()
         self.token_generator = TokenGenerator(endpoint_config, environment=environment)
         self.headers = None
         self.SET_MAX_RETRY = 3
 
-    def _get_size_terminal(self) -> int:
-        """
-        Return the terminal size for pretty print
-        """
-        stty_sizes = os.popen('stty size', 'r').read().split()
-        if len(stty_sizes) >= 2:
-            return int(stty_sizes[1])
-        else:  # Return default terminal size
-            return 80
+    @staticmethod
+    def _get_terminal_size() -> int:
+        """Return the terminal size for pretty print"""
+        try:
+            terminal_size = os.get_terminal_size()
+            if len(terminal_size) == 2:
+                return int(terminal_size[1])
+        except OSError:
+            logger.debug("Couldn't get terminal size, falling back to 80 char wide")
+        return 80
 
     @throttle(
         period=OCD_DTL_QUOTA_TIME,
