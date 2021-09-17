@@ -72,7 +72,7 @@ def test_lookup_threat(datalake):
             ]
         }
     }
-    responses.add(responses.POST, datalake._post_engine_atom_values_extractor.url, json=extractor_response, status=200)
+    responses.add(responses.POST, datalake.Threats._post_engine_atom_values_extractor.url, json=extractor_response, status=200)
     responses.add(responses.GET, lookup_url, match_querystring=True, json=resp_json, status=200)
 
     lookup_response = datalake.Threats.lookup(atoms[0])
@@ -92,7 +92,7 @@ def test_bulk_lookup_threats(datalake):
         }
     }
     bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
-    responses.add(responses.POST, datalake._post_engine_atom_values_extractor.url,
+    responses.add(responses.POST, datalake.Threats._post_engine_atom_values_extractor.url,
                   json=extractor_response, status=200)
 
     bulk_resp = {'domain': [{'atom_value': 'mayoclinic.org',

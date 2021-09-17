@@ -1,20 +1,20 @@
 from requests.sessions import PreparedRequest
 
-
+from datalake import AtomValuesExtractor
 from datalake.common.base_engine import BaseEngine
 from datalake.helper_scripts.utils import join_dicts
 
 
 class Threats(BaseEngine):
 
-    def __init__(self, endpoint_config: dict, environment: str, tokens: list, post_engine_atom_values_extractor):
+    def __init__(self, endpoint_config: dict, environment: str, tokens: list):
         super().__init__(endpoint_config, environment, tokens)
-        self.post_engine_atom_values_extractor = post_engine_atom_values_extractor
+        self._post_engine_atom_values_extractor = AtomValuesExtractor(endpoint_config, environment, tokens)
 
     def _build_url(self, endpoint_config: dict, environment: str):
         return self._build_url_for_endpoint('threats')
 
-    def _post_headers(self, output = 'application/json') -> dict:
+    def _post_headers(self, output='application/json') -> dict:
         """
         Get headers for POST endpoints.
 
@@ -26,7 +26,7 @@ class Threats(BaseEngine):
         """
         return {'Authorization': self.tokens[0], 'Accept': output, 'Content-Type': 'application/json'}
 
-    def _get_headers(self, output = 'application/json') -> dict:
+    def _get_headers(self, output='application/json') -> dict:
         """
         Get headers for GET endpoints.
 
@@ -49,14 +49,14 @@ class Threats(BaseEngine):
         authorized_output = ['application/json', 'text/csv']
 
         if not atom_type:
-            atoms_values_extractor_response = self.post_engine_atom_values_extractor.atom_values_extract(
+            atoms_values_extractor_response = self._post_engine_atom_values_extractor.atom_values_extract(
                 atoms)
             if atoms_values_extractor_response['found'] > 0:
                 typed_atoms = join_dicts(
                     typed_atoms, atoms_values_extractor_response['results'])
             else:
                 raise ValueError('none of your atoms could be typed')
-        elif atom_type not in self.post_engine_atom_values_extractor.authorized_atom_value:
+        elif atom_type not in self._post_engine_atom_values_extractor.authorized_atom_value:
             raise ValueError(f'{atom_type} atom_type could not be treated')
         else:
             typed_atoms[atom_type] = atoms
@@ -70,7 +70,7 @@ class Threats(BaseEngine):
         response = self.datalake_requests(url, 'post', {**self._post_headers(), **accept_header}, body)
         return response
 
-    def lookup(self, atom_value, atom_type=None, hashkey_only=False, output = "application/json"):
+    def lookup(self, atom_value, atom_type=None, hashkey_only=False, output="application/json"):
 
         """
         Use to look up a threat in API.
@@ -80,22 +80,22 @@ class Threats(BaseEngine):
                         if this atom_type is not given, it'll be defined at the cost of an API call.
         """
         authorized_output = [
-        'application/json',
-        'text/csv',
-        'application/x-misp+json'
-        'applicatin/stix+json'
+            'application/json',
+            'text/csv',
+            'application/x-misp+json'
+            'applicatin/stix+json'
         ]
 
         if not atom_type:
             threats = [atom_value]
-            atoms_values_extractor_response = self.post_engine_atom_values_extractor.atom_values_extract(
+            atoms_values_extractor_response = self._post_engine_atom_values_extractor.atom_values_extract(
                 threats)
             if atoms_values_extractor_response['found'] > 0:
                 atom_type = list(
                     atoms_values_extractor_response['results'].keys())[0]
             else:
                 raise ValueError('your atom could not be typed')
-        elif atom_type not in self.post_engine_atom_values_extractor.authorized_atom_value:
+        elif atom_type not in self._post_engine_atom_values_extractor.authorized_atom_value:
             raise ValueError(f'{atom_type} atom_type could not be treated')
         if output and output not in authorized_output:
             raise ValueError(f'{output} output type not authorized')

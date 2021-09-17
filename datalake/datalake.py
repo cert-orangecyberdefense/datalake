@@ -29,7 +29,6 @@ class Datalake:
         endpoint_config, _, tokens = self.starter.load_config(args=args, username=self.username, password=self.password)
         self.tokens = tokens
         self.endpoint_config = endpoint_config
-        self._post_engine_atom_values_extractor = AtomValuesExtractor(endpoint_config, args.env, tokens)
 
-        self.Threats = Threats(endpoint_config, env, tokens, self._post_engine_atom_values_extractor)
+        self.Threats = Threats(endpoint_config, env, tokens)
         self.BulkSearch = BulkSearch(endpoint_config, env, tokens)
