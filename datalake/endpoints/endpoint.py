@@ -1,6 +1,5 @@
 """
-The base engine is use to request the API to the correct endpoint, and generate the data to be saved by the script.
-Extend this engine to give it more functionality.
+Base class used by all endpoints to request the API
 """
 import os
 import json
@@ -13,12 +12,13 @@ from urllib.parse import urljoin
 
 from requests import Response
 
+from datalake import Output
 from datalake.common.logger import logger
 from datalake.common.throttler import throttle
 from datalake.common.token_manager import TokenGenerator
 
 
-class BaseEngine:
+class Endpoint:
     ACCEPTED_HEADERS = {
         'json': 'application/json',
         'csv': 'text/csv'
@@ -34,7 +34,6 @@ class BaseEngine:
     def __init__(self, endpoint_config: dict, environment: str, tokens: list):
         self.endpoint_config = endpoint_config
         self.environment = environment
-        self.url = self._build_url(endpoint_config, environment)
         self.tokens = tokens
         self.terminal_size = self._get_terminal_size()
         self.token_generator = TokenGenerator(endpoint_config, environment=environment)
@@ -102,10 +101,18 @@ class BaseEngine:
         :param value: value to header
         :return: returns content-type header or raise an exception if there isn't an associated content-type value
         """
-        if value.lower() in BaseEngine.ACCEPTED_HEADERS:
-            return BaseEngine.ACCEPTED_HEADERS[value.lower()]
+        if value.lower() in Endpoint.ACCEPTED_HEADERS:
+            return Endpoint.ACCEPTED_HEADERS[value.lower()]
 
-        raise parser.ParserError(f'{value.lower()} is not a valid. Use some of {BaseEngine.ACCEPTED_HEADERS.keys()}')
+        raise parser.ParserError(f'{value.lower()} is not a valid. Use some of {Endpoint.ACCEPTED_HEADERS.keys()}')
+
+    def _post_headers(self, output=Output.JSON) -> dict:
+        """headers for POST endpoints"""
+        return {'Authorization': self.tokens[0], 'Accept': output.value, 'Content-Type': 'application/json'}
+
+    def _get_headers(self, output=Output.JSON) -> dict:
+        """headers for GET endpoints"""
+        return {'Authorization': self.tokens[0], 'Accept': output.value}
 
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """

@@ -1,11 +1,11 @@
-from datalake.common.base_engine import BaseEngine
 import os
 from typing import List
 
 from datalake.common.logger import logger
+from datalake.endpoints import Endpoint
 
 
-class BulkSearch(BaseEngine):
+class BulkSearch(Endpoint):
     """
     Bulk search
     """
@@ -28,30 +28,6 @@ class BulkSearch(BaseEngine):
         self.properties = {"uuid": self.task_uuid}
         # self.update_status()
 
-    def _post_headers(self, output='application/json') -> dict:
-        """
-        Get headers for POST endpoints.
-
-            {
-                'Authorization': self.tokens[0],
-                'accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        """
-        return {'Authorization': self.tokens[0], 'Accept': output, 'Content-Type': 'application/json'}
-
-    def _get_headers(self, output='application/json') -> dict:
-        """
-        Get headers for GET endpoints.
-
-            {
-                'Authorization': self.tokens[0],
-                'accept': output
-            }
-
-        """
-        return {'Authorization': self.tokens[0], 'accept': output}
-
     OCD_DTL_MAX_BULK_SEARCH_TIME = int(os.getenv('OCD_DTL_MAX_BULK_SEARCH_TIME', 3600))
 
     def _build_url(self, endpoint_config: dict, environment: str):
@@ -67,7 +43,8 @@ class BulkSearch(BaseEngine):
         else:
             body['query_hash'] = self.query_hash
 
-        response = self.datalake_requests(self.url, 'post', post_body=body, headers=self._post_headers())
+        url = '123'  # FIXME
+        response = self.datalake_requests(url, 'post', post_body=body, headers=self._post_headers())
         if not response:
             logger.error('No bulk search created, is the query_hash valid as well as the query_fields ?')
             return {}

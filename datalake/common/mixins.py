@@ -6,11 +6,11 @@ from halo import Halo
 
 import requests
 
-from datalake.common.base_engine import BaseEngine
+from endpoints.endpoint import Endpoint
 from datalake.common.logger import logger
 
 
-class HandleBulkTaskMixin(BaseEngine):
+class HandleBulkTaskMixin(Endpoint):
 
     OCD_DTL_MAX_BACK_OFF_TIME = int(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 120))
 

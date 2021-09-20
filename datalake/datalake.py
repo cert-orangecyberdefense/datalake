@@ -1,15 +1,10 @@
 import logging
 
 from datalake import AtomType
-from datalake.common.base_script import BaseScripts
-from datalake.scripts.threats import Threats
-from datalake.scripts.bulk_search import BulkSearch
-
-
-class ConfigArg:
-    def __init__(self, loglevel: int, env: str) -> None:
-        self.loglevel = loglevel
-        self.env = env
+from datalake.common.config import Config
+from datalake.common.logger import configure_logging
+from datalake.endpoints.threats import Threats
+from datalake.endpoints.bulk_search import BulkSearch
 
 
 class Datalake:
@@ -23,14 +18,8 @@ class Datalake:
     LOG_LEVEL = logging.WARNING
 
     def __init__(self, username: str = None, password: str = None, env='prod'):
-        self.username = username
-        self.password = password
-        self.env = env
-        args = ConfigArg(loglevel=self.LOG_LEVEL, env=env)
-        self.starter = BaseScripts()
-        endpoint_config, _, tokens = self.starter.load_config(args=args, username=self.username, password=self.password)
-        self.tokens = tokens
-        self.endpoint_config = endpoint_config
+        configure_logging(self.LOG_LEVEL)
+        endpoint_config, _, tokens = Config().load_config(env=env, username=username, password=password)
 
         self.Threats = Threats(endpoint_config, env, tokens)
         self.BulkSearch = BulkSearch(endpoint_config, env, tokens)

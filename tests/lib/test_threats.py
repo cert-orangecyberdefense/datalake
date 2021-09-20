@@ -10,14 +10,17 @@ atoms = [
     'gawker.com'
 ]
 
+atom_values_extract_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/atom-values-extract/'
+
 
 def test_token_auth(datalake):
     auth_response = {
         "access_token": "12345",
         "refresh_token": "123456"
     }
-    assert datalake.tokens[0] == f"Token {auth_response['access_token']}"
-    assert datalake.tokens[1] == f"Token {auth_response['refresh_token']}"
+    access_token, refresh_token = datalake.Threats.tokens
+    assert access_token == f"Token {auth_response['access_token']}"
+    assert refresh_token == f"Token {auth_response['refresh_token']}"
 
 
 @responses.activate
@@ -74,7 +77,7 @@ def test_lookup_threat(datalake):
             ]
         }
     }
-    responses.add(responses.POST, datalake.Threats._atom_values_extractor.url, json=extractor_response, status=200)
+    responses.add(responses.POST, atom_values_extract_url, json=extractor_response, status=200)
     responses.add(responses.GET, lookup_url, match_querystring=True, json=resp_json, status=200)
 
     lookup_response = datalake.Threats.lookup(atoms[0])
@@ -127,8 +130,7 @@ def test_bulk_lookup_threats(datalake):
         }
     }
     bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
-    responses.add(responses.POST, datalake.Threats._atom_values_extractor.url,
-                  json=extractor_response, status=200)
+    responses.add(responses.POST, atom_values_extract_url, json=extractor_response, status=200)
 
     bulk_resp = {'domain': [{'atom_value': 'mayoclinic.org',
                              'hashkey': '13166b76877347b83ec060f44b847071',
