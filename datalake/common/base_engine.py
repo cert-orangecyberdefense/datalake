@@ -13,7 +13,6 @@ from urllib.parse import urljoin
 
 from requests import Response
 
-from datalake.common import suppress_insecure_request_warns
 from datalake.common.logger import logger
 from datalake.common.throttler import throttle
 from datalake.common.token_manager import TokenGenerator
@@ -35,7 +34,6 @@ class BaseEngine:
     def __init__(self, endpoint_config: dict, environment: str, tokens: list):
         self.endpoint_config = endpoint_config
         self.environment = environment
-        self.requests_ssl_verify = suppress_insecure_request_warns(environment)
         self.url = self._build_url(endpoint_config, environment)
         self.tokens = tokens
         self.terminal_size = self._get_terminal_size()
@@ -124,7 +122,6 @@ class BaseEngine:
         common_kwargs = {
             'url': url,
             'headers': headers,
-            'verify': self.requests_ssl_verify
         }
 
         if method == 'get':
