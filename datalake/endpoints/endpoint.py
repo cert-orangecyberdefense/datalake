@@ -61,21 +61,20 @@ class Endpoint:
         self.headers = headers
         tries_left = self.SET_MAX_RETRY
 
-        logger.debug(self._pretty_debug_request(url, method, post_body, headers))
+        while tries_left > 0:
+            self.headers['Authorization'] = self.token_manager.access_token
+            logger.debug(self._pretty_debug_request(url, method, post_body, headers))
 
-        if not headers.get('Authorization'):
-            fresh_tokens = self.token_generator.get_token()
-            self.replace_tokens(fresh_tokens)
-        while True:
             response = self._send_request(url, method, headers, post_body)
+
             logger.debug(f'API response:\n{str(response.text)}')
             if response.status_code == 401:
                 logger.warning('Token expired or Missing authorization header. Updating token')
-                self._token_update(self._load_response(response))
+                self.token_manager.process_auth_error(response.json().get('msg'))
             elif response.status_code == 422:
                 logger.warning('Bad authorization header. Updating token')
                 logger.debug(f'422 HTTP code: {response.text}')
-                self._token_update(self._load_response(response))
+                self.token_manager.process_auth_error(response.json().get('msg'))
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(f'API returned non 2xx response code : {response.status_code}\n{response.text}'
                              f'\n Retrying')
@@ -83,15 +82,12 @@ class Endpoint:
                 return response.text
             else:
                 try:
-                    dict_response = self._load_response(response)
-                    return dict_response
-                except JSONDecodeError:
+                    return response.json()
+                except ValueError:
                     logger.error('Request unexpectedly returned non dict value. Retrying')
             tries_left -= 1
-            if tries_left <= 0:
-                logger.error('Request failed: Will return nothing for this request')
-                return {}
-            # time.sleep(5)
+        logger.error('Request failed: Will return nothing for this request')
+        return {}
 
     @staticmethod
     def output_type2header(value):
@@ -105,14 +101,15 @@ class Endpoint:
 
         raise parser.ParserError(f'{value.lower()} is not a valid. Use some of {Endpoint.ACCEPTED_HEADERS.keys()}')
 
-    def _post_headers(self, output=Output.JSON) -> dict:
+    @staticmethod
+    def _post_headers(output=Output.JSON) -> dict:
         """headers for POST endpoints"""
-        json_ = 'application/json'
-        return {'Authorization': self.token_manager.access_token, 'Accept': output.value, 'Content-Type': json_}
+        return {'Accept': output.value, 'Content-Type': 'application/json'}
 
-    def _get_headers(self, output=Output.JSON) -> dict:
+    @staticmethod
+    def _get_headers(output=Output.JSON) -> dict:
         """headers for GET endpoints"""
-        return {'Authorization': self.token_manager.access_token, 'Accept': output.value}
+        return {'Accept': output.value}
 
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """
@@ -145,55 +142,6 @@ class Endpoint:
             logger.debug('ERROR : Wrong requests, please only do [get, post, put, patch, delete] method')
             raise TypeError('Unknown method to requests %s', method)
         return api_response
-
-    def _load_response(self, api_response: Response):
-        """
-        Load the API response from JSON format to dict.
-        The endpoint for events is a bit special, the json.loads() doesn't work for the return format of the API.
-        We get for this special case a return dict containing the length of the response i.e.:
-
-            if length of response ==  3 then: no events
-
-        :param: api_response: dict
-        :return: dict_response
-        """
-        if api_response.text.startswith('[') and api_response.text.endswith(']\n'):
-            # This condition is for the date-histogram endpoints
-            dict_response = {'response_length': len(api_response.text)}
-        else:
-            dict_response = json.loads(api_response.text)
-        return dict_response
-
-    def _token_update(self, dict_response: dict):
-        """
-        Allow to update token when API response is either Missing Authorization Header
-        or Token has expired. Return False is the token has been regenerated.
-
-        :param dict_response: dict
-        :return: Bool
-        """
-        if dict_response.get('msg') == 'Missing Authorization Header':
-            fresh_tokens = self.token_generator.get_token()
-            self.replace_tokens(fresh_tokens)
-            return False
-        elif dict_response.get('msg') == 'Bad Authorization header. Expected value \'Token <JWT>\'':
-            fresh_tokens = self.token_generator.get_token()
-            self.replace_tokens(fresh_tokens)
-            return False
-        elif dict_response.get('msg') == 'Token has expired':
-            fresh_tokens = self.token_generator.refresh_token(self.tokens[1])
-            self.replace_tokens(fresh_tokens)
-            return False
-
-        return True
-
-    def replace_tokens(self, fresh_tokens: dict):
-        access_token = fresh_tokens["access_token"]
-        # Update of the refresh token is optional
-        refresh_token = fresh_tokens.get('refresh_token', self.tokens[1].replace('Token ', ''))
-
-        self.tokens = [f'Token {access_token}', f'Token {refresh_token}']
-        self.headers['Authorization'] = self.tokens[0]
 
     def _pretty_debug_request(self, url: str, method: str, data: dict, headers: dict):
         """

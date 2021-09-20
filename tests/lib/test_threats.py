@@ -13,16 +13,6 @@ atoms = [
 atom_values_extract_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/atom-values-extract/'
 
 
-def test_token_auth(datalake):
-    auth_response = {
-        "access_token": "12345",
-        "refresh_token": "123456"
-    }
-    token_manager = datalake.Threats.token_manager
-    assert token_manager.access_token == f"Token {auth_response['access_token']}"
-    assert token_manager.refresh_token == f"Token {auth_response['refresh_token']}"
-
-
 @responses.activate
 def test_lookup_threat(datalake):
     lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/' \

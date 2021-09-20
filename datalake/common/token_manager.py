@@ -47,26 +47,34 @@ class TokenManager:
         except KeyError:
             logger.error(f'An error occurred while retrieving an access token, for URL: {self.url_token}\n'
                          f'response of the API: {response.text}')
-            raise
+            raise ValueError(f'Could not login: {response.text}')
 
-    def refresh_token(self, refresh_token: str):
-        """
-        Refresh the current token
-        :param refresh_token: str
-        """
-        logger.debug('Token will be refresh')
-        headers = {'Authorization': refresh_token}
+    def fetch_new_token(self):
+        logger.debug('Token will be refreshed')
+        headers = {'Authorization': self.refresh_token}
         response = requests.post(url=self.url_refresh, headers=headers)
 
-        json_response = json.loads(response.text)
+        json_response = response.json()
         if response.status_code == 401 and json_response.get('msg') == 'Token has expired':
             logger.debug('Refreshing the refresh token')
             # Refresh token is also expired, we need to restart the authentication from scratch
-            return self.get_token()
+            self.get_token()
         elif 'access_token' in json_response:
-            return json_response
-        # else an error occurred
+            self.access_token = f'Token {json_response["access_token"]}'
+        else:  # an error occurred
+            logger.error(f'An error occurred while refreshing the refresh token, for URL: {self.url_refresh}\n'
+                         f'response of the API: {response.text}')
+            raise ValueError(f'Could not refresh the token: {response.text}')
 
-        logger.error(f'An error occurred while refreshing the refresh token, for URL: {self.url_refresh}\n'
-                     f'response of the API: {response.text}')
-        exit(1)
+    def process_auth_error(self, error_msg: str):
+        """
+        Allow to update token when API response is either Missing Authorization Header or Token has expired.
+        """
+        if error_msg == 'Missing Authorization Header':
+            self.get_token()
+        elif error_msg == 'Bad Authorization header. Expected value \'Token <JWT>\'':
+            self.get_token()
+        elif error_msg == 'Token has expired':
+            self.fetch_new_token()
+        else:
+            raise ValueError(f'Unexpected msg: {error_msg}')
