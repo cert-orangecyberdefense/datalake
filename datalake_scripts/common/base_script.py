@@ -57,7 +57,7 @@ class BaseScripts:
             '-e',
             '--env',
             help='Execute on specified environment (Default: prod)',
-            choices=['prod', 'dtl2', 'preprod'],
+            choices=['prod', 'preprod'],
             default='prod',
         )
         parser.add_argument(

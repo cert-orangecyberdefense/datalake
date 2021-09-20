@@ -18,7 +18,7 @@ class TokenGenerator:
     """
 
     def __init__(self, endpoint_config: dict, *, environment: str):
-        """environment can be either prod, dtl2 or preprod"""
+        """environment can be either prod or preprod"""
         base_url = urljoin(endpoint_config['main'][environment], endpoint_config['api_version'])
         endpoints = endpoint_config['endpoints']
 

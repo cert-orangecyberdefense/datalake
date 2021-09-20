@@ -1,8 +1,7 @@
 {
   "main": {
     "preprod": "https://ti.extranet.mrti-center.com/api/",
-    "prod": "https://datalake.cert.orangecyberdefense.com/api/",
-    "dtl2": "https://datalake2.cert.orangecyberdefense.com/api/"
+    "prod": "https://datalake.cert.orangecyberdefense.com/api/"
   },
   "endpoints": {
     "bulk-search": "mrti/bulk-search/",

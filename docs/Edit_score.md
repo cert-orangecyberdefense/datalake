@@ -27,7 +27,7 @@ At least one of them is required.
 > -w (Optional) will set all the scores to 0 like a whitelist. Override -t  
 
 > -o (Optional) will set the output file as the API gives it.  
-> -e (Optional) to change the environment {preprod, prod, dtl2},  default is **prod**  
+> -e (Optional) to change the environment {preprod, prod},  default is **prod**  
 
 #### Accepted threat types
 

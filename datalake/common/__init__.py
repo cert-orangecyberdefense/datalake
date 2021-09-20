@@ -2,10 +2,8 @@ import requests
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-# TODO
-# this could be set up directly on the config endpoints.json file but it should involve major changes on code parts
-# where we read, parse and extract values from endpoints.json
-SUPPRESS_WARNING_ENVS = ['dtl2']
+# Add envs that are accessed by HTTP only here:
+SUPPRESS_WARNING_ENVS = []
 
 
 def suppress_insecure_request_warns(env) -> bool:
