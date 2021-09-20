@@ -20,7 +20,5 @@ def datalake():
         "refresh_token": "123456"
     }
 
-    responses.add(responses.POST, url,
-                  json=auth_response, status=200)
-
-    return Datalake(username='lesid', password='getget')
+    responses.add(responses.POST, url, json=auth_response, status=200)
+    return Datalake(username='username', password='password')

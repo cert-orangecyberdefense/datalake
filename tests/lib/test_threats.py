@@ -1,7 +1,7 @@
 import pytest
 import responses
 
-from datalake import Datalake
+from datalake import Datalake, Output
 from tests.common.fixture import datalake  # noqa needed fixture import
 
 atoms = [
@@ -74,7 +74,7 @@ def test_lookup_threat(datalake):
             ]
         }
     }
-    responses.add(responses.POST, datalake.Threats._post_engine_atom_values_extractor.url, json=extractor_response, status=200)
+    responses.add(responses.POST, datalake.Threats._atom_values_extractor.url, json=extractor_response, status=200)
     responses.add(responses.GET, lookup_url, match_querystring=True, json=resp_json, status=200)
 
     lookup_response = datalake.Threats.lookup(atoms[0])
@@ -87,7 +87,32 @@ def test_lookup_threat_invalid_output(datalake: Datalake):
     wrong_output = "123"
     with pytest.raises(ValueError) as err:
         datalake.Threats.lookup(atoms[0], output=wrong_output)
-    assert str(err.value) == f'{wrong_output} output type is not supported'
+    assert str(err.value) == f'{wrong_output} output type is not supported. ' \
+                             f'Outputs supported are: CSV, JSON, MISP, STIX'
+
+
+@responses.activate
+def test_lookup_threat_specific_output(datalake: Datalake):
+    lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/' \
+                 '?atom_value=domain.net&atom_type=domain&hashkey_only=True'
+    some_csv = "some csv"
+
+    def request_callback(req):
+        assert req.headers['Accept'] == 'text/csv'
+        return 200, {'Content-Type': 'text/csv'}, some_csv
+
+    responses.add_callback(
+        responses.GET, lookup_url,
+        callback=request_callback,
+        match_querystring=True,
+    )
+    res = datalake.Threats.lookup(
+        'domain.net',
+        atom_type='domain',
+        hashkey_only=True,
+        output=Output.CSV,
+    )
+    assert some_csv == res
 
 
 @responses.activate
@@ -102,7 +127,7 @@ def test_bulk_lookup_threats(datalake):
         }
     }
     bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
-    responses.add(responses.POST, datalake.Threats._post_engine_atom_values_extractor.url,
+    responses.add(responses.POST, datalake.Threats._atom_values_extractor.url,
                   json=extractor_response, status=200)
 
     bulk_resp = {'domain': [{'atom_value': 'mayoclinic.org',
@@ -164,7 +189,7 @@ def test_bulk_lookup_threats(datalake):
                             ]}
 
     responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
-    assert datalake.Threats.bulk_lookup(atoms=atoms) == bulk_resp
+    assert datalake.Threats.bulk_lookup(atom_values=atoms) == bulk_resp
 
 
 @responses.activate
@@ -174,12 +199,19 @@ def test_bulk_lookup_threats_on_typed_atoms(datalake):
     bulk_resp = {'some value': True}  # Only check the API response is returned as is
 
     responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
-    assert datalake.Threats.bulk_lookup(atoms=atoms, atom_type='domain') == bulk_resp
+    assert datalake.Threats.bulk_lookup(atom_values=atoms, atom_type='domain') == bulk_resp
 
 
 @responses.activate
-def test_lookup_threat_invalid_output(datalake: Datalake):
+def test_bulk_lookup_threat_invalid_output(datalake: Datalake):
     wrong_output = "123"
     with pytest.raises(ValueError) as err:
         datalake.Threats.bulk_lookup(atoms, output=wrong_output)
-    assert str(err.value) == f'{wrong_output} output type is not supported'
+    assert str(err.value) == f'{wrong_output} output type is not supported. Outputs supported are: CSV, JSON'
+
+
+@responses.activate
+def test_bulk_lookup_threat_not_supported_output(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.bulk_lookup(atoms, output=Output.MISP)
+    assert str(err.value) == f'MISP output type is not supported. Outputs supported are: CSV, JSON'
