@@ -9,10 +9,16 @@ class BulkSearch(BaseEngine):
     """
     Bulk search
     """
-    def __init__(self, endpoint_config: dict, 
-    environment: str, tokens: list, 
-    query_body : dict = None, query_hash : str = None, 
-    query_fields : List = None, task_uuid : str = None, 
+
+    def __init__(
+            self,
+            endpoint_config: dict,
+            environment: str,
+            tokens: list,
+            query_body: dict = None,
+            query_hash: str = None,
+            query_fields: List = None,
+            task_uuid: str = None,
     ):
         super().__init__(endpoint_config, environment, tokens)
         self.query_body = query_body
@@ -22,7 +28,7 @@ class BulkSearch(BaseEngine):
         self.properties = {"uuid": self.task_uuid}
         # self.update_status()
 
-    def _post_headers(self, output = 'application/json') -> dict:
+    def _post_headers(self, output='application/json') -> dict:
         """
         Get headers for POST endpoints.
 
@@ -34,7 +40,7 @@ class BulkSearch(BaseEngine):
         """
         return {'Authorization': self.tokens[0], 'Accept': output, 'Content-Type': 'application/json'}
 
-    def _get_headers(self, output = 'application/json') -> dict:
+    def _get_headers(self, output='application/json') -> dict:
         """
         Get headers for GET endpoints.
 
@@ -53,7 +59,7 @@ class BulkSearch(BaseEngine):
 
     def _create_bulk_search(self):
         if not self.query_body and not self.query_hash:
-            return 
+            return
 
         body = {"query_fields": self.query_fields} if self.query_fields else {}
         if self.query_body:
@@ -66,11 +72,11 @@ class BulkSearch(BaseEngine):
             logger.error('No bulk search created, is the query_hash valid as well as the query_fields ?')
             return {}
         return response['task_uuid']
-    
+
     def download_results(self):
         if not self.query_body and not self.query_hash:
             raise ValueError(f'you must provide query_hash or query_body !!!')
-        
+
         body = {"query_fields": self.query_fields} if self.query_fields else {}
         if self.query_body:
             body['query_body'] = self.build_full_query_body(self.query_body)
@@ -93,16 +99,16 @@ class BulkSearch(BaseEngine):
 
     def get_bulk_search_hash(self):
         return self.properties.get('bulk_search_hash')
-    
+
     def get_state(self):
         return self.properties.get('state')
 
     def get_resultCount(self):
         return self.properties.get('results')
-    
+
     def get_user(self):
         return self.properties.get('user')
-    
+
     def get_timestamps(self):
         timestamps = {
             "created_at": self.properties.get('created_at'),

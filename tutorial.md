@@ -41,7 +41,7 @@ datalake = Datalake(username='username', password='password')
 ```python
 datalake.Threats.lookup(
     threat='mayoclinic.org',
-    atom_type='domain',
+    atom_type=AtomType.DOMAIN,
     hashkey_only=False,
 )
 ```
@@ -52,7 +52,7 @@ please note that atom_type and hashkey_only parameters are optional:
 
 ## Bulk look up
 ```python
-from datalake import Output
+from datalake import AtomType, Output
 
 threats = [
     'mayoclinic.org',
@@ -63,7 +63,7 @@ threats = [
 
 datalake.Threats.bulk_lookup(
     threats, 
-    atom_type='domain',
+    atom_type=AtomType.DOMAIN,
     hashkey_only=False,
     output=Output.CSV
 )

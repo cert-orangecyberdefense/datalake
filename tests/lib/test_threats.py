@@ -1,7 +1,7 @@
 import pytest
 import responses
 
-from datalake import Datalake, Output
+from datalake import Datalake, Output, AtomType
 from tests.common.fixture import datalake  # noqa needed fixture import
 
 atoms = [
@@ -108,7 +108,7 @@ def test_lookup_threat_specific_output(datalake: Datalake):
     )
     res = datalake.Threats.lookup(
         'domain.net',
-        atom_type='domain',
+        atom_type=AtomType.DOMAIN,
         hashkey_only=True,
         output=Output.CSV,
     )
@@ -199,7 +199,7 @@ def test_bulk_lookup_threats_on_typed_atoms(datalake):
     bulk_resp = {'some value': True}  # Only check the API response is returned as is
 
     responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
-    assert datalake.Threats.bulk_lookup(atom_values=atoms, atom_type='domain') == bulk_resp
+    assert datalake.Threats.bulk_lookup(atom_values=atoms, atom_type=AtomType.DOMAIN) == bulk_resp
 
 
 @responses.activate

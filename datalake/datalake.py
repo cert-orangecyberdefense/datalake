@@ -16,7 +16,7 @@ class Datalake:
 
     Usage:
     >>> dtl = Datalake(username='some username', password='some password')
-    >>> dtl.Threats.lookup(atom_value='mayoclinic.org', atom_type='domain', hashkey_only=False)
+    >>> dtl.Threats.lookup(atom_value='mayoclinic.org', atom_type=AtomType.DOMAIN, hashkey_only=False)
     """
 
     def __init__(self, username: str = None, password: str = None, env='prod'):

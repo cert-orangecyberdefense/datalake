@@ -1,8 +1,6 @@
-"""All the engines that use a GET endpoint."""
+"""All the engines that use a POST endpoint."""
 import os
-from typing import Set, Dict, List, Union
-
-from requests import PreparedRequest
+from typing import Set, Dict, List
 
 from datalake.common.base_engine import BaseEngine
 from datalake.common.logger import logger
@@ -14,26 +12,6 @@ class PostEngine(BaseEngine):
     """
     Common engine for all the POST endpoints.
     """
-    authorized_atom_value = [
-        'apk',
-        'as',
-        'cc',
-        'crypto',
-        'cve',
-        'domain',
-        'email',
-        'file',
-        'fqdn',
-        'iban',
-        'ip',
-        'ip_range',
-        'paste',
-        'phone_number',
-        'regkey',
-        'ssl',
-        'url',
-    ]
-
     authorized_threats_value = [
         'ddos',
         'fraud',

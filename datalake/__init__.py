@@ -1,4 +1,5 @@
 from .common import base_script
+from .common.atom import AtomType, ThreatType
 from .common.ouput import Output
 
 from .engines import get_engine, post_engine
