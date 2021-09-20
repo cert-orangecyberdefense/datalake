@@ -18,9 +18,9 @@ def test_token_auth(datalake):
         "access_token": "12345",
         "refresh_token": "123456"
     }
-    access_token, refresh_token = datalake.Threats.tokens
-    assert access_token == f"Token {auth_response['access_token']}"
-    assert refresh_token == f"Token {auth_response['refresh_token']}"
+    token_manager = datalake.Threats.token_manager
+    assert token_manager.access_token == f"Token {auth_response['access_token']}"
+    assert token_manager.refresh_token == f"Token {auth_response['refresh_token']}"
 
 
 @responses.activate

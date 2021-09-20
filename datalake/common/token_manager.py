@@ -11,12 +11,12 @@ import requests
 from datalake.common.logger import logger
 
 
-class TokenGenerator:
+class TokenManager:
     """
     Use it to generate token access to the API
     """
 
-    def __init__(self, endpoint_config: dict, *, environment: str):
+    def __init__(self, endpoint_config: dict, *, environment: str, username=None, password=None):
         """environment can be either prod or preprod"""
         base_url = urljoin(endpoint_config['main'][environment], endpoint_config['api_version'])
         endpoints = endpoint_config['endpoints']
@@ -24,24 +24,30 @@ class TokenGenerator:
         self.url_token = urljoin(base_url, endpoints['token'], allow_fragments=True)
         self.url_refresh = urljoin(base_url, endpoints['refresh_token'], allow_fragments=True)
 
-    def get_token(self, username=None, password=None):
+        self.username = username
+        self.password = password
+        self.access_token = None
+        self.refresh_token = None
+        self.get_token()
+
+    def get_token(self):
         """
         Generate token from user input, with email and password
         """
-        username = username or os.getenv('OCD_DTL_USERNAME') or input('Email: ')
-        password = password or os.getenv('OCD_DTL_PASSWORD') or getpass()
+        self.username = self.username or os.getenv('OCD_DTL_USERNAME') or input('Email: ')
+        self.password = self.password or os.getenv('OCD_DTL_PASSWORD') or getpass()
         print()
-        data = {'email': username, 'password': password}
+        data = {'email': self.username, 'password': self.password}
 
         response = requests.post(url=self.url_token, json=data)
         json_response = json.loads(response.text)
-        if 'access_token' in json_response.keys():
-            return json_response
-        # else an error occurred
-
-        logger.error(f'An error occurred while retrieving an access token, for URL: {self.url_token}\n'
-                     f'response of the API: {response.text}')
-        exit(1)
+        try:
+            self.access_token = f'Token {json_response["access_token"]}'
+            self.refresh_token = f'Token {json_response["refresh_token"]}'
+        except KeyError:
+            logger.error(f'An error occurred while retrieving an access token, for URL: {self.url_token}\n'
+                         f'response of the API: {response.text}')
+            raise
 
     def refresh_token(self, refresh_token: str):
         """

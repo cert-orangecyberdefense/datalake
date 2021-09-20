@@ -15,7 +15,7 @@ from requests import Response
 from datalake import Output
 from datalake.common.logger import logger
 from datalake.common.throttler import throttle
-from datalake.common.token_manager import TokenGenerator
+from datalake.common.token_manager import TokenManager
 
 
 class Endpoint:
@@ -31,12 +31,11 @@ class Endpoint:
 
     SET_MAX_RETRY = 3
 
-    def __init__(self, endpoint_config: dict, environment: str, tokens: list):
+    def __init__(self, endpoint_config: dict, environment: str, token_manager: TokenManager):
         self.endpoint_config = endpoint_config
         self.environment = environment
-        self.tokens = tokens
         self.terminal_size = self._get_terminal_size()
-        self.token_generator = TokenGenerator(endpoint_config, environment=environment)
+        self.token_manager = token_manager
         self.headers = None
         self.SET_MAX_RETRY = 3
 
@@ -62,7 +61,7 @@ class Endpoint:
         self.headers = headers
         tries_left = self.SET_MAX_RETRY
 
-        logger.debug(self._pretty_debug_request(url, method, post_body, headers, self.tokens))
+        logger.debug(self._pretty_debug_request(url, method, post_body, headers))
 
         if not headers.get('Authorization'):
             fresh_tokens = self.token_generator.get_token()
@@ -108,11 +107,12 @@ class Endpoint:
 
     def _post_headers(self, output=Output.JSON) -> dict:
         """headers for POST endpoints"""
-        return {'Authorization': self.tokens[0], 'Accept': output.value, 'Content-Type': 'application/json'}
+        json_ = 'application/json'
+        return {'Authorization': self.token_manager.access_token, 'Accept': output.value, 'Content-Type': json_}
 
     def _get_headers(self, output=Output.JSON) -> dict:
         """headers for GET endpoints"""
-        return {'Authorization': self.tokens[0], 'Accept': output.value}
+        return {'Authorization': self.token_manager.access_token, 'Accept': output.value}
 
     def _send_request(self, url: str, method: str, headers: dict, data: dict):
         """
@@ -195,7 +195,7 @@ class Endpoint:
         self.tokens = [f'Token {access_token}', f'Token {refresh_token}']
         self.headers['Authorization'] = self.tokens[0]
 
-    def _pretty_debug_request(self, url: str, method: str, data: dict, headers: dict, tokens: list):
+    def _pretty_debug_request(self, url: str, method: str, data: dict, headers: dict):
         """
         Return pretty debug string
 
@@ -212,8 +212,8 @@ class Endpoint:
                  f' - method: \n{method}\n' +
                  f' - headers: \n{headers}\n' +
                  f' - data: \n{data}\n' +
-                 f' - token: \n{tokens[0]}\n' +
-                 f' - refresh_token: \n{tokens[1]}\n' +
+                 f' - token: \n{self.token_manager.access_token}\n' +
+                 f' - refresh_token: \n{self.token_manager.refresh_token}\n' +
                  '-' * self.terminal_size)
         return debug
 
