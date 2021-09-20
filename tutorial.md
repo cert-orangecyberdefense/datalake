@@ -14,9 +14,10 @@ $ pip3 install datalake-scripts
 
 ### step 2: Create a Datalake instance
 Usually you create a Datalake instance in your main module or in the __init__.py file of your package like this:
-
-    from datalake_scripts import Datalake
-    datalake = Datalake()
+```python
+from datalake import Datalake
+datalake = Datalake()
+```
 
 ## About the parameters
 
@@ -30,38 +31,42 @@ then declare an instance of that class with your credentials
 datalake = Datalake(username, password)
 
 ### Usage: Code Sample
+```python
+from datalake import Datalake
 
-    import os
-    from datalake_scripts import Datalake
-
-    datalake = Datalake(username=os.getenv('OCD_DTL_USERNAME'),
-                        password=os.getenv('OCD_DTL_PASSWORD'))
+datalake = Datalake(username='username', password='password')
+```
 
 ## lookup a threat in api
+```python
+datalake.Threats.lookup(
+    threat='mayoclinic.org',
+    atom_type='domain',
+    hashkey_only=False,
+)
+```
 
-please note that the parameters atom_type and hashkey_only are optional.
+please note that atom_type and hashkey_only parameters are optional:
 
-    datalake.Threats.lookup(
-        threat = 'mayoclinic.org',
-        atom_type = 'domain',
-        hashkey_only = False,
-    )
-
-or also: 
     datalake.Threats.lookup(threat)
 
 ## Bulk look up
+```python
+from datalake import Output
 
-    threats = [
-        'mayoclinic.org',
-        'commentcamarche.net',
-        'gawker.com'
-    ]
-    atom_type = 'domain'
-    hashkey_only = False
+threats = [
+    'mayoclinic.org',
+    'commentcamarche.net',
+    'gawker.com'
+]
 
-    datalake.Threats.bulk_lookup(threats, atom_type, hashkey_only)
-or also :
-    datalake.Threats.bulk_lookup(threats)
+
+datalake.Threats.bulk_lookup(
+    threats, 
+    atom_type='domain',
+    hashkey_only=False,
+    output=Output.CSV
+)
+```
 
 
