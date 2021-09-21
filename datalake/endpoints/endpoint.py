@@ -1,15 +1,11 @@
 """
 Base class used by all endpoints to request the API
 """
-import os
 import json
-import parser
-import requests
-
-from json.decoder import JSONDecodeError
-from typing import Union
+import os
 from urllib.parse import urljoin
 
+import requests
 from requests import Response
 
 from datalake import Output
@@ -19,15 +15,9 @@ from datalake.common.token_manager import TokenManager
 
 
 class Endpoint:
-    ACCEPTED_HEADERS = {
-        'json': 'application/json',
-        'csv': 'text/csv'
-    }
     OCD_DTL_QUOTA_TIME = int(os.getenv('OCD_DTL_QUOTA_TIME', 1))
     OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(os.getenv('OCD_DTL_REQUESTS_PER_QUOTA_TIME', 5))
     logger.debug(f'Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s')
-
-    Json = Union[dict, list]  # json like object that can be a dict or root level array
 
     SET_MAX_RETRY = 3
 
@@ -36,7 +26,6 @@ class Endpoint:
         self.environment = environment
         self.terminal_size = self._get_terminal_size()
         self.token_manager = token_manager
-        self.headers = None
         self.SET_MAX_RETRY = 3
 
     @staticmethod
@@ -58,11 +47,10 @@ class Endpoint:
         """
         Use it to request the API
         """
-        self.headers = headers
         tries_left = self.SET_MAX_RETRY
 
         while tries_left > 0:
-            self.headers['Authorization'] = self.token_manager.access_token
+            headers['Authorization'] = self.token_manager.access_token
             logger.debug(self._pretty_debug_request(url, method, post_body, headers))
 
             response = self._send_request(url, method, headers, post_body)
@@ -78,7 +66,7 @@ class Endpoint:
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(f'API returned non 2xx response code : {response.status_code}\n{response.text}'
                              f'\n Retrying')
-            elif 'Content-Type' in response.headers and 'text/csv' in response.headers['Content-Type']:
+            elif 'text/csv' in response.headers.get('Content-Type', []):
                 return response.text
             else:
                 try:
@@ -90,18 +78,6 @@ class Endpoint:
         return {}
 
     @staticmethod
-    def output_type2header(value):
-        """
-        this method gets the CLI input arg value and generate the header content-type
-        :param value: value to header
-        :return: returns content-type header or raise an exception if there isn't an associated content-type value
-        """
-        if value.lower() in Endpoint.ACCEPTED_HEADERS:
-            return Endpoint.ACCEPTED_HEADERS[value.lower()]
-
-        raise parser.ParserError(f'{value.lower()} is not a valid. Use some of {Endpoint.ACCEPTED_HEADERS.keys()}')
-
-    @staticmethod
     def _post_headers(output=Output.JSON) -> dict:
         """headers for POST endpoints"""
         return {'Accept': output.value, 'Content-Type': 'application/json'}
@@ -111,17 +87,11 @@ class Endpoint:
         """headers for GET endpoints"""
         return {'Accept': output.value}
 
-    def _send_request(self, url: str, method: str, headers: dict, data: dict):
+    @staticmethod
+    def _send_request(url: str, method: str, headers: dict, data: dict) -> Response:
         """
         Send the correct http request to url from method [get, post, delete, patch, put].
         Raise a TypeError 'Unknown method to requests {method}' when the method is not one of the above.
-
-        :param url: str
-        :param method: str
-        :param data: dict
-        :param headers: dict
-        :param tokens: list
-        :return: str
         """
         common_kwargs = {
             'url': url,
@@ -144,16 +114,6 @@ class Endpoint:
         return api_response
 
     def _pretty_debug_request(self, url: str, method: str, data: dict, headers: dict):
-        """
-        Return pretty debug string
-
-        :param url: str
-        :param method: str
-        :param data: dict
-        :param headers: dict
-        :param tokens: list
-        :return: str
-        """
         debug = ('-' * self.terminal_size +
                  'DEBUG - datalake_requests:\n' +
                  f' - url: \n{url}\n' +

@@ -1,10 +1,5 @@
 from collections import defaultdict
-from typing import Generator, Dict
-
-
-def split_list(list_to_split: list, slice_size: int) -> Generator[list, None, None]:
-    for i in range(0, len(list_to_split), slice_size):
-        yield list_to_split[i:i + slice_size]
+from typing import Dict
 
 
 def join_dicts(*dicts: dict) -> Dict[str, list]:
@@ -19,4 +14,3 @@ def join_dicts(*dicts: dict) -> Dict[str, list]:
         for key, val in d.items():
             out[key].extend(val)
     return out
-

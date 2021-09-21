@@ -6,7 +6,7 @@ from halo import Halo
 
 import requests
 
-from endpoints.endpoint import Endpoint
+from datalake.endpoints import Endpoint
 from datalake.common.logger import logger
 
 

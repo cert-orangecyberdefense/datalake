@@ -5,7 +5,7 @@ from requests.sessions import PreparedRequest
 from datalake import AtomType
 from datalake.common.ouput import Output, output_supported
 from datalake.endpoints.endpoint import Endpoint
-from datalake.helper_scripts.utils import join_dicts
+from datalake.common.utils import join_dicts
 
 
 class Threats(Endpoint):
@@ -30,7 +30,7 @@ class Threats(Endpoint):
         else:
             typed_atoms[atom_type.value] = atom_values
 
-        body = typed_atoms
+        body: dict = typed_atoms
         body['hashkey_only'] = hashkey_only
         url = self._build_url_for_endpoint('threats-bulk-lookup')
         response = self.datalake_requests(url, 'post', self._post_headers(output=output), body)

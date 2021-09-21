@@ -2,7 +2,7 @@ import logging
 
 from datalake import AtomType
 from datalake.common.config import Config
-from datalake.common.logger import configure_logging, logger
+from datalake.common.logger import configure_logging
 from datalake.common.token_manager import TokenManager
 from datalake.endpoints.threats import Threats
 from datalake.endpoints.bulk_search import BulkSearch

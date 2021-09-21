@@ -70,9 +70,10 @@ class TokenManager:
         """
         Allow to update token when API response is either Missing Authorization Header or Token has expired.
         """
-        if error_msg == 'Missing Authorization Header':
-            self.get_token()
-        elif error_msg == 'Bad Authorization header. Expected value \'Token <JWT>\'':
+        if error_msg in (
+                'Missing Authorization Header',
+                'Bad Authorization header. Expected value \'Token <JWT>\''
+        ):
             self.get_token()
         elif error_msg == 'Token has expired':
             self.fetch_new_token()
