@@ -9,7 +9,7 @@ from datalake.endpoints.bulk_search import BulkSearch
 
 
 class Datalake:
-    """ Base Datalake class
+    """ Entrypoint to the Datalake library
 
     Usage:
     >>> dtl = Datalake(username='some username', password='some password')
