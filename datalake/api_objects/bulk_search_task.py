@@ -66,5 +66,6 @@ class BulkSearchTask:
         #     return {}
         # return response
 
-    def update(self) -> "BulkSearchTask":
-        return self._endpoint.get(self.uuid)
+    def update(self):
+        updated_bs = self._endpoint.get(self.uuid)
+        self.__dict__.update(updated_bs.__dict__)  # Avoid to return a new object
