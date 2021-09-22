@@ -5,6 +5,7 @@
   },
   "endpoints": {
     "bulk-search": "mrti/bulk-search/",
+    "bulk-search-task": "mrti/bulk-search/tasks/",
     "retrieve-bulk-search": "mrti/bulk-search/task/{task_uuid}/",
     "threats": "mrti/threats/",
     "advanced-search": "mrti/advanced-queries/threats/",

@@ -1,65 +1,131 @@
+import json
+
 import responses
-from datalake import Datalake
+from datalake import Datalake, BulkSearchTaskState
 import pytest
 
-#
-# @responses.activate
-# def test_lookup_threat(datalake):
-#     lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/' \
-#                  '?atom_value=mayoclinic.org&atom_type=domain&hashkey_only=False'
-#     resp_json = {'atom_type': 'domain',
-#                  'content': {'domain_content': {'atom_value': 'mayoclinic.org',
-#                                                 'depth': 1,
-#                                                 'domain': 'mayoclinic.org',
-#                                                 'notify': True,
-#                                                 'tld': 'org'}},
-#                  'first_seen': '2021-04-03T21:10:33Z',
-#                  'hashkey': '13166b76877347b83ec060f44b847071',
-#                  'href_graph': 'https://ti.extranet.mrti-center.com/api/v2/mrti/threats/13166b76877347b83ec060f44b847071/graph/',
-#                  'href_history': 'https://ti.extranet.mrti-center.com/api/v2/mrti/threats-history/13166b76877347b83ec060f44b847071/',
-#                  'href_threat': 'https://ti.extranet.mrti-center.com/api/v2/mrti/threats/13166b76877347b83ec060f44b847071/',
-#                  'last_updated': '2021-05-12T10:55:49Z',
-#                  'metadata': {'virustotal_url_feed': {'last_analysis_stats': {'harmless': 80,
-#                                                                               'malicious': 0,
-#                                                                               'suspicious': 0,
-#                                                                               'timeout': 0,
-#                                                                               'undetected': 7},
-#                                                       'permalink': 'https://www.virustotal.com/gui/url/af017a61fedd9c7002db06689a43b28fb14ef76d590f67694506bfc0815fd667',
-#                                                       'positives': 0,
-#                                                       'total': 87}},
-#                  'scores': [{'score': {'reliability': 16, 'risk': 0}, 'threat_type': 'malware'},
-#                             {'score': {'reliability': 16, 'risk': 0},
-#                              'threat_type': 'phishing'},
-#                             {'score': {'reliability': 16, 'risk': 0}, 'threat_type': 'spam'}],
-#                  'sources': [{'count': 2,
-#                               'first_seen': '2021-04-03T21:10:33Z',
-#                               'last_updated': '2021-05-12T10:55:49Z',
-#                               'max_depth': 1,
-#                               'min_depth': 1,
-#                               'source_id': 'virustotal_url_feed (notify)',
-#                               'source_policy': {'source_categories': ['threatintell',
-#                                                                       'reputation',
-#                                                                       'antivirus'],
-#                                                 'source_conditions': 'yes',
-#                                                 'source_name_display': ['restricted_internal'],
-#                                                 'source_references_conditions': 'no resell',
-#                                                 'source_uses': ['notify']},
-#                               'tlp': 'amber'}],
-#                  'system_first_seen': '2021-04-05T22:02:33Z',
-#                  'system_last_updated': '2021-05-12T11:56:24Z',
-#                  'tags': []}
-#     extractor_response = {
-#         "found": 1,
-#         "not_found": 0,
-#         "results": {
-#             "domain": [
-#                 "mayoclinic.org"
-#             ]
-#         }
-#     }
-#     responses.add(responses.POST, datalake.Threats._atom_values_extractor.url, json=extractor_response, status=200)
-#     responses.add(responses.GET, lookup_url, match_querystring=True, json=resp_json, status=200)
-#
-#     lookup_response = datalake.Threats.lookup(atoms[0])
-#
-#     assert lookup_response == resp_json
+from tests.common.fixture import datalake  # noqa needed fixture import
+
+bs_user = {
+    "email": "123@mail.com",
+    "full_name": "firstname lastname",
+    "id": 12,
+    "organization": {
+        "id": 47,
+        "name": "my_org",
+        "path_names": [
+            "my_org"
+        ]
+    }
+}
+
+
+@pytest.fixture
+def bs_status_response():
+    with responses.RequestsMock() as rsps:
+        bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+        # <editor-fold desc="bs_status_response">
+        bs_status_response = {
+            "count": 1,
+            "results": [
+                {
+                    "bulk_search": {
+                        "advanced_query_hash": "de70393f1c250ae67566ec37c2032d1b",
+                        "query_fields": [
+                            "threat_hashkey",
+                            "atom_value"
+                        ]
+                    },
+                    "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
+                    "created_at": "2021-09-21T14:19:26.872073+00:00",
+                    "eta": None,
+                    "file_delete_after": "2021-09-24T14:20:01.661882+00:00",
+                    "file_deleted": False,
+                    "file_size": 61398,
+                    "finished_at": "2021-09-21T14:20:01.661882+00:00",
+                    "progress": 100,
+                    "queue_position": None,
+                    "results": 1172,
+                    "started_at": "2021-09-21T14:19:58.040840+00:00",
+                    "state": "DONE",
+                    "user": bs_user,
+                    "uuid": "d9c00380-2784-4386-9bc3-aff35cfeeb41"
+                }
+            ]
+        }
+        # </editor-fold>
+        rsps.add(responses.POST, bs_status_url, json=bs_status_response, status=200)
+        yield rsps
+
+
+@responses.activate
+def test_bulk_search_no_parameter(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.BulkSearch.create_bulk_search_task()
+    assert str(err.value) == "Either a query_body or query_hash is required"
+
+
+def test_bulk_search_query_hash(datalake: Datalake, bs_status_response):
+    bs_creation_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/'
+    bs_creation_response = {
+        "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
+        "query_fields": [
+            "threat_hashkey",
+            "atom_value"
+        ],
+        "query_hash": "de70393f1c250ae67566ec37c2032d1b",
+        "task_uuid": "d9c00380-2784-4386-9bc3-aff35cfeeb41"
+    }
+    bs_status_response.add(responses.POST, bs_creation_url, json=bs_creation_response, status=200)
+
+    bs = datalake.BulkSearch.create_bulk_search_task(query_hash="123")
+    assert bs.bulk_search_hash == 'ff2d2dc27f17f115d85647dced7a3106'
+    assert bs.advanced_query_hash == 'de70393f1c250ae67566ec37c2032d1b'  # flatten field
+    assert bs.query_fields == ["threat_hashkey", "atom_value"]  # flatten field
+    assert bs.uuid == 'd9c00380-2784-4386-9bc3-aff35cfeeb41'
+    assert bs.state == BulkSearchTaskState.DONE
+    assert bs.user == bs_user  # field is not flatten as of now
+
+
+def test_bulk_search_query_body(datalake: Datalake, bs_status_response):
+    bs_creation_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/'
+    bs_creation_response = {
+        "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
+        "query_fields": [
+            "threat_hashkey",
+            "atom_value"
+        ],
+        "query_hash": "de70393f1c250ae67566ec37c2032d1b",
+        "task_uuid": "d9c00380-2784-4386-9bc3-aff35cfeeb41"
+    }
+    bs_query_body = {
+        "AND": [{
+            "AND": [{
+                "field": "metadata",
+                "type": "search",
+                "value": "some value"
+            }]
+        }]
+    }
+
+    def bs_creation_callback(request):
+        assert json.loads(request.body) == {
+            "query_fields": ["atom detail 1", "atom detail 2"],
+            "query_body": bs_query_body,
+        }
+        headers = {}
+        return 200, headers, json.dumps(bs_creation_response)
+
+    bs_status_response.add_callback(
+        responses.POST,
+        bs_creation_url,
+        callback=bs_creation_callback,
+        content_type='application/json',
+    )
+
+    bs = datalake.BulkSearch.create_bulk_search_task(
+        query_body=bs_query_body,
+        query_fields=["atom detail 1", "atom detail 2"],
+    )
+    assert bs.bulk_search_hash == 'ff2d2dc27f17f115d85647dced7a3106'
+    assert bs.uuid == 'd9c00380-2784-4386-9bc3-aff35cfeeb41'

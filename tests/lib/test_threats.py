@@ -17,6 +17,7 @@ atom_values_extract_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/m
 def test_lookup_threat(datalake):
     lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/' \
                  '?atom_value=mayoclinic.org&atom_type=domain&hashkey_only=False'
+    # <editor-fold desc="resp_json">
     resp_json = {'atom_type': 'domain',
                  'content': {'domain_content': {'atom_value': 'mayoclinic.org',
                                                 'depth': 1,
@@ -58,6 +59,7 @@ def test_lookup_threat(datalake):
                  'system_first_seen': '2021-04-05T22:02:33Z',
                  'system_last_updated': '2021-05-12T11:56:24Z',
                  'tags': []}
+    # </editor-fold>
     extractor_response = {
         "found": 1,
         "not_found": 0,
@@ -121,7 +123,7 @@ def test_bulk_lookup_threats(datalake):
     }
     bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
     responses.add(responses.POST, atom_values_extract_url, json=extractor_response, status=200)
-
+    # <editor-fold desc="bulk_resp">
     bulk_resp = {'domain': [{'atom_value': 'mayoclinic.org',
                              'hashkey': '13166b76877347b83ec060f44b847071',
                              'threat_details': {'atom_type': 'domain',
@@ -179,6 +181,7 @@ def test_bulk_lookup_threats(datalake):
                              'hashkey': '664d2e13bff4ac355c94b4f62ac0b92a',
                              'threat_found': False}
                             ]}
+    # </editor-fold>
 
     responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
     assert datalake.Threats.bulk_lookup(atom_values=atoms) == bulk_resp

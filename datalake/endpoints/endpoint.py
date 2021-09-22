@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 import requests
 from requests import Response
 
-from datalake import Output
+from datalake.common.ouput import Output
 from datalake.common.logger import logger
 from datalake.common.throttler import throttle
 from datalake.common.token_manager import TokenManager
@@ -75,7 +75,7 @@ class Endpoint:
                     logger.error('Request unexpectedly returned non dict value. Retrying')
             tries_left -= 1
         logger.error('Request failed: Will return nothing for this request')
-        return {}
+        return {}  # TODO replace with raise
 
     @staticmethod
     def _post_headers(output=Output.JSON) -> dict:
