@@ -1,5 +1,6 @@
 import copy
 import json
+from http.client import ResponseNotReady
 
 import responses
 from datalake import Datalake, BulkSearchTaskState, BulkSearchTask
@@ -177,3 +178,16 @@ def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
     download_result = bulk_search_task.download()
 
     assert download_result == expected_result
+
+
+@responses.activate
+def test_bulk_search_task_download_not_ready(bulk_search_task: BulkSearchTask):
+    task_uuid = bs_status_json['results'][0]['uuid']
+    bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    error_message = "Not ready yet"
+    json_returned = {"message": ("%s" % error_message)}
+    responses.add(responses.GET, bs_status_url, json=json_returned, status=202)
+
+    with pytest.raises(ResponseNotReady) as err:
+        bulk_search_task.download()
+    assert str(err.value) == error_message

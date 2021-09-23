@@ -1,7 +1,11 @@
 import json
+from http.client import ResponseNotReady
+
+from requests import Response
 
 from datalake.api_objects.bulk_search_task import BulkSearchTask
 from datalake.common.logger import logger
+from datalake.common.ouput import parse_response
 from datalake.endpoints import Endpoint
 
 
@@ -23,19 +27,20 @@ class BulkSearch(Endpoint):
             body['query_hash'] = query_hash
 
         url = self._build_url_for_endpoint('bulk-search')
-        response = self.datalake_requests(url, 'post', post_body=body, headers=self._post_headers())
+        response = self.datalake_requests(url, 'post', post_body=body, headers=self._post_headers()).json()
         return self.get_task(response['task_uuid'])
 
     def get_task(self, task_uuid) -> BulkSearchTask:
         url = self._build_url_for_endpoint("bulk-search-task")
         body = {"task_uuid": task_uuid}
-        response = self.datalake_requests(url, 'post', post_body=body, headers=self._post_headers())
+        response = self.datalake_requests(url, 'post', post_body=body, headers=self._post_headers()).json()
         bs_as_json = response['results'][0]  # TODO handle not found
         return BulkSearchTask(endpoint=self, **bs_as_json)
 
-    def download(self, task_uuid):
+    def download(self, task_uuid):  # TODO add different output type
         url = self._build_url_for_endpoint('retrieve-bulk-search')
         url = url.format(task_uuid=task_uuid)
-        response = self.datalake_requests(url, 'get', headers=self._get_headers())
-        # TODO handle not ready yet
-        return response
+        response: Response = self.datalake_requests(url, 'get', headers=self._get_headers())
+        if response.status_code == 202:
+            raise ResponseNotReady(response.json().get('message', ''))
+        return parse_response(response)

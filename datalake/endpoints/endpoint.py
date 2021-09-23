@@ -43,7 +43,14 @@ class Endpoint:
         period=OCD_DTL_QUOTA_TIME,
         call_per_period=OCD_DTL_REQUESTS_PER_QUOTA_TIME,
     )
-    def datalake_requests(self, url: str, method: str, headers: dict, post_body: dict = None):
+    def datalake_requests(
+            self,
+            url: str,
+            method: str,
+            headers: dict,
+            post_body:
+            dict = None,
+    ) -> Response:
         """
         Use it to request the API
         """
@@ -64,18 +71,14 @@ class Endpoint:
                 logger.debug(f'422 HTTP code: {response.text}')
                 self.token_manager.process_auth_error(response.json().get('msg'))
             elif response.status_code < 200 or response.status_code > 299:
-                logger.error(f'API returned non 2xx response code : {response.status_code}\n{response.text}'
-                             f'\n Retrying')
-            elif 'text/csv' in response.headers.get('Content-Type', []):
-                return response.text
+                logger.error(
+                    f'API returned non 2xx response code : {response.status_code}\n{response.text}\n Retrying'
+                )
             else:
-                try:
-                    return response.json()
-                except ValueError:
-                    logger.error('Request unexpectedly returned non dict value. Retrying')
+                return response
             tries_left -= 1
-        logger.error('Request failed: Will return nothing for this request')
-        return {}  # TODO replace with raise
+        logger.error('Request failed')
+        raise ValueError(f'{response.status_code}: {response.text}')
 
     @staticmethod
     def _post_headers(output=Output.JSON) -> dict:

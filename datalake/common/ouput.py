@@ -1,5 +1,7 @@
 from enum import Enum
-from typing import Set
+from typing import Set, Union
+
+from requests import Response
 
 
 class Output(Enum):
@@ -13,6 +15,14 @@ class Output(Enum):
 
     def __repr__(self):
         return str(self)
+
+
+def parse_response(response: Response) -> Union[str, dict]:
+    """Parse a Request.Response depending if a json or csv is returned"""
+    if 'text/csv' in response.headers.get('Content-Type', []):
+        return response.text
+    else:
+        return response.json()
 
 
 def display_outputs(outputs):

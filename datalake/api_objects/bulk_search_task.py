@@ -6,7 +6,7 @@ from datalake.common.logger import logger
 class BulkSearchTaskState(Enum):
     NEW = 'NEW'
     QUEUED = 'QUEUED'
-    PROGRESS = 'PROGRESS'
+    IN_PROGRESS = 'IN_PROGRESS'
     DONE = 'DONE'
 
 

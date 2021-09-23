@@ -3,7 +3,7 @@ from typing import List
 from requests.sessions import PreparedRequest
 
 from datalake import AtomType
-from datalake.common.ouput import Output, output_supported
+from datalake.common.ouput import Output, output_supported, parse_response
 from datalake.endpoints.endpoint import Endpoint
 from datalake.common.utils import join_dicts
 
@@ -40,7 +40,7 @@ class Threats(Endpoint):
         body['hashkey_only'] = hashkey_only
         url = self._build_url_for_endpoint('threats-bulk-lookup')
         response = self.datalake_requests(url, 'post', self._post_headers(output=output), body)
-        return response
+        return parse_response(response)
 
     @output_supported({Output.JSON, Output.CSV, Output.MISP, Output.STIX})
     def lookup(self, atom_value, atom_type: AtomType = None, hashkey_only=False, output=Output.JSON) -> dict:
@@ -69,7 +69,7 @@ class Threats(Endpoint):
         req = PreparedRequest()
         req.prepare_url(url, params)
         response = self.datalake_requests(req.url, 'get', self._get_headers(output=output))
-        return response
+        return parse_response(response)
 
     def atom_values_extract(self, untyped_atoms: List[str], treat_hashes_like=AtomType.FILE) -> dict:
         """
@@ -82,4 +82,4 @@ class Threats(Endpoint):
             'content': ' '.join(untyped_atoms),
             'treat_hashes_like': treat_hashes_like.value
         }
-        return self.datalake_requests(url, 'post', self._post_headers(), payload)
+        return self.datalake_requests(url, 'post', self._post_headers(), payload).json()
