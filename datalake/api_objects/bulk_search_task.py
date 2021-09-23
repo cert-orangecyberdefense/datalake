@@ -1,3 +1,5 @@
+import asyncio
+import os
 from enum import Enum
 
 from datalake.common.ouput import Output
@@ -16,6 +18,8 @@ class BulkSearchTask:
 
     This class is a thin wrapper around information returned by the API
     """
+
+    OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 30))
 
     # TODO replace with dataclasses when python 3.6 reach end of life
     def __init__(
@@ -58,7 +62,24 @@ class BulkSearchTask:
         self.uuid = uuid
 
     def download(self, output=Output.JSON):
+        """
+        Download a bulk search task, if it is not ready to be downloaded, it'll return a ResponseNotReady error
+
+        Use download_sync/download_async to automatically wait for the bulk search to be ready before downloading it
+        """
         return self._endpoint.download(self.uuid, output=output)
+
+    async def download_async(self, output=Output.JSON):  # Add warning that the request part is synchrone !
+        while self.state != BulkSearchTaskState.DONE:
+            # TODO Add timeout after which raise error
+            # TODO handle cancelled / failled / ... error
+            await asyncio.sleep(self.OCD_DTL_MAX_BACK_OFF_TIME)
+            self.update()
+        return self.download(output=output)  # Retry once if can't dl right away ?
+
+    def download_sync(self, output=Output.JSON):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self.download_async(output))
 
     def update(self):
         updated_bs = self._endpoint.get_task(self.uuid)

@@ -12,7 +12,7 @@ from datalake_scripts.common.logger import logger
 
 class HandleBulkTaskMixin(BaseEngine):
 
-    OCD_DTL_MAX_BACK_OFF_TIME = int(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 120))
+    OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 120))
 
     Json = Dict
     Check = Callable[[Json], bool]

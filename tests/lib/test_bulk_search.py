@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import json
 from http.client import ResponseNotReady
@@ -170,7 +171,7 @@ def test_bulk_search_task_update(bulk_search_task: BulkSearchTask):
 
 @responses.activate
 def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
-    task_uuid = bs_status_json['results'][0]['uuid']
+    task_uuid = bulk_search_task.uuid
     bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
     expected_result = "bulk search download"
     responses.add(responses.GET, bs_download_url, json=expected_result, status=200)
@@ -182,7 +183,7 @@ def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
 
 @responses.activate
 def test_bulk_search_task_download_not_ready(bulk_search_task: BulkSearchTask):
-    task_uuid = bs_status_json['results'][0]['uuid']
+    task_uuid = bulk_search_task.uuid
     bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
     error_message = "Not ready yet"
     json_returned = {"message": ("%s" % error_message)}
@@ -202,7 +203,7 @@ def test_bulk_search_task_download_invalid_output(bulk_search_task: BulkSearchTa
 
 @responses.activate
 def test_bulk_search_task_download_zip_json_output(bulk_search_task: BulkSearchTask):
-    task_uuid = bs_status_json['results'][0]['uuid']
+    task_uuid = bulk_search_task.uuid
     bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
     expected_result = 'zip json'
 
@@ -219,5 +220,31 @@ def test_bulk_search_task_download_zip_json_output(bulk_search_task: BulkSearchT
     )
 
     download_result = bulk_search_task.download(Output.JSON_ZIP)
+
+    assert download_result == expected_result
+
+
+@responses.activate
+def test_bulk_search_task_download_async(bulk_search_task: BulkSearchTask):
+    task_uuid = bulk_search_task.uuid
+    bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    expected_result = "bulk search download"
+    responses.add(responses.GET, bs_download_url, json=expected_result, status=200)
+
+    loop = asyncio.get_event_loop()
+    download_result = loop.run_until_complete(bulk_search_task.download_async())
+
+    assert download_result == expected_result
+
+
+# bs_status_response have DONE state
+def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask, bs_status_response):
+    bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download is not ready yet
+    task_uuid = bulk_search_task.uuid
+    bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    expected_result = "bulk search download"
+    bs_status_response.add(responses.GET, bs_download_url, json=expected_result, status=200)
+
+    download_result = bulk_search_task.download_sync()
 
     assert download_result == expected_result
