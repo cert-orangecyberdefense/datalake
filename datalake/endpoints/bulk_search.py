@@ -5,7 +5,7 @@ from requests import Response
 
 from datalake.api_objects.bulk_search_task import BulkSearchTask
 from datalake.common.logger import logger
-from datalake.common.ouput import parse_response
+from datalake.common.ouput import parse_response, Output, output_supported
 from datalake.endpoints import Endpoint
 
 
@@ -37,10 +37,11 @@ class BulkSearch(Endpoint):
         bs_as_json = response['results'][0]  # TODO handle not found
         return BulkSearchTask(endpoint=self, **bs_as_json)
 
-    def download(self, task_uuid):  # TODO add different output type
+    @output_supported({Output.JSON, Output.JSON_ZIP, Output.CSV, Output.CSV_ZIP})
+    def download(self, task_uuid, output=Output.JSON):
         url = self._build_url_for_endpoint('retrieve-bulk-search')
         url = url.format(task_uuid=task_uuid)
-        response: Response = self.datalake_requests(url, 'get', headers=self._get_headers())
+        response: Response = self.datalake_requests(url, 'get', headers=self._get_headers(output=output))
         if response.status_code == 202:
             raise ResponseNotReady(response.json().get('message', ''))
         return parse_response(response)

@@ -3,7 +3,7 @@ import json
 from http.client import ResponseNotReady
 
 import responses
-from datalake import Datalake, BulkSearchTaskState, BulkSearchTask
+from datalake import Datalake, BulkSearchTaskState, BulkSearchTask, Output
 import pytest
 
 from tests.common.fixture import datalake  # noqa needed fixture import
@@ -171,9 +171,9 @@ def test_bulk_search_task_update(bulk_search_task: BulkSearchTask):
 @responses.activate
 def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
     task_uuid = bs_status_json['results'][0]['uuid']
-    bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
     expected_result = "bulk search download"
-    responses.add(responses.GET, bs_status_url, json=expected_result, status=200)
+    responses.add(responses.GET, bs_download_url, json=expected_result, status=200)
 
     download_result = bulk_search_task.download()
 
@@ -183,11 +183,41 @@ def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
 @responses.activate
 def test_bulk_search_task_download_not_ready(bulk_search_task: BulkSearchTask):
     task_uuid = bs_status_json['results'][0]['uuid']
-    bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
     error_message = "Not ready yet"
     json_returned = {"message": ("%s" % error_message)}
-    responses.add(responses.GET, bs_status_url, json=json_returned, status=202)
+    responses.add(responses.GET, bs_download_url, json=json_returned, status=202)
 
     with pytest.raises(ResponseNotReady) as err:
         bulk_search_task.download()
     assert str(err.value) == error_message
+
+
+@responses.activate
+def test_bulk_search_task_download_invalid_output(bulk_search_task: BulkSearchTask):
+    with pytest.raises(ValueError) as err:
+        bulk_search_task.download(Output.MISP)
+    assert str(err.value) == f'MISP output type is not supported. Outputs supported are: CSV, CSV_ZIP, JSON, JSON_ZIP'
+
+
+@responses.activate
+def test_bulk_search_task_download_zip_json_output(bulk_search_task: BulkSearchTask):
+    task_uuid = bs_status_json['results'][0]['uuid']
+    bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    expected_result = 'zip json'
+
+    def bs_download_callback(request):
+        assert request.headers['Accept'] == 'application/zip'
+        headers = {'Content-Type': 'application/zip'}
+        return 200, headers, expected_result
+
+    responses.add_callback(
+        responses.GET,
+        bs_download_url,
+        callback=bs_download_callback,
+        content_type='application/zip',
+    )
+
+    download_result = bulk_search_task.download(Output.JSON_ZIP)
+
+    assert download_result == expected_result

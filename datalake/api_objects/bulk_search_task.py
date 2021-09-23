@@ -1,6 +1,6 @@
 from enum import Enum
 
-from datalake.common.logger import logger
+from datalake.common.ouput import Output
 
 
 class BulkSearchTaskState(Enum):
@@ -57,8 +57,8 @@ class BulkSearchTask:
         self.user = user
         self.uuid = uuid
 
-    def download(self):
-        return self._endpoint.download(self.uuid)
+    def download(self, output=Output.JSON):
+        return self._endpoint.download(self.uuid, output=output)
 
     def update(self):
         updated_bs = self._endpoint.get_task(self.uuid)

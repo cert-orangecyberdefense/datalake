@@ -9,6 +9,8 @@ class Output(Enum):
     CSV = 'text/csv'
     MISP = 'application/x-misp+json'
     STIX = 'application/stix+json'
+    JSON_ZIP = 'application/zip'
+    CSV_ZIP = 'text/x-csv-zip'
 
     def __str__(self):
         return self.name
@@ -18,8 +20,9 @@ class Output(Enum):
 
 
 def parse_response(response: Response) -> Union[str, dict]:
-    """Parse a Request.Response depending if a json or csv is returned"""
-    if 'text/csv' in response.headers.get('Content-Type', []):
+    """Parse a Request.Response depending of the Content-Type returned"""
+    content_type = response.headers.get('Content-Type', Output.JSON.value)
+    if content_type in {output.value for output in [Output.CSV, Output.CSV_ZIP, Output.JSON_ZIP]}:
         return response.text
     else:
         return response.json()
