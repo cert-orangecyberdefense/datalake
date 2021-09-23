@@ -37,7 +37,7 @@ class BulkSearchTask:
             uuid: str,
             user: dict,
     ):
-        """Do not call this method directly, use BulkSearch.create_bulk_search_task instead"""
+        """Do not call this method directly, use BulkSearch.create_task instead"""
         self._endpoint = endpoint
         # flatten bulk_search field
         self.advanced_query_hash = bulk_search['advanced_query_hash']
@@ -58,14 +58,8 @@ class BulkSearchTask:
         self.uuid = uuid
 
     def download(self):
-        ...
-        # bulk_results_url = self._build_url_for_endpoint('retrieve-bulk-search')
-        # response = self.datalake_requests(bulk_results_url, 'post', post_body=body, headers=self._post_headers())
-        # if not response:
-        #     logger.error('No bulk search created, is the query_hash valid as well as the query_fields ?')
-        #     return {}
-        # return response
+        return self._endpoint.download(self.uuid)
 
     def update(self):
-        updated_bs = self._endpoint.get(self.uuid)
+        updated_bs = self._endpoint.get_task(self.uuid)
         self.__dict__.update(updated_bs.__dict__)  # Avoid to return a new object

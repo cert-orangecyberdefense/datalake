@@ -49,6 +49,8 @@ bs_status_json = {
         }
     ]
 }
+
+
 # </editor-fold>
 
 
@@ -74,13 +76,13 @@ def bulk_search_task(datalake: Datalake, bs_status_response):
     }
     bs_status_response.add(responses.POST, bs_creation_url, json=bs_creation_response, status=200)
 
-    return datalake.BulkSearch.create_bulk_search_task(query_hash="123")
+    return datalake.BulkSearch.create_task(query_hash="123")
 
 
 @responses.activate
 def test_bulk_search_no_parameter(datalake: Datalake):
     with pytest.raises(ValueError) as err:
-        datalake.BulkSearch.create_bulk_search_task()
+        datalake.BulkSearch.create_task()
     assert str(err.value) == "Either a query_body or query_hash is required"
 
 
@@ -97,7 +99,7 @@ def test_bulk_search_query_hash(datalake: Datalake, bs_status_response):
     }
     bs_status_response.add(responses.POST, bs_creation_url, json=bs_creation_response, status=200)
 
-    bs = datalake.BulkSearch.create_bulk_search_task(query_hash="123")
+    bs = datalake.BulkSearch.create_task(query_hash="123")
     assert bs.bulk_search_hash == 'ff2d2dc27f17f115d85647dced7a3106'
     assert bs.advanced_query_hash == 'de70393f1c250ae67566ec37c2032d1b'  # flatten field
     assert bs.query_fields == ["threat_hashkey", "atom_value"]  # flatten field
@@ -142,7 +144,7 @@ def test_bulk_search_query_body(datalake: Datalake, bs_status_response):
         content_type='application/json',
     )
 
-    bs = datalake.BulkSearch.create_bulk_search_task(
+    bs = datalake.BulkSearch.create_task(
         query_body=bs_query_body,
         query_fields=["atom detail 1", "atom detail 2"],
     )
@@ -163,3 +165,15 @@ def test_bulk_search_task_update(bulk_search_task: BulkSearchTask):
 
     assert bulk_search_task.queue_position is 42
     assert bulk_search_task.state == BulkSearchTaskState.DONE  # field not modified
+
+
+@responses.activate
+def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
+    task_uuid = bs_status_json['results'][0]['uuid']
+    bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    expected_result = "bulk search download"
+    responses.add(responses.GET, bs_status_url, json=expected_result, status=200)
+
+    download_result = bulk_search_task.download()
+
+    assert download_result == expected_result
