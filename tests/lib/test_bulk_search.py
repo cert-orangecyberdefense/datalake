@@ -55,18 +55,8 @@ bs_status_json = {
 
 # </editor-fold>
 
-
 @pytest.fixture
-def bs_status_response():
-    with responses.RequestsMock() as rsps:
-        bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
-        rsps.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
-        yield rsps
-
-
-@pytest.fixture
-def bulk_search_task(datalake: Datalake, bs_status_response):
-    """Warning: include the bs_status_response context, which return a DONE bulk search status"""
+def bulk_search_task(datalake: Datalake):
     bs_creation_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/'
     bs_creation_response = {
         "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
@@ -77,9 +67,12 @@ def bulk_search_task(datalake: Datalake, bs_status_response):
         "query_hash": "de70393f1c250ae67566ec37c2032d1b",
         "task_uuid": "d9c00380-2784-4386-9bc3-aff35cfeeb41"
     }
-    bs_status_response.add(responses.POST, bs_creation_url, json=bs_creation_response, status=200)
-
-    return datalake.BulkSearch.create_task(query_hash="123")
+    with responses.RequestsMock() as response_context:
+        response_context.add(responses.POST, bs_creation_url, json=bs_creation_response, status=200)
+        bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+        response_context.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
+        task = datalake.BulkSearch.create_task(query_hash="123")
+    return task
 
 
 @responses.activate
@@ -89,7 +82,8 @@ def test_bulk_search_no_parameter(datalake: Datalake):
     assert str(err.value) == "Either a query_body or query_hash is required"
 
 
-def test_bulk_search_query_hash(datalake: Datalake, bs_status_response):
+@responses.activate
+def test_bulk_search_query_hash(datalake: Datalake):
     bs_creation_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/'
     bs_creation_response = {
         "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
@@ -100,7 +94,9 @@ def test_bulk_search_query_hash(datalake: Datalake, bs_status_response):
         "query_hash": "de70393f1c250ae67566ec37c2032d1b",
         "task_uuid": "d9c00380-2784-4386-9bc3-aff35cfeeb41"
     }
-    bs_status_response.add(responses.POST, bs_creation_url, json=bs_creation_response, status=200)
+    responses.add(responses.POST, bs_creation_url, json=bs_creation_response, status=200)
+    bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+    responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
 
     bs = datalake.BulkSearch.create_task(query_hash="123")
     assert bs.bulk_search_hash == 'ff2d2dc27f17f115d85647dced7a3106'
@@ -111,7 +107,8 @@ def test_bulk_search_query_hash(datalake: Datalake, bs_status_response):
     assert bs.user == bs_user  # field is not flatten as of now
 
 
-def test_bulk_search_query_body(datalake: Datalake, bs_status_response):
+@responses.activate
+def test_bulk_search_query_body(datalake: Datalake):
     bs_creation_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/'
     bs_creation_response = {
         "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
@@ -140,12 +137,14 @@ def test_bulk_search_query_body(datalake: Datalake, bs_status_response):
         headers = {}
         return 200, headers, json.dumps(bs_creation_response)
 
-    bs_status_response.add_callback(
+    responses.add_callback(
         responses.POST,
         bs_creation_url,
         callback=bs_creation_callback,
         content_type='application/json',
     )
+    bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+    responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
 
     bs = datalake.BulkSearch.create_task(
         query_body=bs_query_body,
@@ -247,13 +246,15 @@ def test_bulk_search_task_download_async(bulk_search_task: BulkSearchTask):
     assert download_result == expected_result
 
 
-# bs_status_response have DONE state
-def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask, bs_status_response):
+@responses.activate
+def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask):
+    bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+    responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
     bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download is not ready yet
     task_uuid = bulk_search_task.uuid
     bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
     expected_result = "bulk search download"
-    bs_status_response.add(responses.GET, bs_download_url, json=expected_result, status=200)
+    responses.add(responses.GET, bs_download_url, json=expected_result, status=200)
 
     download_result = bulk_search_task.download_sync()
 
@@ -261,36 +262,39 @@ def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask, bs_sta
 
 
 @pytest.mark.asyncio
-async def test_bulk_search_task_download_async_timeout(bulk_search_task: BulkSearchTask, bs_status_response):
+async def test_bulk_search_task_download_async_timeout(bulk_search_task: BulkSearchTask):
+    with responses.RequestsMock() as response_context:  # pytest.mark.asyncio is not compatible with responses decorator
+        bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download will never be ready
+        bs_update_json = copy.deepcopy(bs_status_json)
+        bs_update_json['results'][0]['state'] = 'IN_PROGRESS'
+        bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+        response_context.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
+
+        loop = asyncio.get_event_loop()
+        task = loop.create_task(bulk_search_task.download_async(timeout=0.2))
+        with pytest.raises(TimeoutError):
+            await task
+
+
+@responses.activate
+def test_bulk_search_task_download_sync_timeout(bulk_search_task: BulkSearchTask):
     bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download will never be ready
     bs_update_json = copy.deepcopy(bs_status_json)
     bs_update_json['results'][0]['state'] = 'IN_PROGRESS'
     bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
-    bs_status_response.replace(responses.POST, bs_status_url, json=bs_update_json, status=200)
-
-    loop = asyncio.get_event_loop()
-    task = loop.create_task(bulk_search_task.download_async(timeout=0.2))
-    with pytest.raises(TimeoutError):
-        await task
-
-
-def test_bulk_search_task_download_sync_timeout(bulk_search_task: BulkSearchTask, bs_status_response):
-    bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download will never be ready
-    bs_update_json = copy.deepcopy(bs_status_json)
-    bs_update_json['results'][0]['state'] = 'IN_PROGRESS'
-    bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
-    bs_status_response.replace(responses.POST, bs_status_url, json=bs_update_json, status=200)
+    responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
 
     with pytest.raises(TimeoutError):
         bulk_search_task.download_sync(timeout=0.2)
 
 
-def test_bulk_search_task_download_sync_failed(bulk_search_task: BulkSearchTask, bs_status_response):
+@responses.activate
+def test_bulk_search_task_download_sync_failed(bulk_search_task: BulkSearchTask):
     bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS
     bs_update_json = copy.deepcopy(bs_status_json)
     bs_update_json['results'][0]['state'] = 'CANCELLED'
     bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
-    bs_status_response.replace(responses.POST, bs_status_url, json=bs_update_json, status=200)
+    responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
 
     with pytest.raises(BulkSearchFailedError) as err:
         bulk_search_task.download_sync()
