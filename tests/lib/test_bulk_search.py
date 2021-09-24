@@ -6,7 +6,7 @@ from http.client import ResponseNotReady
 import pytest
 import responses
 
-from datalake import Datalake, BulkSearchTaskState, BulkSearchTask, Output, BulkSearchFailedError
+from datalake import Datalake, BulkSearchTaskState, BulkSearchTask, Output, BulkSearchFailedError, BulkSearchNotFound
 from tests.common.fixture import datalake  # noqa needed fixture import
 
 bs_user = {
@@ -168,6 +168,15 @@ def test_bulk_search_task_update(bulk_search_task: BulkSearchTask):
 
     assert bulk_search_task.queue_position is 42
     assert bulk_search_task.state == BulkSearchTaskState.DONE  # field not modified
+
+
+@responses.activate
+def test_bulk_search_task_not_found(datalake: Datalake):
+    bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+    responses.add(responses.POST, bs_status_url, json={'results': []}, status=200)
+
+    with pytest.raises(BulkSearchNotFound):
+        datalake.BulkSearch.get_task('non existing task_uuid')
 
 
 @responses.activate

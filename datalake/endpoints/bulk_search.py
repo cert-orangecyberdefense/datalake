@@ -3,6 +3,7 @@ from http.client import ResponseNotReady
 
 from requests import Response
 
+from datalake import BulkSearchNotFound
 from datalake.api_objects.bulk_search_task import BulkSearchTask
 from datalake.common.logger import logger
 from datalake.common.ouput import parse_response, Output, output_supported
@@ -34,7 +35,10 @@ class BulkSearch(Endpoint):
         url = self._build_url_for_endpoint("bulk-search-task")
         body = {"task_uuid": task_uuid}
         response = self.datalake_requests(url, 'post', post_body=body, headers=self._post_headers()).json()
-        bs_as_json = response['results'][0]  # TODO handle not found
+        results = response['results']
+        if len(results) != 1:
+            raise BulkSearchNotFound
+        bs_as_json = results[0]
         return BulkSearchTask(endpoint=self, **bs_as_json)
 
     @output_supported({Output.JSON, Output.JSON_ZIP, Output.CSV, Output.CSV_ZIP})

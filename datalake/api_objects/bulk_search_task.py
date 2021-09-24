@@ -28,6 +28,10 @@ class BulkSearchFailedError(Exception):
         self.failed_state = failed_state
 
 
+class BulkSearchNotFound(Exception):
+    pass
+
+
 class BulkSearchTask:
     """
     Bulk Search Task as represented by the API
