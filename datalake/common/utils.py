@@ -18,4 +18,7 @@ def join_dicts(*dicts: dict) -> Dict[str, list]:
 
 
 def parse_api_timestamp(timestamp: str) -> Optional[datetime.datetime]:
-    return datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z') if timestamp else None
+    if timestamp:
+        timestamp = timestamp.split('+')[0]  # Discard the offset as it should be 0 and is not supported by python 3.6
+        return datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f')
+    return None

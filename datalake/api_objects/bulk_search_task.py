@@ -76,7 +76,7 @@ class BulkSearchTask:
         self.progress = progress
         self.queue_position = queue_position
         self.results = results
-        self.started_at = parse_api_timestamp(finished_at)
+        self.started_at = parse_api_timestamp(started_at)
         self.state = BulkSearchTaskState[state]
         self.user = user
         self.uuid = uuid
