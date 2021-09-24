@@ -40,7 +40,7 @@ class BulkSearchTask:
     This class is a thin wrapper around information returned by the API
     """
 
-    OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 10))
+    REQUEST_INTERVAL = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 10))
 
     def __init__(
             self,
@@ -104,7 +104,7 @@ class BulkSearchTask:
             if time_passed.total_seconds() > timeout:
                 raise TimeoutError()
 
-            await asyncio.sleep(self.OCD_DTL_MAX_BACK_OFF_TIME)
+            await asyncio.sleep(self.REQUEST_INTERVAL)
             self.update()
         return self.download(output=output)
 
