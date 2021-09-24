@@ -1,11 +1,9 @@
-import json
 from http.client import ResponseNotReady
 
 from requests import Response
 
 from datalake import BulkSearchNotFound
 from datalake.api_objects.bulk_search_task import BulkSearchTask
-from datalake.common.logger import logger
 from datalake.common.ouput import parse_response, Output, output_supported
 from datalake.endpoints import Endpoint
 

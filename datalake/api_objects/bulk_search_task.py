@@ -4,6 +4,7 @@ import os
 from enum import Enum
 
 from datalake.common.ouput import Output
+from datalake.common.utils import parse_api_timestamp
 
 
 class BulkSearchTaskState(Enum):
@@ -41,13 +42,12 @@ class BulkSearchTask:
 
     OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 10))
 
-    # TODO replace with dataclasses when python 3.6 reach end of life
     def __init__(
             self,
             endpoint: "BulkSearch",
             bulk_search: dict,
             bulk_search_hash: str,
-            created_at: str,  # TODO parse date
+            created_at: str,
             eta: str,
             file_delete_after: str,
             file_deleted: bool,
@@ -67,16 +67,16 @@ class BulkSearchTask:
         self.advanced_query_hash = bulk_search['advanced_query_hash']
         self.query_fields = bulk_search['query_fields']
         self.bulk_search_hash = bulk_search_hash
-        self.created_at = created_at
-        self.eta = eta
+        self.created_at = parse_api_timestamp(created_at)
+        self.eta = parse_api_timestamp(eta)
         self.file_delete_after = file_delete_after
         self.file_deleted = file_deleted
         self.file_size = file_size
-        self.finished_at = finished_at
+        self.finished_at = parse_api_timestamp(finished_at)
         self.progress = progress
         self.queue_position = queue_position
         self.results = results
-        self.started_at = started_at
+        self.started_at = parse_api_timestamp(finished_at)
         self.state = BulkSearchTaskState[state]
         self.user = user
         self.uuid = uuid

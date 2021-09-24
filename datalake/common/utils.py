@@ -1,5 +1,6 @@
+import datetime
 from collections import defaultdict
-from typing import Dict
+from typing import Dict, Optional
 
 
 def join_dicts(*dicts: dict) -> Dict[str, list]:
@@ -14,3 +15,7 @@ def join_dicts(*dicts: dict) -> Dict[str, list]:
         for key, val in d.items():
             out[key].extend(val)
     return out
+
+
+def parse_api_timestamp(timestamp: str) -> Optional[datetime.datetime]:
+    return datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z') if timestamp else None

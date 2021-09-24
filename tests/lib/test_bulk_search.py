@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import datetime
 import json
 from http.client import ResponseNotReady
 
@@ -105,6 +106,8 @@ def test_bulk_search_query_hash(datalake: Datalake):
     assert bs.uuid == 'd9c00380-2784-4386-9bc3-aff35cfeeb41'
     assert bs.state == BulkSearchTaskState.DONE
     assert bs.user == bs_user  # field is not flatten as of now
+    assert bs.created_at == datetime.datetime(2021, 9, 21, 14, 19, 26, 872073, tzinfo=datetime.timezone.utc)
+    assert bs.eta is None  # Some timestamps are empty
 
 
 @responses.activate
