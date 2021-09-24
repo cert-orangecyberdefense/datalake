@@ -40,7 +40,7 @@ datalake = Datalake(username='username', password='password')
 ## lookup a threat in api
 ```python
 datalake.Threats.lookup(
-    threat='mayoclinic.org',
+    atom_value='mayoclinic.org',
     atom_type=AtomType.DOMAIN,
     hashkey_only=False,
 )
@@ -62,11 +62,17 @@ threats = [
 
 
 datalake.Threats.bulk_lookup(
-    threats, 
+    atom_values=threats, 
     atom_type=AtomType.DOMAIN,
     hashkey_only=False,
     output=Output.CSV
 )
+```
+
+## Bulk search
+```python
+task = dtl.BulkSearch.create_task(query_hash='<some query hash>')
+csv = task.download_sync(output=Output.CSV)
 ```
 
 

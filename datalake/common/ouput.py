@@ -22,6 +22,7 @@ class Output(Enum):
 def parse_response(response: Response) -> Union[str, dict]:
     """Parse a Request.Response depending of the Content-Type returned"""
     content_type = response.headers.get('Content-Type', Output.JSON.value)
+    content_type = content_type.split(';')[0]  # we don't care about extra info on the content
     if content_type in {output.value for output in [Output.CSV, Output.CSV_ZIP, Output.JSON_ZIP]}:
         return response.text
     else:
