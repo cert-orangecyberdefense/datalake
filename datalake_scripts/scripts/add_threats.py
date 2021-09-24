@@ -3,8 +3,8 @@ import sys
 
 from collections import OrderedDict
 
+from datalake.common.logger import logger
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import ThreatsPost, BulkThreatsPost
 
 

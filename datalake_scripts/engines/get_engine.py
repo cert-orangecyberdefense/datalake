@@ -2,8 +2,8 @@
 
 from requests import PreparedRequest
 
+from datalake.common.logger import logger
 from datalake_scripts.common.base_engine import BaseEngine
-from datalake_scripts.common.logger import logger
 
 
 class GetEngine(BaseEngine):

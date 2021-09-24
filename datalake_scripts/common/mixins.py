@@ -6,8 +6,8 @@ from halo import Halo
 
 import requests
 
+from datalake.common.logger import logger
 from datalake_scripts.common.base_engine import BaseEngine
-from datalake_scripts.common.logger import logger
 
 
 class HandleBulkTaskMixin(BaseEngine):

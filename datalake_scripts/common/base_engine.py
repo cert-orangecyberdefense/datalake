@@ -13,9 +13,9 @@ from urllib.parse import urljoin
 
 from requests import Response
 
+from datalake.common.logger import logger
+from datalake.common.throttler import throttle
 from datalake_scripts.common import suppress_insecure_request_warns
-from datalake_scripts.common.logger import logger
-from datalake_scripts.common.throttler import throttle
 from datalake_scripts.common.token_manager import TokenGenerator
 
 

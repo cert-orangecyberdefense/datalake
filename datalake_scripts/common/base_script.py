@@ -8,7 +8,8 @@ import logging
 import os
 from typing import List
 
-from datalake_scripts.common.logger import configure_logging, logger
+from datalake.common.config import Config
+from datalake.common.logger import configure_logging, logger
 from datalake_scripts.common.token_manager import TokenGenerator
 
 FOLDER_ABSOLUTE_PATH = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
@@ -16,7 +17,6 @@ FOLDER_ABSOLUTE_PATH = os.path.normpath(os.path.dirname(os.path.abspath(__file__
 
 class BaseScripts:
 
-    _CONFIG_ENDPOINTS = os.path.join(FOLDER_ABSOLUTE_PATH, '..', 'config', 'endpoints.json')
     PACKAGE_NAME = 'ocd-dtl'
 
     def save_output(self, file_name: str, data):
@@ -81,7 +81,7 @@ class BaseScripts:
         :return (dict, str, list<str, str>)
         """
         configure_logging(args.loglevel)
-        endpoint_config = self._load_config(self._CONFIG_ENDPOINTS)
+        endpoint_config = Config().load_config()
         main_url = endpoint_config['main'][args.env]
         token_generator = TokenGenerator(endpoint_config, environment=args.env)
         token_json = token_generator.get_token(username, password)
@@ -91,14 +91,6 @@ class BaseScripts:
         else:
             logger.error("Couldn't generate Tokens, please check the login/password provided")
             exit()
-
-    def _load_config(self, file_name: str) -> dict:
-        """
-        Load a Json file as a dict
-        """
-        with open(file_name, 'r') as config:
-            payload = json.load(config)
-        return payload
 
     def _load_list(self, file_name: str) -> list:
         """

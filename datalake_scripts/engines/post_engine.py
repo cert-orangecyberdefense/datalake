@@ -4,8 +4,8 @@ from typing import Set, Dict, List, Union
 
 from requests import PreparedRequest
 
+from datalake.common.logger import logger
 from datalake_scripts.common.base_engine import BaseEngine
-from datalake_scripts.common.logger import logger
 from datalake_scripts.common.mixins import HandleBulkTaskMixin
 from datalake_scripts.helper_scripts.utils import split_list
 

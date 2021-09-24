@@ -48,6 +48,8 @@ setup(
         'Natural Language :: English',
     ],
     include_package_data=True,
-    package_data={'datalake_scripts': ['config/endpoints.json']},
+    package_data={
+        'datalake': ['config/endpoints.json'],
+    },
     python_requires=">=3.6",
 )
