@@ -11,6 +11,21 @@ class BulkSearchTaskState(Enum):
     QUEUED = 'QUEUED'
     IN_PROGRESS = 'IN_PROGRESS'
     DONE = 'DONE'
+    CANCELLED = 'CANCELLED'
+    FAILED_ERROR = 'FAILED_ERROR'
+    FAILED_TIMEOUT = 'FAILED_TIMEOUT'
+
+
+BULK_SEARCH_FAILED_STATE = {
+    BulkSearchTaskState.CANCELLED,
+    BulkSearchTaskState.FAILED_TIMEOUT,
+    BulkSearchTaskState.FAILED_ERROR
+}
+
+
+class BulkSearchFailedError(Exception):
+    def __init__(self, failed_state: BulkSearchTaskState):
+        self.failed_state = failed_state
 
 
 class BulkSearchTask:
@@ -70,7 +85,7 @@ class BulkSearchTask:
         """
         return self._endpoint.download(self.uuid, output=output)
 
-    async def download_async(self, output=Output.JSON, timeout=15*60):
+    async def download_async(self, output=Output.JSON, timeout=15 * 60):
         """
         Wait asynchronously for the bulk search to be ready then return its result
 
@@ -79,15 +94,17 @@ class BulkSearchTask:
         """
         start = datetime.datetime.utcnow()
         while self.state != BulkSearchTaskState.DONE:
+            if self.state in BULK_SEARCH_FAILED_STATE:
+                raise BulkSearchFailedError(self.state)
             time_passed = datetime.datetime.utcnow() - start
             if time_passed.total_seconds() > timeout:
                 raise TimeoutError()
-            # TODO handle cancelled / failled / ... error
+
             await asyncio.sleep(self.OCD_DTL_MAX_BACK_OFF_TIME)
             self.update()
         return self.download(output=output)
 
-    def download_sync(self, output=Output.JSON, timeout=15*60):
+    def download_sync(self, output=Output.JSON, timeout=15 * 60):
         """Blocking version of download_async, easier to use but doesn't allow parallelization"""
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(self.download_async(output, timeout))
