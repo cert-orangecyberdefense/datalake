@@ -3,10 +3,10 @@ import copy
 import json
 from http.client import ResponseNotReady
 
-import responses
-from datalake import Datalake, BulkSearchTaskState, BulkSearchTask, Output
 import pytest
+import responses
 
+from datalake import Datalake, BulkSearchTaskState, BulkSearchTask, Output
 from tests.common.fixture import datalake  # noqa needed fixture import
 
 bs_user = {
@@ -66,6 +66,7 @@ def bs_status_response():
 
 @pytest.fixture
 def bulk_search_task(datalake: Datalake, bs_status_response):
+    """Warning: include the bs_status_response context, which return a DONE bulk search status"""
     bs_creation_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/'
     bs_creation_response = {
         "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
@@ -248,3 +249,27 @@ def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask, bs_sta
     download_result = bulk_search_task.download_sync()
 
     assert download_result == expected_result
+
+
+@pytest.mark.asyncio
+async def test_bulk_search_task_download_async_timeout(bulk_search_task: BulkSearchTask, bs_status_response):
+    bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download will never be ready
+    bs_update_json = copy.deepcopy(bs_status_json)
+    bs_update_json['results'][0]['state'] = 'IN_PROGRESS'
+    bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+    bs_status_response.replace(responses.POST, bs_status_url, json=bs_update_json, status=200)
+
+    task = asyncio.create_task(bulk_search_task.download_async(timeout=0.2))
+    with pytest.raises(TimeoutError):
+        await task
+
+
+def test_bulk_search_task_download_sync_timeout(bulk_search_task: BulkSearchTask, bs_status_response):
+    bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download will never be ready
+    bs_update_json = copy.deepcopy(bs_status_json)
+    bs_update_json['results'][0]['state'] = 'IN_PROGRESS'
+    bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+    bs_status_response.replace(responses.POST, bs_status_url, json=bs_update_json, status=200)
+
+    with pytest.raises(TimeoutError):
+        bulk_search_task.download_sync(timeout=0.2)

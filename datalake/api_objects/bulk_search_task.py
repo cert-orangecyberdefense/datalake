@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import os
 from enum import Enum
 
@@ -19,7 +20,7 @@ class BulkSearchTask:
     This class is a thin wrapper around information returned by the API
     """
 
-    OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 30))
+    OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 10))
 
     # TODO replace with dataclasses when python 3.6 reach end of life
     def __init__(
@@ -69,18 +70,29 @@ class BulkSearchTask:
         """
         return self._endpoint.download(self.uuid, output=output)
 
-    async def download_async(self, output=Output.JSON):  # Add warning that the request part is synchrone !
+    async def download_async(self, output=Output.JSON, timeout=15*60):
+        """
+        Wait asynchronously for the bulk search to be ready then return its result
+
+        Note that the requests library is used which is blocking.
+        timeout parameter is in seconds.
+        """
+        start = datetime.datetime.utcnow()
         while self.state != BulkSearchTaskState.DONE:
-            # TODO Add timeout after which raise error
+            time_passed = datetime.datetime.utcnow() - start
+            if time_passed.total_seconds() > timeout:
+                raise TimeoutError()
             # TODO handle cancelled / failled / ... error
             await asyncio.sleep(self.OCD_DTL_MAX_BACK_OFF_TIME)
             self.update()
-        return self.download(output=output)  # Retry once if can't dl right away ?
+        return self.download(output=output)
 
-    def download_sync(self, output=Output.JSON):
+    def download_sync(self, output=Output.JSON, timeout=15*60):
+        """Blocking version of download_async, easier to use but doesn't allow parallelization"""
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.download_async(output))
+        return loop.run_until_complete(self.download_async(output, timeout))
 
     def update(self):
+        """Query the API to refresh the tasks attributes"""
         updated_bs = self._endpoint.get_task(self.uuid)
         self.__dict__.update(updated_bs.__dict__)  # Avoid to return a new object
