@@ -259,7 +259,8 @@ async def test_bulk_search_task_download_async_timeout(bulk_search_task: BulkSea
     bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
     bs_status_response.replace(responses.POST, bs_status_url, json=bs_update_json, status=200)
 
-    task = asyncio.create_task(bulk_search_task.download_async(timeout=0.2))
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(bulk_search_task.download_async(timeout=0.2))
     with pytest.raises(TimeoutError):
         await task
 
