@@ -1,34 +1,29 @@
-from typing import List
+from typing import List, Union
 
 from requests.sessions import PreparedRequest
 
 from datalake import AtomType
 from datalake.common.ouput import Output, output_supported, parse_response
 from datalake.endpoints.endpoint import Endpoint
-from datalake.common.utils import join_dicts
+from datalake.common.utils import join_dicts, split_list, aggregate_csv_or_json_api_response
 
 
 class Threats(Endpoint):
+    _NB_ATOMS_PER_BULK_LOOKUP = 100
 
-    @output_supported({Output.JSON, Output.CSV})
-    def bulk_lookup(
+    def _bulk_lookup_batch(
             self,
             atom_values: list,
             atom_type: AtomType = None,
             hashkey_only=False,
             output=Output.JSON
     ) -> dict:
-        """
-        Look up multiple threats at once in the API, returning their ids and if they are present in Datalake.
-
-        Compared to the lookup endpoint, it allow to lookup big batch of values faster as fewer API calls are made.
-        However, fewer outputs types are supported as of now.
-        """
+        """Bulk lookup done on maximum _NB_ATOMS_PER_BULK_LOOKUP atoms"""
         typed_atoms = {}
         if not atom_type:
             atoms_values_extractor_response = self.atom_values_extract(atom_values)
             if atoms_values_extractor_response['found'] > 0:
-                typed_atoms = join_dicts(typed_atoms, atoms_values_extractor_response['results'])
+                typed_atoms = atoms_values_extractor_response['results']
             else:
                 raise ValueError('none of your atoms could be typed')
         elif not isinstance(atom_type, AtomType):
@@ -41,6 +36,31 @@ class Threats(Endpoint):
         url = self._build_url_for_endpoint('threats-bulk-lookup')
         response = self.datalake_requests(url, 'post', self._post_headers(output=output), body)
         return parse_response(response)
+
+    @output_supported({Output.JSON, Output.CSV})
+    def bulk_lookup(
+            self,
+            atom_values: list,
+            atom_type: AtomType = None,
+            hashkey_only=False,
+            output=Output.JSON
+    ) -> Union[dict, str]:
+        """
+        Look up multiple threats at once in the API, returning their ids and if they are present in Datalake.
+
+        Compared to the lookup endpoint, it allow to lookup big batch of values faster as fewer API calls are made.
+        However, fewer outputs types are supported as of now.
+        """
+        aggregated_response = [] if output is Output.CSV else {}
+        for atom_values_batch in split_list(atom_values, self._NB_ATOMS_PER_BULK_LOOKUP):
+            batch_result = self._bulk_lookup_batch(atom_values_batch, atom_type, hashkey_only, output)
+            aggregated_response = aggregate_csv_or_json_api_response(
+                aggregated_response,
+                batch_result,
+            )
+        if output is Output.CSV:
+            aggregated_response = '\n'.join(aggregated_response)  # a string is expected for CSV output
+        return aggregated_response
 
     @output_supported({Output.JSON, Output.CSV, Output.MISP, Output.STIX})
     def lookup(self, atom_value, atom_type: AtomType = None, hashkey_only=False, output=Output.JSON) -> dict:

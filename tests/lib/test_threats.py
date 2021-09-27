@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import responses
 
@@ -191,10 +193,79 @@ def test_bulk_lookup_threats(datalake):
 def test_bulk_lookup_threats_on_typed_atoms(datalake):
     bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
 
-    bulk_resp = {'some value': True}  # Only check the API response is returned as is
+    bulk_resp = {'file': [{'uid': '123'}]}  # Only check the API response is returned as is
 
     responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
     assert datalake.Threats.bulk_lookup(atom_values=atoms, atom_type=AtomType.DOMAIN) == bulk_resp
+
+
+@responses.activate
+def test_bulk_lookup_threats_on_big_chunk_json(datalake):
+    atom_values = [f'domain{i}.com' for i in range(10_000)]
+    bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
+
+    def request_callback(req):
+        assert req.headers['Accept'] == 'application/json'
+        body = json.loads(req.body)
+        assert len(body['domain']) == 100
+
+        resp = {
+            'domain': [
+                {'atom_value': domain,
+                 'hashkey': '664d2e13bff4ac355c94b4f62ac0b92a',
+                 'threat_found': False}
+                for domain in body['domain']
+            ]
+        }
+        return 200, {'Content-Type': 'application/json'}, json.dumps(resp)
+
+    responses.add_callback(
+        responses.POST,
+        bulk_lookup_url,
+        callback=request_callback,
+        match_querystring=True,
+    )
+
+    api_response = datalake.Threats.bulk_lookup(atom_values=atom_values, atom_type=AtomType.DOMAIN)
+
+    assert len(responses.calls) == 100, 'big chunk of atoms should be split in multiple query for bulk lookup'
+    assert len(api_response['domain']) == 10_000
+
+
+@responses.activate
+def test_bulk_lookup_threats_on_big_chunk_csv(datalake):
+    atom_values = [f'domain{i}.com' for i in range(5_000)]
+    bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
+    header = 'hashkey,atom_type,atom_value,atom_value_best_matching,threat_found,events_number,first_seen,last_updated,threat_types,ddos.score.risk,fraud.score.risk,hack.score.risk,leak.score.risk,malware.score.risk,phishing.score.risk,scam.score.risk,scan.score.risk,spam.score.risk,sources,tags,href_graph,href_history,href_threat,href_threat_webGUI'
+
+    def request_callback(req):
+        assert req.headers['Accept'] == 'text/csv'
+        body = json.loads(req.body)
+        assert len(body['domain']) == 100
+
+        resp = '\n'.join(
+            [header] +
+            [f'02bd4baae2bb8142509984c3c7574512,domain,{domain},,False,,,,,,,,,,,,,,,,,,,' for domain in body['domain']]
+        )
+        return 200, {'Content-Type': 'text/csv'}, resp
+
+    responses.add_callback(
+        responses.POST,
+        bulk_lookup_url,
+        callback=request_callback,
+        match_querystring=True,
+    )
+
+    api_response = datalake.Threats.bulk_lookup(
+        atom_values=atom_values,
+        atom_type=AtomType.DOMAIN,
+        output=Output.CSV,
+    )
+
+    assert len(responses.calls) == 50, 'big chunk of atoms should be split in multiple query for bulk lookup'
+    csv_lines = api_response.split('\n')
+    assert len(csv_lines) == 5_001
+    assert csv_lines[0] == header
 
 
 @responses.activate

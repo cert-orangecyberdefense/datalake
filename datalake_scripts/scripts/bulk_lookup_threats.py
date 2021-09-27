@@ -3,7 +3,7 @@ import sys
 
 from datalake import Datalake, AtomType, Output
 from datalake.common.logger import logger
-from datalake.common.utils import join_dicts
+from datalake.common.utils import join_dicts, aggregate_csv_or_json_api_response
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.helper_scripts.utils import split_input_file, save_output
 
@@ -116,7 +116,7 @@ def main(override_args=None):
             hashkey_only=hashkey_only,
             output=output_type,
         )
-        full_response = add_to_full_response(full_response, response)
+        full_response = aggregate_csv_or_json_api_response(full_response, response)
 
     if args.output:
         save_output(args.output, full_response)
@@ -124,17 +124,6 @@ def main(override_args=None):
     else:
         pretty_print(full_response, args.output_type)
     logger.debug(f'END: lookup_threats.py')
-
-
-def add_to_full_response(full_response, response):
-    if isinstance(response, dict):
-        full_response = join_dicts(full_response, response)
-    else:
-        csv_lines = response.strip().split('\n')
-        if not full_response:
-            full_response = [csv_lines[0]]
-        full_response += csv_lines[1:]
-    return full_response
 
 
 def lookup_atom_types(dtl: Datalake, untyped_atoms):
