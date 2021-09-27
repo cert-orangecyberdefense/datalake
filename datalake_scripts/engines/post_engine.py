@@ -420,9 +420,10 @@ class ScorePost(PostEngine):
         return_value = []
         for hashkey in hashkeys:
             response = self._post_new_score(hashkey, scores, override_type)
-            if response.get('message'):
-                logger.warning('\x1b[6;30;41m' + hashkey + ': ' + response.get('message') + '\x1b[0m')
-                return_value.append(hashkey + ': ' + response.get('message'))
+            if not response or response.get('message'):
+                response = response or {}  # handle case where no response is returned
+                logger.warning('\x1b[6;30;41m' + hashkey + ': ' + response.get('message', 'Error happened') + '\x1b[0m')
+                return_value.append(hashkey + ': ' + response.get('message', 'Error happened'))
             else:
                 return_value.append(hashkey + ': OK')
                 logger.info('\x1b[6;30;42m' + hashkey + ': OK\x1b[0m')

@@ -1,17 +1,19 @@
 import sys
 from collections import OrderedDict
 
+from datalake import Datalake
+from datalake.common.config import Config
+from datalake.common.logger import logger, configure_logging
+from datalake.common.token_manager import TokenManager
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import ScorePost, ThreatsPost
+from datalake_scripts.helper_scripts.utils import save_output
 
 
 def main(override_args=None):
     """Method to start the script"""
-    starter = BaseScripts()
-
     # Load initial args
-    parser = starter.start('Edit scores of a specified list of ids (hashkeys)')
+    parser = BaseScripts.start('Edit scores of a specified list of ids (hashkeys)')
     parser.add_argument(
         'hashkeys',
         help='hashkeys of the threat to edit score.',
@@ -46,7 +48,7 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-
+    configure_logging(args.loglevel)
     logger.debug(f'START: edit_score.py')
 
     if not args.hashkeys and not args.input_file:
@@ -64,8 +66,9 @@ def main(override_args=None):
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
     hashkeys = list(OrderedDict.fromkeys(hashkeys)) if hashkeys else []
     # Load api_endpoints and tokens
-    endpoint_config, main_url, tokens = starter.load_config(args)
-    post_engine_edit_score = ScorePost(endpoint_config, args.env, tokens)
+    endpoint_config = Config().load_config()
+    token_manager = TokenManager(endpoint_config, environment=args.env)
+    post_engine_edit_score = ScorePost(endpoint_config, args.env, token_manager)
 
     response_dict = post_engine_edit_score.post_new_score_from_list(
         hashkeys,
@@ -74,7 +77,7 @@ def main(override_args=None):
     )
 
     if args.output:
-        starter.save_output(args.output, response_dict)
+        save_output(args.output, response_dict)
         logger.info(f'Results saved in {args.output}\n')
     logger.debug(f'END: edit_score.py')
 
