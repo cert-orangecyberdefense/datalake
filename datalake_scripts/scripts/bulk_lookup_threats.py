@@ -1,28 +1,22 @@
 import json
 import sys
-from parser import ParserError
 
+from datalake import Datalake, AtomType, Output
 from datalake.common.logger import logger
 from datalake.common.utils import join_dicts
-from datalake_scripts import AtomValuesExtractor
-from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.engines.post_engine import BulkLookupThreats
+from datalake_scripts.helper_scripts.utils import split_input_file, save_output
 
 SUBCOMMAND_NAME = 'bulk_lookup_threats'
 UNTYPED_ATOM_TYPE = 'untyped'
-ATOM_TYPES_FLAGS = [
-    'apk', 'asn', 'cc', 'crypto', 'cve', 'domain', 'email', 'file', 'fqdn',
-    'iban', 'ip', 'ip_range', 'paste', 'phone_number', 'regkey', 'ssl', 'url'
-]
+ATOM_TYPES_FLAGS = [atom_type.name.lower() for atom_type in AtomType]
 
 
 def main(override_args=None):
     """Method to start the script"""
 
     # Load initial args
-    starter = BaseScripts()
-    parser = starter.start('Gets threats or hashkeys from given atom types and atom values.')
+    parser = BaseScripts.start('Gets threats or hashkeys from given atom types and atom values.')
     supported_atom_types = parser.add_argument_group('Supported Atom Types')
 
     parser.add_argument(
@@ -62,15 +56,12 @@ def main(override_args=None):
         args = parser.parse_args()
     logger.debug(f'START: bulk_lookup_threats.py')
 
-    # create output type header
-    accept_header = {'Accept': None}
-
+    output_type = Output.JSON
     if args.output_type:
         try:
-            accept_header['Accept'] = BaseEngine.output_type2header(
-                args.output_type)
-        except ParserError as e:
-            logger.exception(f'Exception raised while getting output type headers # {str(e)}', exc_info=False)
+            output_type = Output[args.output_type.upper()]
+        except KeyError:
+            logger.error('Not supported output, please use either json or csv')
             exit(1)
 
     # to gather all typed atoms passed by arguments and input files
@@ -89,56 +80,46 @@ def main(override_args=None):
         parser.error("you must provide at least one of following: untyped atom, atom type, input file.")
 
     # load api_endpoints and tokens
-    endpoints_config, token_manager = starter.load_config(args)
-    post_engine_bulk_lookup_threats = BulkLookupThreats(endpoints_config, args.env, token_manager)
-    post_engine_atom_values_extractor = AtomValuesExtractor(endpoints_config, args.env, token_manager)
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
     hashkey_only = args.hashkey_only
     untyped_atoms = args.untyped_atoms or []
-    full_response = {}
     size_limit = 100
 
+    # Retrieve all atoms and try to type them first
     # process command line arguments inputs.
     untyped = []
     for untyped_atom in untyped_atoms:
         input_atom_type, atom = get_atom_type_from_filename(untyped_atom)
         if input_atom_type == UNTYPED_ATOM_TYPE:
             untyped.append(atom)
-    current_typed_atoms = lookup_atom_types(post_engine_atom_values_extractor, untyped, typed_atoms)
-    if current_typed_atoms:
-        response = bulk_lookup_request(
-            post_engine_bulk_lookup_threats,
-            current_typed_atoms,
-            accept_header,
-            hashkey_only,
-        )
-        full_response = add_to_full_response(full_response, response)
-    typed_atoms.clear()
+    typed_atoms_to_look_up = join_dicts(typed_atoms, lookup_atom_types(dtl, untyped))
 
     # process input files
     if has_file:
         for input_file in args.input:
             file_atom_type, filename = get_atom_type_from_filename(input_file)
             logger.debug(f'file {filename} was recognized as {file_atom_type}')
-            splitted = starter.split_input_file(filename, size_limit)
             if file_atom_type == UNTYPED_ATOM_TYPE:
-                for atom_chunk in splitted:
+                for atom_chunk in split_input_file(filename, size_limit):
                     untyped_atoms = atom_chunk
-                    current_typed_atoms = lookup_atom_types(
-                        post_engine_atom_values_extractor, untyped_atoms, typed_atoms)
-                    response = bulk_lookup_request(
-                        post_engine_bulk_lookup_threats, current_typed_atoms, accept_header, hashkey_only)
-                    full_response = add_to_full_response(full_response, response)
-                    typed_atoms.clear()
+                    typed_atoms_to_look_up = join_dicts(lookup_atom_types(dtl, untyped_atoms), typed_atoms_to_look_up)
             else:
-                for atom_chunk in splitted:
-                    typed_atoms.setdefault(
-                        file_atom_type, []).extend(atom_chunk)
-                    response = bulk_lookup_request(
-                        post_engine_bulk_lookup_threats, typed_atoms, accept_header, hashkey_only)
-                    full_response = add_to_full_response(full_response, response)
-                    typed_atoms.clear()
+                for atom_chunk in split_input_file(filename, size_limit):
+                    typed_atoms_to_look_up = join_dicts({file_atom_type: atom_chunk}, typed_atoms_to_look_up)
+
+    # Query each atom type
+    full_response = {}
+    for atom_type, atoms in typed_atoms_to_look_up.items():
+        response = dtl.Threats.bulk_lookup(
+            atom_values=atoms,
+            atom_type=AtomType[atom_type.upper()],
+            hashkey_only=hashkey_only,
+            output=output_type,
+        )
+        full_response = add_to_full_response(full_response, response)
+
     if args.output:
-        starter.save_output(args.output, full_response)
+        save_output(args.output, full_response)
         logger.debug(f'Results saved in {args.output}\n')
     else:
         pretty_print(full_response, args.output_type)
@@ -156,35 +137,20 @@ def add_to_full_response(full_response, response):
     return full_response
 
 
-def bulk_lookup_request(post_engine_bulk_lookup_threats, typed_atoms,
-                        accept_header, hashkey_only):
-    response = post_engine_bulk_lookup_threats.bulk_lookup_threats(
-        threats=typed_atoms,
-        additional_headers=accept_header,
-        hashkey_only=hashkey_only
-    )
+def lookup_atom_types(dtl: Datalake, untyped_atoms):
+    if not untyped_atoms:
+        return {}
 
-    return response
+    response = dtl.Threats.atom_values_extract(untyped_atoms)
+    if response['found'] == 0:
+        logger.warning('none of your untyped atoms could be typed')
 
-
-def lookup_atom_types(post_engine_atom_values_extractor, untyped_atoms, typed_atoms):
-    # lookup for atom types
-    if untyped_atoms:
-        atoms_values_extractor_response = post_engine_atom_values_extractor.atom_values_extract(
-            untyped_atoms)
-        if atoms_values_extractor_response['found'] > 0:
-            typed_atoms = join_dicts(
-                typed_atoms, atoms_values_extractor_response['results'])
-        else:
-            logger.warning('none of your untyped atoms could be typed')
-
-        # find out which atoms couldn't be typed to display them
-        failed_to_type_atoms = atoms_values_extractor_response['not_found']
-        if len(failed_to_type_atoms) > 0:
-            logger.warning(f'\x1b[46m{"#" * 60} FAILED TO IDENTIFY ATOMS {"#" * 36}\x1b[46m')
-            logger.warning('\n'.join(failed_to_type_atoms) + '\n')
-
-    return typed_atoms
+    # find out which atoms couldn't be typed to display them
+    failed_to_type_atoms = response['not_found']
+    if len(failed_to_type_atoms) > 0:
+        logger.warning(f'\x1b[46m{"#" * 60} FAILED TO IDENTIFY ATOMS {"#" * 36}\x1b[46m')
+        logger.warning('\n'.join(failed_to_type_atoms) + '\n')
+    return response['results']
 
 
 def get_atom_type_from_filename(filename, input_delimiter=':'):

@@ -66,4 +66,4 @@ def parse_atom_type_or_exit(atom_type: str) -> AtomType:
             f'{atom_type} atom type is not supported, '
             f'use one of {[atom_type_.name.lower() for atom_type_ in AtomType]}'
         )
-        exit()
+        exit(1)
