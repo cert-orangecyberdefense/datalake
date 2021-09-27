@@ -40,11 +40,7 @@ class HandleBulkTaskMixin(BaseEngine):
 
         json_response = None
         while not json_response:
-            response = requests.get(
-                url=retrieve_bulk_result_url,
-                headers={'Authorization': self.tokens[0]},
-                verify=self.requests_ssl_verify
-            )
+            response = requests.get(url=retrieve_bulk_result_url, headers={}, verify=self.requests_ssl_verify)
             if response.status_code == 200:
                 potential_json_response = response.json()
                 if additional_checks and not all(check(potential_json_response) for check in additional_checks):

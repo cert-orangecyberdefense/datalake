@@ -48,8 +48,7 @@ class Endpoint:
             url: str,
             method: str,
             headers: dict,
-            post_body:
-            dict = None,
+            post_body: dict = None,
     ) -> Response:
         """
         Use it to request the API

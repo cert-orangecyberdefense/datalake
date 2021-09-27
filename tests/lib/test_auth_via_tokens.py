@@ -1,4 +1,5 @@
 import json
+import logging
 
 import pytest
 import responses
@@ -18,15 +19,20 @@ def test_token_auth(datalake):
 
 
 @responses.activate
-def test_invalid_credentials():
+def test_invalid_credentials(caplog):
     url = 'https://datalake.cert.orangecyberdefense.com/api/v2/auth/token/'
 
     api_error_msg = "Wrong credentials provided"
     api_response = {'messages': api_error_msg}
     responses.add(responses.POST, url, json=api_response, status=401)
-    with pytest.raises(ValueError) as ve:
-        Datalake(username='username@wow.com', password='password')
+    with caplog.at_level(logging.ERROR):
+        with pytest.raises(ValueError) as ve:
+            Datalake(username='username@wow.com', password='password')
     assert str(ve.value) == f'Could not login: {{"messages": "{api_error_msg}"}}'
+    assert caplog.messages == [
+        f'An error occurred while retrieving an access token, for URL: {url}\n'
+        f'response of the API: {{"messages": "{api_error_msg}"}}'
+    ]
 
 
 @responses.activate

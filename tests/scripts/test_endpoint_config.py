@@ -1,36 +1,17 @@
 import pytest
 
-from datalake_scripts.common.token_manager import TokenGenerator
-from datalake_scripts.engines.get_engine import LookupThreats, ThreatsSearch
+from datalake_scripts.engines.get_engine import ThreatsSearch
 from datalake_scripts.engines.post_engine import CommentsPost, ThreatsPost, ScorePost, TagsPost, BulkSearch
-
-TEST_ENV = 'my_env'
-TEST_CONFIG = {
-    'main': {
-        TEST_ENV: 'https://datalake.com/api/'
-    },
-    'endpoints': {
-        'bulk-search': 'mrti/bulk-search/',
-        'threats': 'mrti/threats/',
-        'threats-manual': 'mrti/threats-manual/',
-        'token': 'auth/token/',
-        "advanced-search": "mrti/advanced-queries/threats/",
-        'refresh_token': 'auth/refresh-token/',
-        'lookup': 'mrti/threats/lookup/',
-        'comment': 'mrti/threats/{hashkey}/comments/',
-        'tag': 'mrti/threats/{hashkey}/tags/',
-    },
-    'api_version': 'v42/'
-}
+from tests.common.fixture import token_manager, TestData  # noqa needed fixture import
 
 
-def test_auth():
-    engine = TokenGenerator(TEST_CONFIG, environment=TEST_ENV)
-    assert engine.url_token == 'https://datalake.com/api/v42/auth/token/'
+def test_auth(token_manager):
+    assert token_manager.url_token == 'https://datalake.com/api/v42/auth/token/'
+    assert token_manager.access_token == 'Token access_token'
+    assert token_manager.refresh_token == 'Token refresh_token'
 
 
 @pytest.mark.parametrize("engine,expected_url", [
-    (LookupThreats, 'https://datalake.com/api/v42/mrti/threats/lookup/'),
     (ThreatsSearch, 'https://datalake.com/api/v42/mrti/threats/'),
     (BulkSearch, 'https://datalake.com/api/v42/mrti/bulk-search/'),
     (ThreatsPost, 'https://datalake.com/api/v42/mrti/threats-manual/'),
@@ -38,6 +19,6 @@ def test_auth():
     (TagsPost, 'https://datalake.com/api/v42/mrti/threats/{hashkey}/tags/'),
     (ScorePost, 'https://datalake.com/api/v42/mrti/threats/'),
 ])
-def test_engine(engine, expected_url):
-    engine = engine(TEST_CONFIG, environment='my_env', tokens=[])
+def test_engine(token_manager, engine, expected_url):
+    engine = engine(TestData.TEST_CONFIG, environment=TestData.TEST_ENV, token_manager=token_manager)
     assert engine.url == expected_url

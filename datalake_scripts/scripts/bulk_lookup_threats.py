@@ -2,12 +2,12 @@ import json
 import sys
 from parser import ParserError
 
+from datalake.common.logger import logger
+from datalake.common.utils import join_dicts
 from datalake_scripts import AtomValuesExtractor
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import BulkLookupThreats
-from datalake_scripts.helper_scripts.utils import join_dicts
 
 SUBCOMMAND_NAME = 'bulk_lookup_threats'
 UNTYPED_ATOM_TYPE = 'untyped'
@@ -89,9 +89,9 @@ def main(override_args=None):
         parser.error("you must provide at least one of following: untyped atom, atom type, input file.")
 
     # load api_endpoints and tokens
-    endpoints_config, main_url, tokens = starter.load_config(args)
-    post_engine_bulk_lookup_threats = BulkLookupThreats(endpoints_config, args.env, tokens)
-    post_engine_atom_values_extractor = AtomValuesExtractor(endpoints_config, args.env, tokens)
+    endpoints_config, token_manager = starter.load_config(args)
+    post_engine_bulk_lookup_threats = BulkLookupThreats(endpoints_config, args.env, token_manager)
+    post_engine_atom_values_extractor = AtomValuesExtractor(endpoints_config, args.env, token_manager)
     hashkey_only = args.hashkey_only
     untyped_atoms = args.untyped_atoms or []
     full_response = {}

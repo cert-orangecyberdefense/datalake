@@ -1,22 +1,24 @@
+import logging
 import sys
-
 from collections import OrderedDict
 from parser import ParserError
 
+from datalake import Datalake, AtomType
+from datalake.common.logger import logger
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.common.logger import logger
-from datalake_scripts.engines.get_engine import LookupThreats
-from datalake_scripts.engines.post_engine import PostEngine
 from datalake_scripts.helper_scripts.output_builder import CsvBuilder
+from datalake_scripts.helper_scripts.utils import load_csv, load_list, save_output, parse_atom_type_or_exit
+
+boolean_to_text_and_color = {
+    True: ('FOUND', '\x1b[6;30;42m'),
+    False: ('NOT_FOUND', '\x1b[6;30;41m')
+}
 
 
 def main(override_args=None):
-    """Method to start the script"""
-    starter = BaseScripts()
-
     # Load initial args
-    parser = starter.start('Submit a new threat to Datalake from a file')
+    parser = BaseScripts.start('Submit a new threat to Datalake from a file')
     required_named = parser.add_argument_group('required arguments')
     csv_controle = parser.add_argument_group('CSV control arguments')
 
@@ -75,9 +77,6 @@ def main(override_args=None):
     if not args.threats and not args.input:
         parser.error("either a threat or an input_file is required")
 
-    if args.atom_type not in PostEngine.authorized_atom_value:
-        parser.error("atom type must be in {}".format(','.join(PostEngine.authorized_atom_value)))
-
     if args.output_type:
         try:
             args.output_type = BaseEngine.output_type2header(args.output_type)
@@ -86,32 +85,36 @@ def main(override_args=None):
             exit(1)
 
     hashkey_only = not args.threat_details
-
-    # Load api_endpoints and tokens
-    endpoint_config, main_url, tokens = starter.load_config(args)
-    get_engine_lookup_threats = LookupThreats(endpoint_config, args.env, tokens)
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
     list_threats = list(args.threats) if args.threats else []
     if args.input:
         if args.is_csv:
             try:
-                list_threats = list_threats + starter._load_csv(args.input, args.delimiter, args.column - 1)
+                list_threats = list_threats + load_csv(args.input, args.delimiter, args.column - 1)
             except ValueError as ve:
                 logger.error(ve)
                 exit()
         else:
-            list_threats = list_threats + starter._load_list(args.input)
-    list_threats = list(OrderedDict.fromkeys(list_threats))  # removing duplicates while preserving order
-    response_dict = get_engine_lookup_threats.lookup_threats(
-        list_threats,
-        args.atom_type,
-        hashkey_only,
-    )
+            list_threats = list_threats + load_list(args.input)
 
-    if args.output_type == 'text/csv':
-        response_dict = CsvBuilder.create_look_up_csv(response_dict, args.atom_type, has_details=args.threat_details)
+    full_response = {}
+    atom_type = parse_atom_type_or_exit(args.atom_type)
+    list_threats = list(OrderedDict.fromkeys(list_threats))  # removing duplicates while preserving order
+    for threat in list_threats:
+        response = dtl.Threats.lookup(threat, atom_type=atom_type, hashkey_only=hashkey_only)
+        found = response.get('threat_found', True)
+        text, color = boolean_to_text_and_color[found]
+        logger.info('{}{} hashkey:{} {}\x1b[0m'.format(color, threat, response['hashkey'], text))
+        full_response[threat] = response
 
     if args.output:
-        starter.save_output(args.output, response_dict)
+        if args.output_type == 'text/csv':
+            full_response = CsvBuilder.create_look_up_csv(
+                full_response,
+                args.atom_type,
+                has_details=args.threat_details,
+            )
+        save_output(args.output, full_response)
         logger.debug(f'Results saved in {args.output}\n')
     logger.debug(f'END: lookup_threats.py')
 

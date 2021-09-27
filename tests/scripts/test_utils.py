@@ -1,4 +1,5 @@
-from datalake_scripts.helper_scripts.utils import split_list, join_dicts
+from datalake.common.utils import join_dicts
+from datalake_scripts.helper_scripts.utils import split_list
 
 
 def test_split_list():

@@ -36,7 +36,7 @@ setup(
             'add_new_comment_or_tags = datalake_scripts.scripts.add_new_comment_or_tags:main',
             'edit_score = datalake_scripts.scripts.edit_score:main',
             'get_threats_from_query_hash = datalake_scripts.scripts.get_threats_from_query_hash:main',
-            f'{BaseScripts.PACKAGE_NAME} = datalake_scripts.cli:main'
+            f'{Cli.CLI_NAME} = datalake_scripts.cli:main'
         ),
     },
     classifiers=[

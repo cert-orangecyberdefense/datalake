@@ -57,16 +57,7 @@ class PostEngine(BaseEngine):
                 return entry
 
     def _post_headers(self) -> dict:
-        """
-        Get headers for GET endpoints.
-
-            {
-                'Authorization': self.tokens[0],
-                'accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        """
-        return {'Authorization': self.tokens[0], 'Accept': 'application/json', 'Content-Type': 'application/json'}
+        return {'Accept': 'application/json', 'Content-Type': 'application/json'}
 
     @staticmethod
     def build_full_query_body(query_body):

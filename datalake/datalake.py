@@ -16,10 +16,8 @@ class Datalake:
     >>> dtl.Threats.lookup(atom_value='mayoclinic.org', atom_type=AtomType.DOMAIN, hashkey_only=False)
     """
 
-    LOG_LEVEL = logging.WARNING
-
-    def __init__(self, username: str = None, password: str = None, env='prod'):
-        configure_logging(self.LOG_LEVEL)
+    def __init__(self, username: str = None, password: str = None, env='prod', log_level=logging.WARNING):
+        configure_logging(log_level)
         endpoint_config = Config().load_config()
         token_manager = TokenManager(endpoint_config, environment=env, username=username, password=password)
 
