@@ -1,7 +1,7 @@
 import sys
 
+from datalake.common.logger import logger, configure_logging
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import CommentsPost
 
 
@@ -37,6 +37,7 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
+    configure_logging(args.loglevel)
 
     # Load api_endpoints and tokens
     endpoint_config, main_url, tokens = starter.load_config(args)
