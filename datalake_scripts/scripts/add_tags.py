@@ -1,16 +1,18 @@
 import sys
 
+from datalake.common.config import Config
 from datalake.common.logger import logger, configure_logging
+from datalake.common.token_manager import TokenManager
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.engines.post_engine import TagsPost
+from datalake_scripts.helper_scripts.utils import save_output
 
 
 def main(override_args=None):
     """Method to start the script"""
-    starter = BaseScripts()
 
     # Load initial args
-    parser = starter.start('Add tags and/or comments to a specified list of hashkeys.')
+    parser = BaseScripts.start('Add tags and/or comments to a specified list of hashkeys.')
     parser.add_argument(
         'hashkeys',
         help='hashkeys of the threat to add tags and/or the comment',
@@ -41,8 +43,9 @@ def main(override_args=None):
     configure_logging(args.loglevel)
 
     # Load api_endpoints and tokens
-    endpoint_config, main_url, tokens = starter.load_config(args)
-    post_engine_add_comments = TagsPost(endpoint_config, args.env, tokens)
+    endpoint_config = Config().load_config()
+    token_manager = TokenManager(endpoint_config, environment=args.env)
+    post_engine_add_comments = TagsPost(endpoint_config, args.env, token_manager)
 
     if not args.hashkeys and not args.input_file:
         parser.error("either a hashkey or an input_file is required")
@@ -59,7 +62,7 @@ def main(override_args=None):
     )
 
     if args.output:
-        starter.save_output(args.output, response_dict)
+        save_output(args.output, response_dict)
         logger.debug(f'Results saved in {args.output}\n')
     logger.debug(f'END: add_tags.py')
 
