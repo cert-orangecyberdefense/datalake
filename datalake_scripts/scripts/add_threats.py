@@ -150,9 +150,9 @@ def main(override_args=None):
 def defang_threats(threats, atom_type):
     defanged = []
     # matches urls like http://www.website.com:444/file.html
-    standard_url_regex = re.compile(r'^(https?:\/\/)[a-z0-9]+([\-\.][a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$')
+    standard_url_regex = re.compile(r'^(https?://)[a-z0-9]+([\-.][a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(/.*)?$')
     # matches urls like http://185.25.5.3:8080/result.php (ipv4 or ipv6)
-    ip_url_regex = re.compile(r'^(https?:\/\/)[0-9a-zA-Z]{1,4}([\.:][0-9a-zA-Z]{1,4}){3,7}(:[0-9]{1,5})?(\/.*)?$')
+    ip_url_regex = re.compile(r'^(https?://)[0-9a-zA-Z]{1,4}([.:][0-9a-zA-Z]{1,4}){3,7}(:[0-9]{1,5})?(/.*)?$')
     for threat in threats:
         unmodified_threat = threat
         threat = threat.replace('[.]', '.')

@@ -1,7 +1,6 @@
 import sys
 from collections import OrderedDict
 
-from datalake import Datalake
 from datalake.common.config import Config
 from datalake.common.logger import logger, configure_logging
 from datalake.common.token_manager import TokenManager

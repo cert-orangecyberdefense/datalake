@@ -1,6 +1,5 @@
 import csv
 import json
-import logging
 from typing import Generator, List
 
 from datalake import AtomType

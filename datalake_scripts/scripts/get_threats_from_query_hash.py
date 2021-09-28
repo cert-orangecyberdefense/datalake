@@ -37,6 +37,7 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
+    configure_logging(args.loglevel)
 
     if len(args.query_fields) > 1 and args.list:
         parser.error("List output format is only available if a single element is queried (via query_fields)")

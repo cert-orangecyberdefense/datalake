@@ -1,9 +1,8 @@
-import logging
 import sys
 from collections import OrderedDict
 from parser import ParserError
 
-from datalake import Datalake, AtomType
+from datalake import Datalake
 from datalake.common.logger import logger
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.base_script import BaseScripts
@@ -20,7 +19,7 @@ def main(override_args=None):
     # Load initial args
     parser = BaseScripts.start('Submit a new threat to Datalake from a file')
     required_named = parser.add_argument_group('required arguments')
-    csv_controle = parser.add_argument_group('CSV control arguments')
+    csv_control = parser.add_argument_group('CSV control arguments')
 
     parser.add_argument(
         'threats',
@@ -50,18 +49,18 @@ def main(override_args=None):
         help='set it to define the atom type',
         required=True,
     )
-    csv_controle.add_argument(
+    csv_control.add_argument(
         '--is_csv',
         help='set if the file input is a CSV',
         action='store_true',
     )
-    csv_controle.add_argument(
+    csv_control.add_argument(
         '-d',
         '--delimiter',
         help='set the delimiter of the CSV file',
         default=',',
     )
-    csv_controle.add_argument(
+    csv_control.add_argument(
         '-c',
         '--column',
         help='select column of the CSV file, starting at 1',

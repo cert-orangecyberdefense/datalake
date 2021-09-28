@@ -7,7 +7,7 @@
 # Use this package as a Python library
 Using this library has multiple advantages, it first allows you to get started more quickly than by using the API directly.
 The library is also maintained directly by the developers of Datalake thus reducing the burden of keeping it compatible with the API over time.
-Finally, as it is open-source, you can reuse the functionnalities developed by other Datalake users as well as helps improve this package further yourself.
+Finally, as it is open-source, you can reuse the functionalities developed by other Datalake users as well as helps improve this package further yourself.
 
 ### step 1: install datalake
 
@@ -25,7 +25,7 @@ from datalake import Datalake
 dtl = Datalake(username='username', password='password')
 ```
 The credentials can be omitted and will then be asked in a prompt.  
-You can also set them in your os environnement variables:
+You can also set them in your os environment variables:
 * `OCD_DTL_USERNAME` email address used to login on Datalake API/GUI.   
 * `OCD_DTL_PASSWORD` password used to login on Datalake API/GUI.
 

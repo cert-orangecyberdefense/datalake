@@ -9,7 +9,6 @@ from json.decoder import JSONDecodeError
 from typing import Union
 from urllib.parse import urljoin
 
-import requests
 from requests import Response
 
 from datalake.common.logger import logger

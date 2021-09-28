@@ -2,11 +2,9 @@
 This is all common functions for basics scripts
 """
 import argparse
-import csv
-import json
 import logging
 import os
-from typing import List, Tuple
+from typing import Tuple
 
 from datalake.common.config import Config
 from datalake.common.logger import configure_logging, logger

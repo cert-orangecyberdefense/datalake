@@ -4,8 +4,8 @@ from requests.sessions import PreparedRequest
 
 from datalake import AtomType
 from datalake.common.ouput import Output, output_supported, parse_response
+from datalake.common.utils import split_list, aggregate_csv_or_json_api_response
 from datalake.endpoints.endpoint import Endpoint
-from datalake.common.utils import join_dicts, split_list, aggregate_csv_or_json_api_response
 
 
 class Threats(Endpoint):

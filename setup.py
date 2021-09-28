@@ -3,7 +3,6 @@ import os
 from setuptools import find_packages, setup
 
 from datalake_scripts.cli import Cli
-from datalake_scripts.common.base_script import BaseScripts
 
 here = os.path.abspath(os.path.dirname(__file__))
 
