@@ -3,7 +3,6 @@ import os
 from setuptools import find_packages, setup
 
 from datalake_scripts.cli import Cli
-from datalake_scripts.common.base_script import BaseScripts
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -36,18 +35,22 @@ setup(
             'add_new_comment_or_tags = datalake_scripts.scripts.add_new_comment_or_tags:main',
             'edit_score = datalake_scripts.scripts.edit_score:main',
             'get_threats_from_query_hash = datalake_scripts.scripts.get_threats_from_query_hash:main',
-            f'{BaseScripts.PACKAGE_NAME} = datalake_scripts.cli:main'
+            f'{Cli.CLI_NAME} = datalake_scripts.cli:main'
         ),
     },
     classifiers=[
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Operating System :: POSIX :: Linux',
         'Environment :: Console',
         'Topic :: Security',
         'Natural Language :: English',
     ],
     include_package_data=True,
-    package_data={'datalake_scripts': ['config/endpoints.json']},
+    package_data={
+        'datalake': ['config/endpoints.json'],
+    },
     python_requires=">=3.6",
 )

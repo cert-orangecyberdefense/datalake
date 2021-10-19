@@ -25,4 +25,4 @@ At least one of them is required.
 If both parameters are provided, only hashkeys in the file will be retrieved. 
 
 > -o (Optional) will set the output file as the API gives it.  
-> -e (Optional) to change the environment {preprod, prod, dtl2},  default is **prod**  
+> -e (Optional) to change the environment {preprod, prod},  default is **prod**  

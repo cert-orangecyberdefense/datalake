@@ -1,19 +1,21 @@
 import json
+import logging
 import os
 import sys
 
+from halo import Halo
+
+from datalake import Datalake
+from datalake.common.logger import logger, configure_logging
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.common.logger import logger
-from datalake_scripts.engines.post_engine import BulkSearch
 
 
 def main(override_args=None):
     """Method to start the script"""
-    starter = BaseScripts()
     logger.debug(f'START: get_threats_from_query_hash.py')
 
     # Load initial args
-    parser = starter.start('Retrieve a list of response from a given query hash.')
+    parser = BaseScripts.start('Retrieve a list of response from a given query hash.')
     parser.add_argument(
         '--query_fields',
         help='fields to be retrieved from the threat (default: only the hashkey)\n'
@@ -35,6 +37,7 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
+    configure_logging(args.loglevel)
 
     if len(args.query_fields) > 1 and args.list:
         parser.error("List output format is only available if a single element is queried (via query_fields)")
@@ -50,16 +53,21 @@ def main(override_args=None):
             exit(1)
 
     # Load api_endpoints and tokens
-    endpoint_config, main_url, tokens = starter.load_config(args)
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
     logger.debug(f'Start to search for threat from the query hash:{query_hash}')
+    spinner = None
+    if logger.isEnabledFor(logging.INFO):
+        spinner = Halo(text=f'Creating bulk task', spinner='dots')
+        spinner.start()
 
-    bulk_search = BulkSearch(endpoint_config, args.env, tokens)
-    if query_body:
-        response = bulk_search.get_threats(query_body=query_body, query_fields=args.query_fields)
-    else:
-        response = bulk_search.get_threats(query_hash=query_hash, query_fields=args.query_fields)
+    task = dtl.BulkSearch.create_task(query_body=query_body, query_hash=query_hash, query_fields=args.query_fields)
+    if spinner:
+        spinner.text = f'Waiting for bulk task {task.uuid} response'
+    response = task.download_sync()
     original_count = response.get('count', 0)
-    logger.info(f'Number of threat that have been retrieved: {original_count}')
+    if spinner:
+        spinner.succeed()
+        spinner.info(f'Number of threat that have been retrieved: {original_count}')
 
     formatted_output = format_output(response, args.list)
     if args.output:

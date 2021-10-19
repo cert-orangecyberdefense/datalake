@@ -3,17 +3,18 @@ import sys
 
 from collections import OrderedDict
 
+from datalake.common.config import Config
+from datalake.common.logger import logger, configure_logging
+from datalake.common.token_manager import TokenManager
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.common.logger import logger
 from datalake_scripts.engines.post_engine import ThreatsPost, BulkThreatsPost
+from datalake_scripts.helper_scripts.utils import load_csv, load_list, save_output
 
 
 def main(override_args=None):
     """Method to start the script"""
-    starter = BaseScripts()
-
     # Load initial args
-    parser = starter.start('Submit a new threat to Datalake from a file')
+    parser = BaseScripts.start('Submit a new threat to Datalake from a file')
     required_named = parser.add_argument_group('required arguments')
     csv_controle = parser.add_argument_group('CSV control arguments')
     required_named.add_argument(
@@ -90,6 +91,7 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
+    configure_logging(args.loglevel)
     logger.debug(f'START: add_new_threats.py')
 
     if not args.threat_types and not args.whitelist:
@@ -99,20 +101,22 @@ def main(override_args=None):
 
     if args.is_csv:
         try:
-            list_new_threats = starter._load_csv(args.input, args.delimiter, args.column - 1)
+            list_new_threats = load_csv(args.input, args.delimiter, args.column - 1)
         except ValueError as ve:
             logger.error(ve)
             exit()
     else:
-        list_new_threats = starter._load_list(args.input)
+        list_new_threats = load_list(args.input)
     list_new_threats = defang_threats(list_new_threats, args.atom_type)
     list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
     threat_types = ThreatsPost.parse_threat_types(args.threat_types) or []
 
     # Load api_endpoints and tokens
-    endpoint_config, main_url, tokens = starter.load_config(args)
+    endpoint_config = Config().load_config()
+    token_manager = TokenManager(endpoint_config, environment=args.env)
+
     if args.no_bulk:
-        post_engine_add_threats = ThreatsPost(endpoint_config, args.env, tokens)
+        post_engine_add_threats = ThreatsPost(endpoint_config, args.env, token_manager)
         response_dict = post_engine_add_threats.add_threats(
             list_new_threats,
             args.atom_type,
@@ -124,7 +128,7 @@ def main(override_args=None):
             permanent
         )
     else:
-        post_engine_add_threats = BulkThreatsPost(endpoint_config, args.env, tokens)
+        post_engine_add_threats = BulkThreatsPost(endpoint_config, args.env, token_manager)
         hashkeys = post_engine_add_threats.add_bulk_threats(
             list_new_threats,
             args.atom_type,
@@ -138,7 +142,7 @@ def main(override_args=None):
         response_dict = {'haskeys': list(hashkeys)}
 
     if args.output:
-        starter.save_output(args.output, response_dict)
+        save_output(args.output, response_dict)
         logger.debug(f'Results saved in {args.output}\n')
     logger.debug(f'END: add_new_threats.py')
 
@@ -146,9 +150,9 @@ def main(override_args=None):
 def defang_threats(threats, atom_type):
     defanged = []
     # matches urls like http://www.website.com:444/file.html
-    standard_url_regex = re.compile(r'^(https?:\/\/)[a-z0-9]+([\-\.][a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$')
+    standard_url_regex = re.compile(r'^(https?://)[a-z0-9]+([\-.][a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(/.*)?$')
     # matches urls like http://185.25.5.3:8080/result.php (ipv4 or ipv6)
-    ip_url_regex = re.compile(r'^(https?:\/\/)[0-9a-zA-Z]{1,4}([\.:][0-9a-zA-Z]{1,4}){3,7}(:[0-9]{1,5})?(\/.*)?$')
+    ip_url_regex = re.compile(r'^(https?://)[0-9a-zA-Z]{1,4}([.:][0-9a-zA-Z]{1,4}){3,7}(:[0-9]{1,5})?(/.*)?$')
     for threat in threats:
         unmodified_threat = threat
         threat = threat.replace('[.]', '.')

@@ -3,14 +3,13 @@
 import argparse
 import sys
 
-from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
     add_comments, lookup_threats, add_tags, get_query_hash, bulk_lookup_threats
 
 
 class Cli:
-    CLI_NAME = BaseScripts.PACKAGE_NAME
-    VERSION = '2.4.2'
+    CLI_NAME = 'ocd-dtl'
+    VERSION = '2.4.4'
 
     def __init__(self):
         parser = argparse.ArgumentParser(

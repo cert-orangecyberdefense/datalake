@@ -4,8 +4,9 @@ from typing import Set, Dict, List, Union
 
 from requests import PreparedRequest
 
+from datalake.common.logger import logger
+from datalake.endpoints import Endpoint
 from datalake_scripts.common.base_engine import BaseEngine
-from datalake_scripts.common.logger import logger
 from datalake_scripts.common.mixins import HandleBulkTaskMixin
 from datalake_scripts.helper_scripts.utils import split_list
 
@@ -57,16 +58,7 @@ class PostEngine(BaseEngine):
                 return entry
 
     def _post_headers(self) -> dict:
-        """
-        Get headers for GET endpoints.
-
-            {
-                'Authorization': self.tokens[0],
-                'accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        """
-        return {'Authorization': self.tokens[0], 'Accept': 'application/json', 'Content-Type': 'application/json'}
+        return {'Accept': 'application/json', 'Content-Type': 'application/json'}
 
     @staticmethod
     def build_full_query_body(query_body):
@@ -107,10 +99,26 @@ class ThreatsPost(PostEngine):
         return self.datalake_requests(self.url, 'post', self._post_headers(), final_payload)
 
     def _tune_payload_to_atom(self, atom_type, links, payload, value):
+        def hash_to_name(hash_):
+            HASH_LIST = {'32': 'md5', '40': 'sha1', '64': 'sha256', '128': 'sha512'}
+            hash_name = HASH_LIST.get(str(len(hash_)))
+            if not hash_name:
+                hash_name = 'ssdeep'
+            return hash_name
+
         atom_type = atom_type.lower()
         key_value = atom_type + '_content'
         if atom_type == 'apk':
-            payload['threat_data']['content'][key_value] = {'android': {'package_name': value}}
+            package_name, apk_version, apk_hash = value.split(',')
+            apk_details = {
+                'android': {
+                    'package_name': package_name,
+                },
+                'hashes': {hash_to_name(apk_hash): apk_hash}
+            }
+            if apk_version:
+                apk_details['android']['version_name'] = apk_version
+            payload['threat_data']['content'][key_value] = apk_details
         elif atom_type == 'as':
             payload['threat_data']['content'][key_value] = {'asn': int(value)}
         elif atom_type == 'cc':
@@ -125,11 +133,8 @@ class ThreatsPost(PostEngine):
         elif atom_type == 'email':
             payload['threat_data']['content'][key_value] = {'email': value}
         elif atom_type == 'file' or atom_type == 'ssl':
-            HASH_LIST = {'32': 'md5', '40': 'sha1', '64': 'sha256', '128': 'sha512'}
-            hash_key = HASH_LIST.get(str(len(value)))
-            if not hash_key:
-                hash_key = 'ssdeep'
-            payload['threat_data']['content'][key_value] = {'hashes': {hash_key: value}}
+            hash_name = hash_to_name(value)
+            payload['threat_data']['content'][key_value] = {'hashes': {hash_name: value}}
         elif atom_type == 'fqdn':
             payload['threat_data']['content'][key_value] = {'fqdn': value}
         elif atom_type == 'iban':
@@ -186,18 +191,19 @@ class ThreatsPost(PostEngine):
                 payload['threat_data']['scores'].append({'score': {'risk': score}, 'threat_type': threat})
                 payload['threat_data']['threat_types'].append(threat)
 
+        terminal_size = Endpoint._get_terminal_size()
         return_value = {'results': []}
         for atom in atom_list:
             if not atom:  # empty value
-                logger.info(f'EMPTY ATOM {atom.ljust(self.terminal_size - 6, " ")} \x1b[0;30;41m  KO  \x1b[0m')
+                logger.info(f'EMPTY ATOM {atom.ljust(terminal_size - 6, " ")} \x1b[0;30;41m  KO  \x1b[0m')
                 continue
             response_dict = self._add_new_atom(atom, atom_type, payload, links)
 
             if response_dict.get('atom_value'):
-                logger.info(atom.ljust(self.terminal_size - 6, ' ') + '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m')
+                logger.info(atom.ljust(terminal_size - 6, ' ') + '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m')
                 return_value['results'].append(response_dict)
             else:
-                logger.info(atom.ljust(self.terminal_size - 6, ' ') + '\x1b[0;30;41m' + '  KO  ' + '\x1b[0m')
+                logger.info(atom.ljust(terminal_size - 6, ' ') + '\x1b[0;30;41m' + '  KO  ' + '\x1b[0m')
                 logger.debug(response_dict)
         return return_value
 
@@ -265,13 +271,14 @@ class BulkThreatsPost(PostEngine, HandleBulkTaskMixin):
         for bulk_threat_task_uuid in bulk_in_flight:
             hashkey_created += self.check_bulk_threats_added(bulk_threat_task_uuid)
 
+        terminal_size = Endpoint._get_terminal_size()
         nb_threats = len(hashkey_created)
         if nb_threats > 0:
             ok_sign = '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m'
-            logger.info(f'Created {nb_threats} threats'.ljust(self.terminal_size - 6, ' ') + ok_sign)
+            logger.info(f'Created {nb_threats} threats'.ljust(terminal_size - 6, ' ') + ok_sign)
         else:
             ko_sign = '\x1b[0;30;41m' + '  KO  ' + '\x1b[0m'
-            logger.info(f'Failed to create any threats'.ljust(self.terminal_size - 6, ' ') + ko_sign)
+            logger.info(f'Failed to create any threats'.ljust(terminal_size - 6, ' ') + ko_sign)
         return set(hashkey_created)
 
     def check_bulk_threats_added(self, bulk_threat_task_uuid) -> list:
@@ -429,9 +436,10 @@ class ScorePost(PostEngine):
         return_value = []
         for hashkey in hashkeys:
             response = self._post_new_score(hashkey, scores, override_type)
-            if response.get('message'):
-                logger.warning('\x1b[6;30;41m' + hashkey + ': ' + response.get('message') + '\x1b[0m')
-                return_value.append(hashkey + ': ' + response.get('message'))
+            if not response or response.get('message'):
+                response = response or {}  # handle case where no response is returned
+                logger.warning('\x1b[6;30;41m' + hashkey + ': ' + response.get('message', 'Error happened') + '\x1b[0m')
+                return_value.append(hashkey + ': ' + response.get('message', 'Error happened'))
             else:
                 return_value.append(hashkey + ': OK')
                 logger.info('\x1b[6;30;42m' + hashkey + ': OK\x1b[0m')

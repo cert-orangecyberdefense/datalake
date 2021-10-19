@@ -6,13 +6,13 @@ from halo import Halo
 
 import requests
 
+from datalake.common.logger import logger
 from datalake_scripts.common.base_engine import BaseEngine
-from datalake_scripts.common.logger import logger
 
 
 class HandleBulkTaskMixin(BaseEngine):
 
-    OCD_DTL_MAX_BACK_OFF_TIME = int(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 120))
+    OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 30))
 
     Json = Dict
     Check = Callable[[Json], bool]
@@ -36,15 +36,12 @@ class HandleBulkTaskMixin(BaseEngine):
             spinner.start()
 
         start_time = time()
-        back_off_time = 10
+        back_off_time = 1
 
         json_response = None
         while not json_response:
-            response = requests.get(
-                url=retrieve_bulk_result_url,
-                headers={'Authorization': self.tokens[0]},
-                verify=self.requests_ssl_verify
-            )
+            headers = {'Authorization': self.token_manager.access_token}
+            response = requests.get(url=retrieve_bulk_result_url, headers=headers, verify=self.requests_ssl_verify)
             if response.status_code == 200:
                 potential_json_response = response.json()
                 if additional_checks and not all(check(potential_json_response) for check in additional_checks):
@@ -54,7 +51,7 @@ class HandleBulkTaskMixin(BaseEngine):
                 json_response = potential_json_response
             elif response.status_code == 401:
                 logger.debug('Refreshing expired Token')
-                self._token_update(response.json())
+                self.token_manager.process_auth_error(response.json().get('msg'))
             elif time() - start_time + back_off_time < timeout:
                 sleep(back_off_time)
                 back_off_time = min(back_off_time * 2, self.OCD_DTL_MAX_BACK_OFF_TIME)
