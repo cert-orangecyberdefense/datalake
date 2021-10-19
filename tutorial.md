@@ -33,6 +33,7 @@ You can also set them in your os environment variables:
 Below are some examples to get you started
 ### lookup a threat
 ```python
+from datalake import AtomType, Output
 dtl.Threats.lookup(
     atom_value='mayoclinic.org',
     atom_type=AtomType.DOMAIN,
@@ -77,11 +78,11 @@ But depending of your use case, you can call an async version to parallelize the
 # Queuing multiple bulk searches at once saves a lot of time
 # However you will receive HTTP 400 error if you try to enqueue too many bulk search at once (more than 10)
 query_hashes_to_process = [
-    'eb40e5cdd6f640708c8bbe640ac2d10a',
-    'de70393f1c250ae67566ec37c2032d1b',
-    '850557fefb053cb9aefd858084e5ccb7',
-    '0740b2dd87c55737d68f898e9a63adbd',
-    '55682bb7d762428c324880e220328ecf',
+    '7018d41944b71b04a9d3785b3741c842',
+    '207d02c81edde3c87f665451f04f9bd1',
+    '9f7a8fecb0a74e508d6873c4d6e0d614',
+    '8bd8f1b47ce1a76ac2a1dc9e91aa9a5e',
+    'd3f8e2006554aaffa554714c614acd30',
 ]
 coroutines = []
 for query_hash in query_hashes_to_process:
