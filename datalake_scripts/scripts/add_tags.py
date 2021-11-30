@@ -1,10 +1,8 @@
 import sys
 
-from datalake.common.config import Config
-from datalake.common.logger import logger, configure_logging
-from datalake.common.token_manager import TokenManager
+from datalake import Datalake
+from datalake.common.logger import logger
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.engines.post_engine import TagsPost
 from datalake_scripts.helper_scripts.utils import save_output
 
 
@@ -40,12 +38,6 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-    configure_logging(args.loglevel)
-
-    # Load api_endpoints and tokens
-    endpoint_config = Config().load_config()
-    token_manager = TokenManager(endpoint_config, environment=args.env)
-    post_engine_add_comments = TagsPost(endpoint_config, args.env, token_manager)
 
     if not args.hashkeys and not args.input_file:
         parser.error("either a hashkey or an input_file is required")
@@ -55,16 +47,34 @@ def main(override_args=None):
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
 
-    response_dict = post_engine_add_comments.post_tags(
+    response_dict = post_tags(
         hashkeys,
         args.tags,
-        public=args.public,
+        args.public,
+        args.env
     )
 
     if args.output:
         save_output(args.output, response_dict)
         logger.debug(f'Results saved in {args.output}\n')
     logger.debug(f'END: add_tags.py')
+
+
+def post_tags(hashkeys, tags, public, env):
+    dtl = Datalake(env=env)
+    logger.info(hashkeys)
+    return_value = []
+    for hashkey in hashkeys:
+        try:
+            dtl.Tags.add_tags(hashkey, tags, public)
+        except ValueError as e:
+            logger.warning('\x1b[6;30;41m' + hashkey + ': FAILED\x1b[0m')
+            logger.debug('\x1b[6;30;41m' + hashkey + ': ' + str(e) + '\x1b[0m')
+            return_value.append(hashkey + ': FAILED')
+        else:
+            return_value.append(hashkey + ': OK')
+            logger.info('\x1b[6;30;42m' + hashkey + ': OK\x1b[0m')
+    return return_value
 
 
 def retrieve_hashkeys_from_file(input_file, hashkeys):
