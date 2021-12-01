@@ -3,7 +3,7 @@ from datalake.common.ouput import parse_response
 
 
 class Tags(Endpoint):
-    def add_tags(
+    def add_to_threat(
             self,
             hashkey: str,
             tags: list,

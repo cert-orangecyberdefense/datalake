@@ -65,7 +65,7 @@ def post_tags(hashkeys, tags, public, dtl):
     return_value = []
     for hashkey in hashkeys:
         try:
-            dtl.Tags.add_tags(hashkey, tags, public)
+            dtl.Tags.add_to_threat(hashkey, tags, public)
         except ValueError as e:
             logger.warning('\x1b[6;30;41m' + hashkey + ': FAILED\x1b[0m')
             logger.debug('\x1b[6;30;41m' + hashkey + ': FAILED : ' + str(e) + '\x1b[0m')

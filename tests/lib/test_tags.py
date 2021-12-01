@@ -3,37 +3,46 @@ import responses
 from datalake import Datalake
 from tests.common.fixture import datalake  # noqa needed fixture import
 
+value_error_msg = "Tags has to be a list of string"
+
+
 
 @responses.activate
-def test_add_tags(datalake: Datalake):
+def test_add_to_threat(datalake: Datalake):
     mock_api_resp()
-    resp = datalake.Tags.add_tags(hashkey="123456abcd", tags=['tag'])
+    resp = datalake.Tags.add_to_threat(hashkey="123456abcd", tags=['tag'])
     assert resp[0]['author']['full_name'] == "string"
 
 
-def test_add_tags_bad_tags(datalake: Datalake):
+def test_add_to_threat_bad_tags(datalake: Datalake):
     with pytest.raises(ValueError) as execinfo:
-        datalake.Tags.add_tags(hashkey="123456abcd", tags='[tag]')
-    assert str(execinfo.value) == "Tags has to be a list of string"
+        datalake.Tags.add_to_threat(hashkey="123456abcd", tags='[tag]')
+    assert str(execinfo.value) == value_error_msg
 
 
-def test_add_tags_empty_tags(datalake: Datalake):
+def test_add_to_threat_empty_str(datalake: Datalake):
     with pytest.raises(ValueError) as execinfo:
-        datalake.Tags.add_tags(hashkey="123456abcd", tags=[])
-    assert str(execinfo.value) == "Tags has to be a list of string"
+        datalake.Tags.add_to_threat(hashkey="123456abcd", tags=[""])
+    assert str(execinfo.value) == value_error_msg
 
 
-def test_add_tags_not_str_tags(datalake: Datalake):
+def test_add_to_threat_empty_tags(datalake: Datalake):
     with pytest.raises(ValueError) as execinfo:
-        datalake.Tags.add_tags(hashkey="123456abcd", tags=[1, 2, 3, 4, 5])
-    assert str(execinfo.value) == "Tags has to be a list of string"
+        datalake.Tags.add_to_threat(hashkey="123456abcd", tags=[])
+    assert str(execinfo.value) == value_error_msg
+
+
+def test_add_to_threat_not_str_tags(datalake: Datalake):
+    with pytest.raises(ValueError) as execinfo:
+        datalake.Tags.add_to_threat(hashkey="123456abcd", tags=[1, 2, 3, 4, 5])
+    assert str(execinfo.value) == value_error_msg
 
 
 @responses.activate
-def test_add_tags_bad_hash(datalake: Datalake):
+def test_add_to_threat_bad_hash(datalake: Datalake):
     mock_api_resp_404()
     with pytest.raises(ValueError) as execinfo:
-        datalake.Tags.add_tags(hashkey="789101112efghij", tags=['tag'])
+        datalake.Tags.add_to_threat(hashkey="789101112efghij", tags=['tag'])
     assert str(execinfo.value) == '404: {"message": "Threat does not exist."}'
 
 
