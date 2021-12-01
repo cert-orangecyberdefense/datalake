@@ -62,7 +62,6 @@ def main(override_args=None):
 
 
 def post_tags(hashkeys, tags, public, dtl):
-    logger.info(hashkeys)
     return_value = []
     for hashkey in hashkeys:
         try:
