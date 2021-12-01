@@ -12,13 +12,11 @@ class Tags(Endpoint):
         """
         Adds tag(s) to a threat.
         """
-        if type(tags) is not list:
+        if type(tags) is not list or not tags:
             raise ValueError("Tags has to be a list of string")
-        if not tags:
+        if all(type(tag) is not str or not tag for tag in tags):
             raise ValueError("Tags has to be a list of string")
-        if all(type(tag) is not str for tag in tags):
-            raise ValueError("Tags has to be a list of string")
-
+        
         visibility = 'public' if public else 'organization'
         tags_payload = []
         for tag in tags:

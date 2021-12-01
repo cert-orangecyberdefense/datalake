@@ -47,11 +47,12 @@ def main(override_args=None):
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
 
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
     response_dict = post_tags(
         hashkeys,
         args.tags,
         args.public,
-        args.env
+        dtl
     )
 
     if args.output:
@@ -60,8 +61,7 @@ def main(override_args=None):
     logger.debug(f'END: add_tags.py')
 
 
-def post_tags(hashkeys, tags, public, env):
-    dtl = Datalake(env=env)
+def post_tags(hashkeys, tags, public, dtl):
     logger.info(hashkeys)
     return_value = []
     for hashkey in hashkeys:
@@ -69,7 +69,7 @@ def post_tags(hashkeys, tags, public, env):
             dtl.Tags.add_tags(hashkey, tags, public)
         except ValueError as e:
             logger.warning('\x1b[6;30;41m' + hashkey + ': FAILED\x1b[0m')
-            logger.debug('\x1b[6;30;41m' + hashkey + ': ' + str(e) + '\x1b[0m')
+            logger.debug('\x1b[6;30;41m' + hashkey + ': FAILED : ' + str(e) + '\x1b[0m')
             return_value.append(hashkey + ': FAILED')
         else:
             return_value.append(hashkey + ': OK')
