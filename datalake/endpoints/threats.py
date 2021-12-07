@@ -1,8 +1,8 @@
-from typing import List, Union
+from typing import List, Union, Dict
 
 from requests.sessions import PreparedRequest
 
-from datalake import AtomType
+from datalake import AtomType, ThreatType
 from datalake.common.ouput import Output, output_supported, parse_response
 from datalake.common.utils import split_list, aggregate_csv_or_json_api_response
 from datalake.endpoints.endpoint import Endpoint
@@ -103,3 +103,47 @@ class Threats(Endpoint):
             'treat_hashes_like': treat_hashes_like.value
         }
         return self.datalake_requests(url, 'post', self._post_headers(), payload).json()
+
+    def edit_score_by_hashkeys(self, hashkeys, scores_list, permanent):
+        if type(hashkeys) is not list or not hashkeys:
+            raise ValueError('Hashkeys has to be a list of string')
+        if all(type(hashkey) is not str or not hashkey for hashkey in hashkeys):
+            raise ValueError('Hashkeys has to be a list of string')
+
+        override_type = 'permanent' if permanent else 'temporary'
+        req_body = {
+            'override_type': override_type,
+            'hashkeys': hashkeys,
+            'scores': self.__build_scores(scores_list)
+        }
+        url = self._build_url_for_endpoint('bulk-scoring-edits')
+        response = self.datalake_requests(url, 'post', self._post_headers(), req_body)
+        return parse_response(response)
+
+    def edit_score_by_query_body_hash(self, query_body_hash, scores_list, permanent):
+        override_type = 'permanent' if permanent else 'temporary'
+        req_body = {
+            'override_type': override_type,
+            'query_body_hash': query_body_hash,
+            'scores': self.__build_scores(scores_list)
+        }
+        url = self._build_url_for_endpoint('bulk-scoring-edits')
+        response = self.datalake_requests(url, 'post', self._post_headers(), req_body)
+        return parse_response(response)
+
+    @staticmethod
+    def __build_scores(scores_list: List[Dict[str, int]]):
+        scores_body = []
+        for score_dict in scores_list:
+            if not isinstance(score_dict['threat_type'], ThreatType):
+                raise ValueError('Invalid threat_type input')
+            if score_dict['score'] > 100 or score_dict['score'] < 0:
+                raise ValueError('Invalid score input, min: 0, max: 100')
+
+            scores_body.append({
+                'score': {
+                    'risk': score_dict['score']
+                },
+                'threat_type': score_dict['threat_type'].value
+            })
+        return scores_body

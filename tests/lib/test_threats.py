@@ -3,7 +3,7 @@ import json
 import pytest
 import responses
 
-from datalake import Datalake, Output, AtomType
+from datalake import Datalake, Output, AtomType, ThreatType
 from tests.common.fixture import datalake  # noqa needed fixture import
 
 atoms = [
@@ -281,3 +281,39 @@ def test_bulk_lookup_threat_not_supported_output(datalake: Datalake):
     with pytest.raises(ValueError) as err:
         datalake.Threats.bulk_lookup(atoms, output=Output.MISP)
     assert str(err.value) == f'MISP output type is not supported. Outputs supported are: CSV, JSON'
+
+
+def test_edit_score_by_hashkeys_invalid_input(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys('not a list', None, None)
+    assert str(err.value) == 'Hashkeys has to be a list of string'
+
+
+def test_edit_score_by_hashkeys_empty_input(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys([], None, None)
+    assert str(err.value) == 'Hashkeys has to be a list of string'
+
+
+def test_edit_score_by_hashkeys_invalid_list(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys([1, 2, 3], None, None)
+    assert str(err.value) == 'Hashkeys has to be a list of string'
+
+
+def test_edit_score_by_hashkeys_empty_list_element(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys([''], None, None)
+    assert str(err.value) == 'Hashkeys has to be a list of string'
+
+
+def test_edit_score_by_hashkeys_invalid_scores_threat_type(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': 'ddos'}], False)
+    assert str(err.value) == 'Invalid threat_type input'
+
+
+def test_edit_score_by_hashkeys_invalid_scores_score(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': ThreatType.DDOS, 'score': 999}], False)
+    assert str(err.value) == 'Invalid score input, min: 0, max: 100'

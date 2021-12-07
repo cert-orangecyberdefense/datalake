@@ -77,7 +77,7 @@ class Endpoint:
                 return response
             tries_left -= 1
         logger.error('Request failed')
-        raise ValueError(f'{response.status_code}: {response.text}')
+        raise ValueError(f'{response.status_code}: {response.text.strip()}')
 
     @staticmethod
     def _post_headers(output=Output.JSON) -> dict:
