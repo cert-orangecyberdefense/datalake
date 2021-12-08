@@ -66,7 +66,7 @@ def main(override_args=None):
     response_list = []
     for index, hashkeys in enumerate(hashkeys_chunks):
         try:
-            response = dtl.Threats.edit_score_by_hashkeys(hashkeys, parsed_threat_type, args.permanent,)
+            dtl.Threats.edit_score_by_hashkeys(hashkeys, parsed_threat_type, args.permanent,)
         except ValueError as e:
             logger.warning('\x1b[6;30;41mBATCH ' + str(index+1) + ': FAILED\x1b[0m')
             for hashkey in hashkeys:

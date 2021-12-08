@@ -106,3 +106,43 @@ print(result_per_query_hash)
 }
 ```
 
+### Add tags
+A quick and easy way to add tags to a threat
+```python
+hashkey = '00000001655688982ec8ba4058f02dd1'
+tags = ['green', 'white']
+public = False
+
+dtl.Tags.add_to_threat(hashkey, tags, public)
+```
+
+### Edit score
+Mutliple threats can be edited at once, each threat type independently:
+```python
+from datalake import ThreatType
+
+hashkeys = [
+    '00000001655688982ec8ba4058f02dd1',
+    '00000001655688982ec8ba4058f02dd2',
+]
+threat_scores_list = [
+    {'threat_type': ThreatType('ddos'), 'score': 5},
+    {'threat_type': ThreatType('phishing'), 'score': 25},
+]
+permanent = False
+
+dtl.Threats.edit_score_by_hashkeys(hashkeys, threat_Scores_list, permanent)
+```
+Query hashes can also be used with another function provided for that use:
+```python
+from datalake import ThreatType
+
+query_body_hash = '7018d41944b71b04a9d3785b3741c842'
+threat_scores_list = [
+    {'threat_type': ThreatType('ddos'), 'score': 5},
+    {'threat_type': ThreatType('phishing'), 'score': 25},
+]
+permanent = False
+
+dtl.Threats.edit_score_by_query_body_hash(query_body_hash, threat_Scores_list, permanent)
+```
