@@ -65,6 +65,7 @@ def main(override_args=None):
         nargs='+',
         help='choose specific threat types and their score, like: ddos 50 scam 15',
         default=[],
+        action='append',
     )
     parser.add_argument(
         '--tag',
@@ -109,6 +110,7 @@ def main(override_args=None):
         list_new_threats = load_list(args.input)
     list_new_threats = defang_threats(list_new_threats, args.atom_type)
     list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
+    args.threat_types = [item for sublist in args.threat_types for item in sublist]
     threat_types = ThreatsPost.parse_threat_types(args.threat_types) or []
 
     # Load api_endpoints and tokens
