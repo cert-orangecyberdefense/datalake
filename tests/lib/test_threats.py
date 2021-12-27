@@ -309,14 +309,20 @@ def test_edit_score_by_hashkeys_empty_list_element(datalake: Datalake):
 
 def test_edit_score_by_hashkeys_invalid_scores_threat_type(datalake: Datalake):
     with pytest.raises(ValueError) as err:
-        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': 'ddos'}], False)
+        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': 'ddos'}])
     assert str(err.value) == 'Invalid threat_type input'
 
 
 def test_edit_score_by_hashkeys_invalid_scores_score(datalake: Datalake):
     with pytest.raises(ValueError) as err:
-        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': ThreatType.DDOS, 'score': 999}], False)
+        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': ThreatType.DDOS, 'score': 999}])
     assert str(err.value) == 'Invalid score input, min: 0, max: 100'
+
+
+def test_edit_score_bad_override_type(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': 'ddos'}], 'lock')
+    assert str(err.value) == 'Invalid OverrideType input'
 
 
 def test_add_threat_not_threat_types_not_whitelist(datalake: Datalake):
