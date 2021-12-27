@@ -1,7 +1,7 @@
 import pytest
 
 from datalake_scripts.engines.get_engine import ThreatsSearch
-from datalake_scripts.engines.post_engine import CommentsPost, ThreatsPost, ScorePost, TagsPost, BulkSearch
+from datalake_scripts.engines.post_engine import CommentsPost, ScorePost, TagsPost, BulkSearch
 from tests.common.fixture import token_manager, TestData  # noqa needed fixture import
 
 
@@ -14,7 +14,6 @@ def test_auth(token_manager):
 @pytest.mark.parametrize("engine,expected_url", [
     (ThreatsSearch, 'https://datalake.com/api/v42/mrti/threats/'),
     (BulkSearch, 'https://datalake.com/api/v42/mrti/bulk-search/'),
-    (ThreatsPost, 'https://datalake.com/api/v42/mrti/threats-manual/'),
     (CommentsPost, 'https://datalake.com/api/v42/mrti/threats/{hashkey}/comments/'),
     (TagsPost, 'https://datalake.com/api/v42/mrti/threats/{hashkey}/tags/'),
     (ScorePost, 'https://datalake.com/api/v42/mrti/threats/'),

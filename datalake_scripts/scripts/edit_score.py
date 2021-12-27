@@ -1,10 +1,11 @@
-import sys, json
+import sys
+import json
 from collections import OrderedDict
-from datalake import ThreatType
+from datalake import ThreatType, OverrideType
 from datalake import Datalake
 from datalake.common.logger import logger
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.helper_scripts.utils import save_output
+from datalake_scripts.helper_scripts.utils import save_output, parse_threat_types
 
 
 def main(override_args=None):
@@ -41,6 +42,12 @@ def main(override_args=None):
             but not newer ones.''',
         action='store_true',
     )
+    parser.add_argument(
+        '--lock',
+        help='sets override_type to lock. Scores won\'t be updated by the algorithm for three months. Default is '
+             'temporary',
+        action='store_true',
+    )
     if override_args:
         args = parser.parse_args(override_args)
     else:
@@ -49,6 +56,16 @@ def main(override_args=None):
 
     if not args.hashkeys and not args.input_file:
         parser.error("either a hashkey or an input_file is required")
+
+    if args.permanent and args.lock:
+        parser.error("Only one override type is authorized")
+
+    if args.permanent:
+        override_type = OverrideType.PERMANENT
+    elif args.lock:
+        override_type = OverrideType.LOCK
+    else:
+        override_type = OverrideType.TEMPORARY
 
     if args.whitelist:
         parsed_threat_type = get_whitelist_threat_types()
@@ -61,12 +78,12 @@ def main(override_args=None):
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
     hashkeys_chunks = chunk_list(list(OrderedDict.fromkeys(hashkeys)) if hashkeys else [])
-    
+
     dtl = Datalake(env=args.env, log_level=args.loglevel)
     response_list = []
     for index, hashkeys in enumerate(hashkeys_chunks):
         try:
-            dtl.Threats.edit_score_by_hashkeys(hashkeys, parsed_threat_type, args.permanent,)
+            dtl.Threats.edit_score_by_hashkeys(hashkeys, parsed_threat_type, override_type)
         except ValueError as e:
             logger.warning('\x1b[6;30;41mBATCH ' + str(index+1) + ': FAILED\x1b[0m')
             for hashkey in hashkeys:
@@ -89,25 +106,6 @@ def chunk_list(lst):
     for i in range(0, len(lst), 100):
         output.append(lst[i:i+100])
     return output
-
-
-def parse_threat_types(threat_types: list) -> list:
-    threat_type_parsed = {}
-    for i in range(0, len(threat_types), 2):
-        score = int(threat_types[i + 1])
-        try:
-            threat_type = ThreatType(threat_types[i])
-        except ValueError:
-            raise ValueError(f'Unknow threat_types: {threat_types[i]} {score},'
-                             f' please use only value in {[e.value for e in ThreatType]}.')
-        if score < 0 or score > 100:
-            raise ValueError(f'Wrong score: {threat_type} {score}, '
-                             'please use only value in [0, 100].')
-        threat_type_parsed[threat_type] = int(score)
-    threat_type_formatted = []
-    for key, value in threat_type_parsed.items():
-        threat_type_formatted.append({'threat_type': key, 'score': value})
-    return threat_type_formatted
 
 
 def get_whitelist_threat_types():

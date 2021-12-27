@@ -106,6 +106,33 @@ print(result_per_query_hash)
 }
 ```
 
+### Add threat
+The library provides a convenient way to add threats.
+You can call the `add_threat` function the following way:
+```python
+from datalake import ThreatType, OverrideType, AtomType
+
+atom_list = ['01.01.111.1', '01.01.111.2']
+threat_types = [{'threat_type': ThreatType.DDOS, 'score': 0}]
+dtl.Threats.add_threat(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True, public=False)
+```
+The following positional arguments are required:
+* `atom_list`: a List of strings. Contains the list of threats to add. In our example it's a list of IPs.
+* `atom_type`: an AtomType. Available options are: **APK, AS, CC, CRYPTO, CVE, DOMAIN, EMAIL, FILE, FQDN, IBAN, IP, IP_RANGE, PATE, PHONE_NUMBER, REGKEY, SSL, URL**
+
+The following keyword arguments are available:
+* `threat_types`: A list of dictionary containing a key named `threat_type` with a `ThreatType` value and a key named `score` with an integer value between **0** and **100**. Available ThreatType options are: **DDOS, FRAUD, HACK, LEAK, MALWARE, PHISHING, SCAM, SCAN, SPAM**. Defaults to `None`.
+ * `override_type`: an OverrideType. Available options are:
+    * `PERMANENT`: All values will override any values provided by both newer and
+older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
+    * `TEMPORARY`: All values should override any values provided by older IOCs,
+but not newer ones.
+    * `LOCK`: Will act like a permanent for three months,
+then like a temporary.
+* `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error. Defaults to False.
+* `public`: A boolean, sets whether the threats should be public or private. Defaults to `True`.
+
+
 ### Add tags
 A quick and easy way to add tags to a threat
 ```python
