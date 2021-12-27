@@ -346,3 +346,42 @@ def test_add_threat_bad_atom(datalake: Datalake):
         threat_types = [{'threat_type': ThreatType('ddos'), 'score': 5}]
         datalake.Threats.add_threat(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY)
     assert str(err.value) == 'Empty atom in atom_list'
+
+
+@responses.activate
+def test_add_threat_no_bulk(datalake: Datalake):
+    url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats-manual/'
+    resp = {
+        'atom_type': 'ip',
+        'atom_value': '11.11.111.1',
+        'delivery_timestamp': '2021-12-23T15:57:23.450107+00:00',
+        'hashkey': '3e3f43a23fadc97a5d4c72424d62f48a',
+        'override_type': 'lock',
+        'public': False,
+        'threat_data': {
+            'content': {
+                'ip_content': {
+                    'ip_address': '11.11.111.1', 'ip_version': 4}},
+                    'scores': [
+                        {
+                            'score': {
+                                'risk': 0
+                            },
+                            'threat_type': 'ddos'
+                        }
+                    ],
+            'tags': ['test_tag', 'ocd']
+        },
+        'timestamp_created': '2021-12-23T15:57:23.306039+00:00',
+        'user': {
+            'email': 'user.user@email.com',
+            'full_name': 'User USER', 'id': 0,
+            'organization': {'id': 0, 'name': 'ORG', 'path_names': ['ORG']}
+        },
+        'uuid': '7447bbea-f9a8-44a4-8dca-fcdaa153d13b'
+    }
+    responses.add(responses.POST, url, json=resp, status=200)
+
+    atom_list = ['11.11.111.1']
+    threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
+    assert datalake.Threats.add_threat(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) == [resp]
