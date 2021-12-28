@@ -121,7 +121,7 @@ The following positional arguments are required:
 * `atom_type`: an AtomType. Available options are: **APK, AS, CC, CRYPTO, CVE, DOMAIN, EMAIL, FILE, FQDN, IBAN, IP, IP_RANGE, PATE, PHONE_NUMBER, REGKEY, SSL, URL**
 
 The following keyword arguments are available:
-* `threat_types`: A list of dictionary containing a key named `threat_type` with a `ThreatType` value and a key named `score` with an integer value between **0** and **100**. Available ThreatType options are: **DDOS, FRAUD, HACK, LEAK, MALWARE, PHISHING, SCAM, SCAN, SPAM**. Defaults to `None`.
+* `threat_types`: A list of dictionaries containing a key named `threat_type` with a `ThreatType` value and a key named `score` with an integer value between **0** and **100**. Available ThreatType options are: **DDOS, FRAUD, HACK, LEAK, MALWARE, PHISHING, SCAM, SCAN, SPAM**. Defaults to `None`.
  * `override_type`: an OverrideType. Available options are:
     * `PERMANENT`: All values will override any values provided by both newer and
 older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
@@ -131,7 +131,12 @@ but not newer ones.
 then like a temporary.
 * `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error. Defaults to False.
 * `public`: A boolean, sets whether the threats should be public or private. Defaults to `True`.
+* `tags`: a List of strings. Will set the tags of the added threat(s).
+* `external_analysis_link`: a List of strings. A link to an external resource providing more information about the threat.
+* `no_bulk`: A boolean, wheter to execute a bulk creation or not. Should be set to `True` if your are adding a large number of threats. Defaults to `False`.
 
+Depending on whether `no_bulk` is set to `True` or not, the response provided by the library will be different.
+When `no_bulk` is to `True`, the return value will be a list of the details of the created threats. When it is set to `False`, the return value will be a list of dictionaries for each bulk request, containing the hashkeys and values of the threats created as well as the hashkeys and values of the threats that failed to be created when it's the case.
 
 ### Add tags
 A quick and easy way to add tags to a threat
@@ -173,3 +178,5 @@ permanent = False
 
 dtl.Threats.edit_score_by_query_body_hash(query_body_hash, threat_Scores_list, permanent)
 ```
+### API documentation
+For more information on the API used by this library, see [the documentation](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)

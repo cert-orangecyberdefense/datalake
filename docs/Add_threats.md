@@ -52,7 +52,7 @@ Optional flags:
 
 
 Currently the result outputted with `-o` depends on the API endpoints call:
-* If `--no-bulk` isn't set, the output file will contain a json with the hashkey of the threats created. If some threats failed to be created, both the value and the hashkey will be recorded in the json.
+* If `--no-bulk` isn't set, the output file will contain a json with the hashkey and the value of the threats created. If some threats failed to be created, the value and the hashkey will be recorded in the json.
 * If `--no-bulk` is set, the output file will contain a json with all the details about the created threats.
 
 ### Environment variables
