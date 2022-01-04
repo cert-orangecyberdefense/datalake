@@ -8,7 +8,7 @@ from datalake import OverrideType, AtomType
 from datalake.common.logger import logger
 from datalake.endpoints import Endpoint
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.helper_scripts.utils import load_csv, load_list, save_output, parse_threat_types
+from datalake_scripts.helper_scripts.utils import load_csv, load_list, save_output, parse_threat_types, flatten_list
 
 
 def main(override_args=None):
@@ -123,8 +123,8 @@ def main(override_args=None):
         list_new_threats = load_list(args.input)
     list_new_threats = defang_threats(list_new_threats, args.atom_type)
     list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
-    args.threat_types = [item for sublist in args.threat_types for item in sublist]
-    threat_types = parse_threat_types(args.threat_types) or []
+    args.threat_types = flatten_list(args.threat_types)
+    threat_types = parse_threat_types(args.threat_types)
     atom_type = AtomType[args.atom_type]
     dtl = Datalake(env=args.env, log_level=args.loglevel)
 
@@ -143,7 +143,10 @@ def main(override_args=None):
 
     spinner.stop()
     terminal_size = Endpoint._get_terminal_size()
-    if not args.no_bulk:
+    if args.no_bulk:
+        for threat in threat_response:
+            logger.info(f'{threat["hashkey"].ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m')
+    else:
         failed = []
         failed_counter = 0
         created_counter = 0
@@ -152,17 +155,13 @@ def main(override_args=None):
             for success in batch_res['success']:
                 for val_created in success['created_atom_values']:
                     created_counter += 1
-                    logger.info(val_created.ljust(terminal_size - 6, ' ') + '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m')
+                    logger.info(f'{val_created.ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m')
         for failed_obj in failed:
             for failed_atom_val in failed_obj['failed_atom_values']:
                 failed_counter += 1
-                logger.info(f'Creation failed for value {failed_atom_val}'.ljust(terminal_size - 6, ' ') + '\x1b['
-                                                                                                           '0;30;41m'
-                            + '  KO  ' + '\x1b[0m')
-        logger.info(f'Created threats: {created_counter}, Failed threat creation: {failed_counter}')
-    else:
-        for threat in threat_response:
-            logger.info(threat['hashkey'].ljust(terminal_size - 6, ' ') + '\x1b[0;30;42m' + '  OK  ' + '\x1b[0m')
+                logger.info(f'Creation failed for value {failed_atom_val.ljust(terminal_size - 6, " ")} \x1b[0;30;4\
+                1m  KO  \x1b[0m')
+        logger.info(f'Number of batches: {len(threat_response)}\nCreated threats: {created_counter}\nFailed threat creation: {failed_counter}')
 
     if args.output:
         save_output(args.output, threat_response)

@@ -119,7 +119,7 @@ class Threats(Endpoint):
         req_body = {
             'override_type': override_type.value,
             'hashkeys': hashkeys,
-            'scores': self.__build_scores(scores_list)
+            'scores': self._build_scores(scores_list)
         }
         url = self._build_url_for_endpoint('bulk-scoring-edits')
         response = self.datalake_requests(url, 'post', self._post_headers(), req_body)
@@ -134,14 +134,14 @@ class Threats(Endpoint):
         req_body = {
             'override_type': override_type.value,
             'query_body_hash': query_body_hash,
-            'scores': self.__build_scores(scores_list)
+            'scores': self._build_scores(scores_list)
         }
         url = self._build_url_for_endpoint('bulk-scoring-edits')
         response = self.datalake_requests(url, 'post', self._post_headers(), req_body)
         return parse_response(response)
 
     @staticmethod
-    def __build_scores(scores_list: List[Dict[str, int]]):
+    def _build_scores(scores_list: List[Dict[str, int]]):
         scores_body = []
         for score_dict in scores_list:
             if not isinstance(score_dict['threat_type'], ThreatType):
@@ -185,19 +185,19 @@ class Threats(Endpoint):
             for threat in ThreatType:
                 scores.append({'score': {'risk': 0}, 'threat_type': threat.value})
         else:
-            scores = self.__build_scores(threat_types)
-        if not no_bulk:
-            return self.__bulk_add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
-        return self.__add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
+            scores = self._build_scores(threat_types)
+        if no_bulk:
+            return self._add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
+        return self._bulk_add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
 
-    def __bulk_add_threat(self,
-                          atom_list: List,
-                          atom_type: AtomType,
-                          payload: Dict,
-                          tags: List,
-                          scores: List[Dict],
-                          external_analysis_link: List = None
-                          ):
+    def _bulk_add_threat(self,
+                         atom_list: List,
+                         atom_type: AtomType,
+                         payload: Dict,
+                         tags: List,
+                         scores: List[Dict],
+                         external_analysis_link: List = None
+                         ):
         url = self._build_url_for_endpoint('threats-manual-bulk')
         payload['atom_type'] = atom_type.value
         payload['scores'] = scores
@@ -216,7 +216,7 @@ class Threats(Endpoint):
     def queue_bulk_threats(self, atom_list, payload, url):
         bulk_response = []
         bulk_in_flight = []  # bulk task uuid unchecked
-
+        failed_batch = []
         for batch in split_list(atom_list, 100):
             if len(bulk_in_flight) >= self.OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT:
                 bulk_threat_task_uuid = bulk_in_flight.pop(0)
@@ -229,7 +229,17 @@ class Threats(Endpoint):
             if task_uid:
                 bulk_in_flight.append(response['task_uuid'])
             else:
-                ...  # logger.warning(f'batch of threats from {batch[0]} to {batch[-1]} failed to be created')
+                failed_batch.append(batch)
+        if failed_batch:
+            bulk_response.append({
+                'success': {
+                    'created_hashkeys': [],
+                    'created_atom_values': []
+                },
+                'failed': {
+                    'failed_hashkeys': [],
+                    'failed_atom_values': failed_batch}
+            })
 
         # Finish to check the other bulk tasks
         for bulk_threat_task_uuid in bulk_in_flight:
@@ -253,7 +263,6 @@ class Threats(Endpoint):
 
         hashkeys = response.get('hashkeys')
         atom_values = response.get('atom_values')
-        # if the state is not DONE we consider the batch a failure
         if hashkeys and response.get('state', 'CANCELLED') == 'DONE':
             hashkey_created = []
             atom_val_created = []
@@ -262,17 +271,11 @@ class Threats(Endpoint):
             for atom_value in atom_values:
                 atom_val_created.append(atom_value)
             success.append({'created_hashkeys': hashkey_created, 'created_atom_values': atom_val_created})
-        else:
+        else:  # if the state is not DONE we consider the batch a failure
             # default values in case the json is missing some fields
             hashkeys = hashkeys or ['<missing value>']
             atom_values = atom_values or ['<missing value>']
-            f_hashkeys = []
-            f_atom_val = []
-            for hashkey in hashkeys:
-                f_hashkeys.append(hashkey)
-            for atom_value in atom_values:
-                f_atom_val.append(atom_value)
-            failed.append({'failed_hashkeys': f_hashkeys, 'failed_atom_values': f_atom_val})
+            failed.append({'failed_hashkeys': hashkeys, 'failed_atom_values': atom_values})
         response_dict = {'success': success, 'failed': failed}
         return response_dict
 
@@ -298,14 +301,14 @@ class Threats(Endpoint):
                 )
         return json_response
 
-    def __add_threat(self,
-                     atom_list: List,
-                     atom_type: AtomType,
-                     payload: Dict,
-                     tags: List,
-                     scores: List[Dict],
-                     external_analysis_link: List = None
-                     ):
+    def _add_threat(self,
+                    atom_list: List,
+                    atom_type: AtomType,
+                    payload: Dict,
+                    tags: List,
+                    scores: List[Dict],
+                    external_analysis_link: List = None
+                    ):
         payload['threat_data'] = {
             'scores': scores,
             'tags': tags,
@@ -327,12 +330,13 @@ class Threats(Endpoint):
     def _tune_payload_to_atom(self, atom_type, links, payload, value):
 
         def hash_to_name(hash_):
-            hash_list = {'32': 'md5', '40': 'sha1', '64': 'sha256', '128': 'sha512'}
-            hash_name_str = hash_list.get(str(len(hash_)))
+            hash_list = {32: 'md5', 40: 'sha1', 64: 'sha256', 128: 'sha512'}
+            hash_name_str = hash_list.get(len(hash_))
             if not hash_name_str:
                 hash_name_str = 'ssdeep'
             return hash_name_str
 
+        content = payload['threat_data']['content']
         key_value = atom_type + '_content'
         if atom_type == 'apk':
             package_name, apk_version, apk_hash = value.split(',')
@@ -344,39 +348,39 @@ class Threats(Endpoint):
             }
             if apk_version:
                 apk_details['android']['version_name'] = apk_version
-            payload['threat_data']['content'][key_value] = apk_details
+            content[key_value] = apk_details
         elif atom_type == 'as':
-            payload['threat_data']['content'][key_value] = {'asn': int(value)}
+            content[key_value] = {'asn': int(value)}
         elif atom_type == 'cc':
-            payload['threat_data']['content'][key_value] = {'number': int(value)}
+            content[key_value] = {'number': int(value)}
         elif atom_type == 'crypto':
             address, network = value.split()
-            payload['threat_data']['content'][key_value] = {'crypto_address': address, 'crypto_network': network}
+            content[key_value] = {'crypto_address': address, 'crypto_network': network}
         elif atom_type == 'cve':
-            payload['threat_data']['content'][key_value] = {'cve_id': value}
+            content[key_value] = {'cve_id': value}
         elif atom_type == 'domain':
-            payload['threat_data']['content'][key_value] = {'domain': value}
+            content[key_value] = {'domain': value}
         elif atom_type == 'email':
-            payload['threat_data']['content'][key_value] = {'email': value}
+            content[key_value] = {'email': value}
         elif atom_type == 'file' or atom_type == 'ssl':
             hash_name = hash_to_name(value)
-            payload['threat_data']['content'][key_value] = {'hashes': {hash_name: value}}
+            content[key_value] = {'hashes': {hash_name: value}}
         elif atom_type == 'fqdn':
-            payload['threat_data']['content'][key_value] = {'fqdn': value}
+            content[key_value] = {'fqdn': value}
         elif atom_type == 'iban':
-            payload['threat_data']['content'][key_value] = {'iban': value}
+            content[key_value] = {'iban': value}
         elif atom_type == 'ip':
             ip_type = 4 if '.' in value else 6
-            payload['threat_data']['content'][key_value] = {'ip_address': value, 'ip_version': ip_type}
+            content[key_value] = {'ip_address': value, 'ip_version': ip_type}
         elif atom_type == 'ip_range':
-            payload['threat_data']['content'][key_value] = {'cidr': value}
+            content[key_value] = {'cidr': value}
         elif atom_type == 'regkey':
-            payload['threat_data']['content'][key_value] = {'path': value}
+            content[key_value] = {'path': value}
         elif atom_type == 'paste' or atom_type == 'url':
-            payload['threat_data']['content'][key_value] = {'url': value}
+            content[key_value] = {'url': value}
         elif atom_type == 'phone_number':
             key = 'international_phone_number' if value.startswith('+') else 'national_phone_number'
-            payload['threat_data']['content'][key_value] = {key: value}
+            content[key_value] = {key: value}
         if links:
-            payload['threat_data']['content'][key_value].update({'external_analysis_link': links})
+            content[key_value].update({'external_analysis_link': links})
         return payload

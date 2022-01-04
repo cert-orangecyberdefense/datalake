@@ -129,7 +129,7 @@ older IOCs. Newer IOCs with override_type permanent can still override old perma
 but not newer ones.
     * `LOCK`: Will act like a permanent for three months,
 then like a temporary.
-* `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error. Defaults to False.
+* `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error. Defaults to `False`.
 * `public`: A boolean, sets whether the threats should be public or private. Defaults to `True`.
 * `tags`: a List of strings. Will set the tags of the added threat(s).
 * `external_analysis_link`: a List of strings. A link to an external resource providing more information about the threat.
@@ -158,25 +158,25 @@ hashkeys = [
     '00000001655688982ec8ba4058f02dd2',
 ]
 threat_scores_list = [
-    {'threat_type': ThreatType('ddos'), 'score': 5},
-    {'threat_type': ThreatType('phishing'), 'score': 25},
+    {'threat_type': ThreatType.DDOS, 'score': 5},
+    {'threat_type': ThreatType.PHISHING, 'score': 25},
 ]
-permanent = False
+override_type = OverrideType.TEMPORARY
 
-dtl.Threats.edit_score_by_hashkeys(hashkeys, threat_Scores_list, permanent)
+dtl.Threats.edit_score_by_hashkeys(hashkeys, threat_scores_list, override_type)
 ```
 Query hashes can also be used with another function provided for that use:
 ```python
-from datalake import ThreatType
+from datalake import ThreatType, OverrideType
 
 query_body_hash = '7018d41944b71b04a9d3785b3741c842'
 threat_scores_list = [
-    {'threat_type': ThreatType('ddos'), 'score': 5},
-    {'threat_type': ThreatType('phishing'), 'score': 25},
+    {'threat_type': ThreatType.DDOS, 'score': 5},
+    {'threat_type': ThreatType.PHISHING, 'score': 25},
 ]
-permanent = False
+override_type = OverrideType.TEMPORARY
 
-dtl.Threats.edit_score_by_query_body_hash(query_body_hash, threat_Scores_list, permanent)
+dtl.Threats.edit_score_by_query_body_hash(query_body_hash, threat_scores_list, override_type)
 ```
 ### API documentation
 For more information on the API used by this library, see [the documentation](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)

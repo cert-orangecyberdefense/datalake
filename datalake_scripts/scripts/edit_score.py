@@ -5,7 +5,7 @@ from datalake import ThreatType, OverrideType
 from datalake import Datalake
 from datalake.common.logger import logger
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.helper_scripts.utils import save_output, parse_threat_types
+from datalake_scripts.helper_scripts.utils import save_output, parse_threat_types, split_list
 
 
 def main(override_args=None):
@@ -77,7 +77,7 @@ def main(override_args=None):
     hashkeys = args.hashkeys
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
-    hashkeys_chunks = chunk_list(list(OrderedDict.fromkeys(hashkeys)) if hashkeys else [])
+    hashkeys_chunks = split_list(list(OrderedDict.fromkeys(hashkeys)) if hashkeys else [], 100)
 
     dtl = Datalake(env=args.env, log_level=args.loglevel)
     response_list = []
@@ -99,13 +99,6 @@ def main(override_args=None):
         save_output(args.output, response_list)
         logger.info(f'Results saved in {args.output}\n')
     logger.debug(f'END: edit_score.py')
-
-
-def chunk_list(lst):
-    output = []
-    for i in range(0, len(lst), 100):
-        output.append(lst[i:i+100])
-    return output
 
 
 def get_whitelist_threat_types():

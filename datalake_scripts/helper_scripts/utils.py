@@ -80,8 +80,13 @@ def parse_threat_types(threat_types: list) -> list:
         if score < 0 or score > 100:
             raise ValueError(f'Wrong score: {threat_type} {score}, '
                              'please use only value in [0, 100].')
-        threat_type_parsed[threat_type] = int(score)
+        threat_type_parsed[threat_type] = score
     threat_type_formatted = []
     for key, value in threat_type_parsed.items():
         threat_type_formatted.append({'threat_type': key, 'score': value})
     return threat_type_formatted
+
+
+def flatten_list(list_to_flatten):
+    flat_list = [item for sublist in list_to_flatten for item in sublist]
+    return flat_list
