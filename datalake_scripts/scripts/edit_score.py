@@ -5,7 +5,7 @@ from datalake import ThreatType, OverrideType
 from datalake import Datalake
 from datalake.common.logger import logger
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.helper_scripts.utils import save_output, parse_threat_types, split_list
+from datalake_scripts.helper_scripts.utils import save_output, parse_threat_types, split_list, flatten_list
 
 
 def main(override_args=None):
@@ -26,7 +26,9 @@ def main(override_args=None):
         '-t',
         '--threat_types',
         nargs='+',
-        help='Choose specific threat types and their score, like: ddos 50 scam 15.',
+        help='choose specific threat types and their score, like: ddos 50 scam 15',
+        default=[],
+        action='append',
     )
     parser.add_argument(
         '-w',
@@ -70,6 +72,7 @@ def main(override_args=None):
     if args.whitelist:
         parsed_threat_type = get_whitelist_threat_types()
     else:
+        args.threat_types = flatten_list(args.threat_types)
         if not args.threat_types or len(args.threat_types) % 2 != 0:
             parser.error("threat_types invalid ! should be like: ddos 50 scam 15")
         parsed_threat_type = parse_threat_types(args.threat_types)
