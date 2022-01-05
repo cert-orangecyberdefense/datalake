@@ -157,17 +157,18 @@ class Threats(Endpoint):
             })
         return scores_body
 
-    def add_threat(self,
-                   atom_list: List[str],
-                   atom_type: AtomType,
-                   threat_types: List[Dict[str, int]] = None,
-                   override_type: OverrideType = OverrideType.TEMPORARY,
-                   whitelist: bool = False,
-                   public: bool = True,
-                   tags: List = None,
-                   external_analysis_link: List = None,
-                   no_bulk: bool = False
-                   ):
+    def add_threat(
+            self,
+            atom_list: List[str],
+            atom_type: AtomType,
+            threat_types: List[Dict[str, int]] = None,
+            override_type: OverrideType = OverrideType.TEMPORARY,
+            whitelist: bool = False,
+            public: bool = True,
+            tags: List = None,
+            external_analysis_link: List = None,
+            no_bulk: bool = False
+    ):
         if not threat_types and not whitelist:
             raise ValueError('threat_types is required if the atom is not for whitelisting')
         if not isinstance(override_type, OverrideType):
@@ -190,14 +191,15 @@ class Threats(Endpoint):
             return self._add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
         return self._bulk_add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
 
-    def _bulk_add_threat(self,
-                         atom_list: List,
-                         atom_type: AtomType,
-                         payload: Dict,
-                         tags: List,
-                         scores: List[Dict],
-                         external_analysis_link: List = None
-                         ):
+    def _bulk_add_threat(
+            self,
+            atom_list: List,
+            atom_type: AtomType,
+            payload: Dict,
+            tags: List,
+            scores: List[Dict],
+            external_analysis_link: List = None
+    ):
         url = self._build_url_for_endpoint('threats-manual-bulk')
         payload['atom_type'] = atom_type.value
         payload['scores'] = scores
@@ -301,14 +303,15 @@ class Threats(Endpoint):
                 )
         return json_response
 
-    def _add_threat(self,
-                    atom_list: List,
-                    atom_type: AtomType,
-                    payload: Dict,
-                    tags: List,
-                    scores: List[Dict],
-                    external_analysis_link: List = None
-                    ):
+    def _add_threat(
+            self,
+            atom_list: List,
+            atom_type: AtomType,
+            payload: Dict,
+            tags: List,
+            scores: List[Dict],
+            external_analysis_link: List = None
+    ):
         payload['threat_data'] = {
             'scores': scores,
             'tags': tags,

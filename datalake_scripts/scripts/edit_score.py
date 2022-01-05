@@ -85,13 +85,13 @@ def main(override_args=None):
         try:
             dtl.Threats.edit_score_by_hashkeys(hashkeys, parsed_threat_type, override_type)
         except ValueError as e:
-            logger.warning('\x1b[6;30;41mBATCH ' + str(index+1) + ': FAILED\x1b[0m')
+            logger.warning(f'\x1b[6;30;41mBATCH {str(index+1)}/{len(list(hashkeys_chunks))+1}: FAILED\x1b[0m')
             for hashkey in hashkeys:
                 response_list.append(hashkey + ': FAILED')
-                logger.warning('\x1b[6;30;41m' + hashkey + ': FAILED\x1b[0m')
+                logger.warning(f'\x1b[6;30;41m{hashkey} : FAILED\x1b[0m')
             logger.warning(e)
         else:
-            logger.info('\x1b[6;30;42mBATCH ' + str(index+1) + ': OK\x1b[0m')
+            logger.info(f'\x1b[6;30;42mBATCH {str(index+1)}/{len(list(hashkeys_chunks))+1}: OK\x1b[0m')
             for hashkey in hashkeys:
                 response_list.append(hashkey + ': OK')
 
