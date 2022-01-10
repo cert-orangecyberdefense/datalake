@@ -325,31 +325,31 @@ def test_edit_score_bad_override_type(datalake: Datalake):
     assert str(err.value) == 'Invalid OverrideType input'
 
 
-def test_add_threat_not_threat_types_not_whitelist(datalake: Datalake):
+def test_add_threats_not_threat_types_not_whitelist(datalake: Datalake):
     with pytest.raises(ValueError) as err:
         atom_list = ['100.100.100.1']
-        datalake.Threats.add_threat(atom_list, AtomType.IP)
+        datalake.Threats.add_threats(atom_list, AtomType.IP)
     assert str(err.value) == 'threat_types is required if the atom is not for whitelisting'
 
 
-def test_add_threat_bad_override_type(datalake: Datalake):
+def test_add_threats_bad_override_type(datalake: Datalake):
     with pytest.raises(ValueError) as err:
         atom_list = ['100.100.100.1']
         threat_types = [{'threat_type': ThreatType('ddos'), 'score': 5}]
-        datalake.Threats.add_threat(atom_list, AtomType.IP, threat_types, 'lock')
+        datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, 'lock')
     assert str(err.value) == 'Invalid OverrideType input'
 
 
-def test_add_threat_bad_atom(datalake: Datalake):
+def test_add_threats_bad_atom(datalake: Datalake):
     with pytest.raises(ValueError) as err:
         atom_list = ['100.100.100.1', '']
         threat_types = [{'threat_type': ThreatType('ddos'), 'score': 5}]
-        datalake.Threats.add_threat(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY)
+        datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY)
     assert str(err.value) == 'Empty atom in atom_list'
 
 
 @responses.activate
-def test_add_threat_no_bulk(datalake: Datalake):
+def test_add_threats_no_bulk(datalake: Datalake):
     url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats-manual/'
     resp = {
         'atom_type': 'ip',
@@ -384,4 +384,4 @@ def test_add_threat_no_bulk(datalake: Datalake):
 
     atom_list = ['11.11.111.1']
     threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
-    assert datalake.Threats.add_threat(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) == [resp]
+    assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) == [resp]
