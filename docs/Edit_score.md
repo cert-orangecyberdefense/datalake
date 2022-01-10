@@ -44,3 +44,9 @@ for -t parameter, please use one of:
     spam
 
 Followed by a number between 0 and 100
+
+### Environment variables
+
+The following environment variable can be used 
+
+* `OCD_DTL_MAX_EDIT_SCORE_HASHKEYS` Sets the number of hashkeys that can be edited with one function call. Default is 100.

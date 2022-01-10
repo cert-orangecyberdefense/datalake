@@ -80,7 +80,9 @@ def main(override_args=None):
     hashkeys = args.hashkeys
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
-    hashkeys_chunks = split_list(list(OrderedDict.fromkeys(hashkeys)) if hashkeys else [], 100)
+        if not hashkeys:
+            raise parser.error('No hashkey found in the input file.')
+    hashkeys_chunks = list(split_list(list(OrderedDict.fromkeys(hashkeys)) if hashkeys else [], 100))
 
     dtl = Datalake(env=args.env, log_level=args.loglevel)
     response_list = []
@@ -88,13 +90,13 @@ def main(override_args=None):
         try:
             dtl.Threats.edit_score_by_hashkeys(hashkeys, parsed_threat_type, override_type)
         except ValueError as e:
-            logger.warning(f'\x1b[6;30;41mBATCH {str(index+1)}/{len(list(hashkeys_chunks))+1}: FAILED\x1b[0m')
+            logger.warning(f'\x1b[6;30;41mBATCH {str(index+1)}/{len(list(hashkeys_chunks))}: FAILED\x1b[0m')
             for hashkey in hashkeys:
                 response_list.append(hashkey + ': FAILED')
                 logger.warning(f'\x1b[6;30;41m{hashkey} : FAILED\x1b[0m')
             logger.warning(e)
         else:
-            logger.info(f'\x1b[6;30;42mBATCH {str(index+1)}/{len(list(hashkeys_chunks))+1}: OK\x1b[0m')
+            logger.info(f'\x1b[6;30;42mBATCH {str(index+1)}/{len(list(hashkeys_chunks))}: OK\x1b[0m')
             for hashkey in hashkeys:
                 response_list.append(hashkey + ': OK')
 

@@ -15,6 +15,7 @@ class Threats(Endpoint):
     OCD_DTL_MAX_BULK_THREATS_TIME = int(os.getenv('OCD_DTL_MAX_BULK_THREATS_TIME', 600))
     OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT = int(os.getenv('OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT', 10))
     OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 30))
+    OCD_DTL_MAX_EDIT_SCORE_HASHKEYS = int(os.getenv('OCD_DTL_MAX_EDIT_SCORE_HASHKEYS', 100))
 
     def _bulk_lookup_batch(
             self,
@@ -110,8 +111,16 @@ class Threats(Endpoint):
         return self.datalake_requests(url, 'post', self._post_headers(), payload).json()
 
     def edit_score_by_hashkeys(self, hashkeys, scores_list, override_type: OverrideType = OverrideType.TEMPORARY):
+        """
+        Edit the score of a list of threats using the API. Default is 100. This function will receive a list of 
+        hashkey to edit, a list of dictonaries defining the score the set and an override type. Can only process a 
+        limited number of hashkeys at one time. Can be modified with the environment variable 
+        OCD_DTL_MAX_EDIT_SCORE_HASHKEYS.
+        """
         if type(hashkeys) is not list or not hashkeys:
             raise ValueError('Hashkeys has to be a list of string')
+        if len(hashkeys) > self.OCD_DTL_MAX_EDIT_SCORE_HASHKEYS:
+            raise ValueError(f'Can\'t process more than {self.OCD_DTL_MAX_EDIT_SCORE_HASHKEYS} hashkeys at one time.')
         if any(type(hashkey) is not str or not hashkey for hashkey in hashkeys):
             raise ValueError('Hashkeys has to be a list of string')
         if not isinstance(override_type, OverrideType):
@@ -129,6 +138,11 @@ class Threats(Endpoint):
                                       query_body_hash,
                                       scores_list,
                                       override_type: OverrideType = OverrideType.TEMPORARY):
+        """
+        Edit the score of a list of threats using the API.
+        This function will receive a query body hash,
+        a list of dictonaries defining the score the set and an override type.
+        """
         if not isinstance(override_type, OverrideType):
             raise ValueError('Invalid OverrideType input')
         req_body = {
@@ -157,7 +171,7 @@ class Threats(Endpoint):
             })
         return scores_body
 
-    def add_threat(
+    def add_threats(
             self,
             atom_list: List[str],
             atom_type: AtomType,
@@ -169,6 +183,11 @@ class Threats(Endpoint):
             external_analysis_link: List = None,
             no_bulk: bool = False
     ):
+        """
+        Add a list of threats to datalake using the API.
+        The type of atom provided in the list of threats to add need to be the same, for example a list of IPs.
+        When bulk add is enabled, will add threats by batch of 100 threats.
+        """
         if not threat_types and not whitelist:
             raise ValueError('threat_types is required if the atom is not for whitelisting')
         if not isinstance(override_type, OverrideType):
@@ -188,7 +207,7 @@ class Threats(Endpoint):
         else:
             scores = self._build_scores(threat_types)
         if no_bulk:
-            return self._add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
+            return self._add_threats(atom_list, atom_type, payload, tags, scores, external_analysis_link)
         return self._bulk_add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
 
     def _bulk_add_threat(
@@ -303,7 +322,7 @@ class Threats(Endpoint):
                 )
         return json_response
 
-    def _add_threat(
+    def _add_threats(
             self,
             atom_list: List,
             atom_type: AtomType,

@@ -121,6 +121,8 @@ def main(override_args=None):
             exit()
     else:
         list_new_threats = load_list(args.input)
+        if not list_new_threats:
+            raise parser.error('No atom found in the input file.')
     list_new_threats = defang_threats(list_new_threats, args.atom_type)
     list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
     args.threat_types = flatten_list(args.threat_types)
@@ -131,15 +133,17 @@ def main(override_args=None):
     spinner = Halo(text=f'Creating threats', spinner='dots')
     spinner.start()
 
-    threat_response = dtl.Threats.add_threat(list_new_threats,
-                                             atom_type,
-                                             threat_types,
-                                             override_type,
-                                             args.whitelist,
-                                             args.public,
-                                             args.tag,
-                                             args.link,
-                                             args.no_bulk)
+    threat_response = dtl.Threats.add_threats(
+        list_new_threats,
+        atom_type,
+        threat_types,
+        override_type,
+        args.whitelist,
+        args.public,
+        args.tag,
+        args.link,
+        args.no_bulk
+    )
 
     spinner.stop()
     terminal_size = Endpoint._get_terminal_size()
@@ -161,7 +165,8 @@ def main(override_args=None):
                 failed_counter += 1
                 logger.info(f'Creation failed for value {failed_atom_val.ljust(terminal_size - 6, " ")} \x1b[0;30;4\
                 1m  KO  \x1b[0m')
-        logger.info(f'Number of batches: {len(threat_response)}\nCreated threats: {created_counter}\nFailed threat creation: {failed_counter}')
+        logger.info(
+            f'Number of batches: {len(threat_response)}\nCreated threats: {created_counter}\nFailed threat creation: {failed_counter}')
 
     if args.output:
         save_output(args.output, threat_response)
