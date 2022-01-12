@@ -1,12 +1,11 @@
 import sys
+import json
 from collections import OrderedDict
-
-from datalake.common.config import Config
-from datalake.common.logger import logger, configure_logging
-from datalake.common.token_manager import TokenManager
+from datalake import ThreatType, OverrideType
+from datalake import Datalake
+from datalake.common.logger import logger
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.engines.post_engine import ScorePost, ThreatsPost
-from datalake_scripts.helper_scripts.utils import save_output
+from datalake_scripts.helper_scripts.utils import save_output, parse_threat_types, split_list, flatten_list
 
 
 def main(override_args=None):
@@ -27,7 +26,9 @@ def main(override_args=None):
         '-t',
         '--threat_types',
         nargs='+',
-        help='Choose specific threat types and their score, like: ddos 50 scam 15.',
+        help='choose specific threat types and their score, like: ddos 50 scam 15',
+        default=[],
+        action='append',
     )
     parser.add_argument(
         '-w',
@@ -43,42 +44,70 @@ def main(override_args=None):
             but not newer ones.''',
         action='store_true',
     )
+    parser.add_argument(
+        '--lock',
+        help='sets override_type to lock. Scores won\'t be updated by the algorithm for three months. Default is '
+             'temporary',
+        action='store_true',
+    )
     if override_args:
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-    configure_logging(args.loglevel)
     logger.debug(f'START: edit_score.py')
 
     if not args.hashkeys and not args.input_file:
         parser.error("either a hashkey or an input_file is required")
 
-    if args.whitelist:
-        parsed_threat_type = ThreatsPost.get_whitelist_threat_types()
+    if args.permanent and args.lock:
+        parser.error("Only one override type is authorized")
+
+    if args.permanent:
+        override_type = OverrideType.PERMANENT
+    elif args.lock:
+        override_type = OverrideType.LOCK
     else:
+        override_type = OverrideType.TEMPORARY
+
+    if args.whitelist:
+        parsed_threat_type = get_whitelist_threat_types()
+    else:
+        args.threat_types = flatten_list(args.threat_types)
         if not args.threat_types or len(args.threat_types) % 2 != 0:
             parser.error("threat_types invalid ! should be like: ddos 50 scam 15")
-        parsed_threat_type = ThreatsPost.parse_threat_types(args.threat_types)
+        parsed_threat_type = parse_threat_types(args.threat_types)
     # removing duplicates while preserving order
     hashkeys = args.hashkeys
     if args.input_file:
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
-    hashkeys = list(OrderedDict.fromkeys(hashkeys)) if hashkeys else []
-    # Load api_endpoints and tokens
-    endpoint_config = Config().load_config()
-    token_manager = TokenManager(endpoint_config, environment=args.env)
-    post_engine_edit_score = ScorePost(endpoint_config, args.env, token_manager)
+        if not hashkeys:
+            raise parser.error('No hashkey found in the input file.')
+    hashkeys_chunks = list(split_list(list(OrderedDict.fromkeys(hashkeys)) if hashkeys else [], 100))
 
-    response_dict = post_engine_edit_score.post_new_score_from_list(
-        hashkeys,
-        parsed_threat_type,
-        'permanent' if args.permanent else 'temporary',
-    )
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
+    response_list = []
+    for index, hashkeys in enumerate(hashkeys_chunks):
+        try:
+            dtl.Threats.edit_score_by_hashkeys(hashkeys, parsed_threat_type, override_type)
+        except ValueError as e:
+            logger.warning(f'\x1b[6;30;41mBATCH {str(index+1)}/{len(list(hashkeys_chunks))}: FAILED\x1b[0m')
+            for hashkey in hashkeys:
+                response_list.append(hashkey + ': FAILED')
+                logger.warning(f'\x1b[6;30;41m{hashkey} : FAILED\x1b[0m')
+            logger.warning(e)
+        else:
+            logger.info(f'\x1b[6;30;42mBATCH {str(index+1)}/{len(list(hashkeys_chunks))}: OK\x1b[0m')
+            for hashkey in hashkeys:
+                response_list.append(hashkey + ': OK')
 
     if args.output:
-        save_output(args.output, response_dict)
+        save_output(args.output, response_list)
         logger.info(f'Results saved in {args.output}\n')
     logger.debug(f'END: edit_score.py')
+
+
+def get_whitelist_threat_types():
+    return [{'threat_type': threat_type, 'score': 0} for threat_type in ThreatType]
 
 
 def retrieve_hashkeys_from_file(input_file, hashkeys):

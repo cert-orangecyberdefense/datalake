@@ -2,7 +2,7 @@ import csv
 import json
 from typing import Generator, List
 
-from datalake import AtomType
+from datalake import AtomType, ThreatType
 from datalake.common.logger import logger
 
 
@@ -66,3 +66,27 @@ def parse_atom_type_or_exit(atom_type: str) -> AtomType:
             f'use one of {[atom_type_.name.lower() for atom_type_ in AtomType]}'
         )
         exit(1)
+
+
+def parse_threat_types(threat_types: list) -> list:
+    threat_type_parsed = {}
+    for i in range(0, len(threat_types), 2):
+        score = int(threat_types[i + 1])
+        try:
+            threat_type = ThreatType(threat_types[i])
+        except ValueError:
+            raise ValueError(f'Unknow threat_types: {threat_types[i]} {score},'
+                             f' please use only value in {[e.value for e in ThreatType]}.')
+        if score < 0 or score > 100:
+            raise ValueError(f'Wrong score: {threat_type} {score}, '
+                             'please use only value in [0, 100].')
+        threat_type_parsed[threat_type] = score
+    threat_type_formatted = []
+    for key, value in threat_type_parsed.items():
+        threat_type_formatted.append({'threat_type': key, 'score': value})
+    return threat_type_formatted
+
+
+def flatten_list(list_to_flatten):
+    flat_list = [item for sublist in list_to_flatten for item in sublist]
+    return flat_list

@@ -2,13 +2,13 @@ import re
 import sys
 
 from collections import OrderedDict
-
-from datalake.common.config import Config
-from datalake.common.logger import logger, configure_logging
-from datalake.common.token_manager import TokenManager
+from halo import Halo
+from datalake import Datalake
+from datalake import OverrideType, AtomType
+from datalake.common.logger import logger
+from datalake.endpoints import Endpoint
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.engines.post_engine import ThreatsPost, BulkThreatsPost
-from datalake_scripts.helper_scripts.utils import load_csv, load_list, save_output
+from datalake_scripts.helper_scripts.utils import load_csv, load_list, save_output, parse_threat_types, flatten_list
 
 
 def main(override_args=None):
@@ -65,6 +65,7 @@ def main(override_args=None):
         nargs='+',
         help='choose specific threat types and their score, like: ddos 50 scam 15',
         default=[],
+        action='append',
     )
     parser.add_argument(
         '--tag',
@@ -83,6 +84,12 @@ def main(override_args=None):
         action='store_true',
     )
     parser.add_argument(
+        '--lock',
+        help='sets override_type to lock. Scores won\'t be updated by the algorithm for three months. Default is '
+             'temporary',
+        action='store_true',
+    )
+    parser.add_argument(
         '--no-bulk',
         help='force an api call for each threats, useful to retrieve the details of threats created',
         action='store_true',
@@ -91,13 +98,20 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-    configure_logging(args.loglevel)
     logger.debug(f'START: add_new_threats.py')
 
     if not args.threat_types and not args.whitelist:
         parser.error("threat types is required if the atom is not for whitelisting")
 
-    permanent = 'permanent' if args.permanent else 'temporary'
+    if args.permanent and args.lock:
+        parser.error("Only one override type is authorized")
+
+    if args.permanent:
+        override_type = OverrideType.PERMANENT
+    elif args.lock:
+        override_type = OverrideType.LOCK
+    else:
+        override_type = OverrideType.TEMPORARY
 
     if args.is_csv:
         try:
@@ -107,42 +121,55 @@ def main(override_args=None):
             exit()
     else:
         list_new_threats = load_list(args.input)
+        if not list_new_threats:
+            raise parser.error('No atom found in the input file.')
     list_new_threats = defang_threats(list_new_threats, args.atom_type)
     list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
-    threat_types = ThreatsPost.parse_threat_types(args.threat_types) or []
+    args.threat_types = flatten_list(args.threat_types)
+    threat_types = parse_threat_types(args.threat_types)
+    atom_type = AtomType[args.atom_type]
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
 
-    # Load api_endpoints and tokens
-    endpoint_config = Config().load_config()
-    token_manager = TokenManager(endpoint_config, environment=args.env)
+    spinner = Halo(text=f'Creating threats', spinner='dots')
+    spinner.start()
 
+    threat_response = dtl.Threats.add_threats(
+        list_new_threats,
+        atom_type,
+        threat_types,
+        override_type,
+        args.whitelist,
+        args.public,
+        args.tag,
+        args.link,
+        args.no_bulk
+    )
+
+    spinner.stop()
+    terminal_size = Endpoint._get_terminal_size()
     if args.no_bulk:
-        post_engine_add_threats = ThreatsPost(endpoint_config, args.env, token_manager)
-        response_dict = post_engine_add_threats.add_threats(
-            list_new_threats,
-            args.atom_type,
-            args.whitelist,
-            threat_types,
-            args.public,
-            args.tag,
-            args.link,
-            permanent
-        )
+        for threat in threat_response:
+            logger.info(f'{threat["hashkey"].ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m')
     else:
-        post_engine_add_threats = BulkThreatsPost(endpoint_config, args.env, token_manager)
-        hashkeys = post_engine_add_threats.add_bulk_threats(
-            list_new_threats,
-            args.atom_type,
-            args.whitelist,
-            threat_types,
-            args.public,
-            args.tag,
-            args.link,
-            permanent
-        )
-        response_dict = {'haskeys': list(hashkeys)}
+        failed = []
+        failed_counter = 0
+        created_counter = 0
+        for batch_res in threat_response:
+            failed.extend(batch_res['failed'])
+            for success in batch_res['success']:
+                for val_created in success['created_atom_values']:
+                    created_counter += 1
+                    logger.info(f'{val_created.ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m')
+        for failed_obj in failed:
+            for failed_atom_val in failed_obj['failed_atom_values']:
+                failed_counter += 1
+                logger.info(f'Creation failed for value {failed_atom_val.ljust(terminal_size - 6, " ")} \x1b[0;30;4\
+                1m  KO  \x1b[0m')
+        logger.info(
+            f'Number of batches: {len(threat_response)}\nCreated threats: {created_counter}\nFailed threat creation: {failed_counter}')
 
     if args.output:
-        save_output(args.output, response_dict)
+        save_output(args.output, threat_response)
         logger.debug(f'Results saved in {args.output}\n')
     logger.debug(f'END: add_new_threats.py')
 

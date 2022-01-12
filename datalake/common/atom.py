@@ -34,3 +34,9 @@ class ThreatType(Enum):
     SCAM = 'scam'
     SCAN = 'scan'
     SPAM = 'spam'
+
+
+class OverrideType(Enum):
+    PERMANENT = 'permanent'
+    TEMPORARY = 'temporary'
+    LOCK = 'lock'

@@ -3,7 +3,7 @@ import json
 import pytest
 import responses
 
-from datalake import Datalake, Output, AtomType
+from datalake import Datalake, Output, AtomType, ThreatType, OverrideType
 from tests.common.fixture import datalake  # noqa needed fixture import
 
 atoms = [
@@ -281,3 +281,107 @@ def test_bulk_lookup_threat_not_supported_output(datalake: Datalake):
     with pytest.raises(ValueError) as err:
         datalake.Threats.bulk_lookup(atoms, output=Output.MISP)
     assert str(err.value) == f'MISP output type is not supported. Outputs supported are: CSV, JSON'
+
+
+def test_edit_score_by_hashkeys_invalid_input(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys('not a list', None, None)
+    assert str(err.value) == 'Hashkeys has to be a list of string'
+
+
+def test_edit_score_by_hashkeys_empty_input(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys([], None, None)
+    assert str(err.value) == 'Hashkeys has to be a list of string'
+
+
+def test_edit_score_by_hashkeys_invalid_list(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys([1, 2, 3], None, None)
+    assert str(err.value) == 'Hashkeys has to be a list of string'
+
+
+def test_edit_score_by_hashkeys_empty_list_element(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys(['xxx-some-hashkey-xxx', ''], None, None)
+    assert str(err.value) == 'Hashkeys has to be a list of string'
+
+
+def test_edit_score_by_hashkeys_invalid_scores_threat_type(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': 'ddos'}])
+    assert str(err.value) == 'Invalid threat_type input'
+
+
+def test_edit_score_by_hashkeys_invalid_scores_score(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': ThreatType.DDOS, 'score': 999}])
+    assert str(err.value) == 'Invalid score input, min: 0, max: 100'
+
+
+def test_edit_score_bad_override_type(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.edit_score_by_hashkeys(['some_hashkey'], [{'threat_type': 'ddos'}], 'lock')
+    assert str(err.value) == 'Invalid OverrideType input'
+
+
+def test_add_threats_not_threat_types_not_whitelist(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        atom_list = ['100.100.100.1']
+        datalake.Threats.add_threats(atom_list, AtomType.IP)
+    assert str(err.value) == 'threat_types is required if the atom is not for whitelisting'
+
+
+def test_add_threats_bad_override_type(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        atom_list = ['100.100.100.1']
+        threat_types = [{'threat_type': ThreatType('ddos'), 'score': 5}]
+        datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, 'lock')
+    assert str(err.value) == 'Invalid OverrideType input'
+
+
+def test_add_threats_bad_atom(datalake: Datalake):
+    with pytest.raises(ValueError) as err:
+        atom_list = ['100.100.100.1', '']
+        threat_types = [{'threat_type': ThreatType('ddos'), 'score': 5}]
+        datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY)
+    assert str(err.value) == 'Empty atom in atom_list'
+
+
+@responses.activate
+def test_add_threats_no_bulk(datalake: Datalake):
+    url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats-manual/'
+    resp = {
+        'atom_type': 'ip',
+        'atom_value': '11.11.111.1',
+        'delivery_timestamp': '2021-12-23T15:57:23.450107+00:00',
+        'hashkey': '3e3f43a23fadc97a5d4c72424d62f48a',
+        'override_type': 'lock',
+        'public': False,
+        'threat_data': {
+            'content': {
+                'ip_content': {
+                    'ip_address': '11.11.111.1', 'ip_version': 4}},
+                    'scores': [
+                        {
+                            'score': {
+                                'risk': 0
+                            },
+                            'threat_type': 'ddos'
+                        }
+                    ],
+            'tags': ['test_tag', 'ocd']
+        },
+        'timestamp_created': '2021-12-23T15:57:23.306039+00:00',
+        'user': {
+            'email': 'user.user@email.com',
+            'full_name': 'User USER', 'id': 0,
+            'organization': {'id': 0, 'name': 'ORG', 'path_names': ['ORG']}
+        },
+        'uuid': '7447bbea-f9a8-44a4-8dca-fcdaa153d13b'
+    }
+    responses.add(responses.POST, url, json=resp, status=200)
+
+    atom_list = ['11.11.111.1']
+    threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
+    assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) == [resp]

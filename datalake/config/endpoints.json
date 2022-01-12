@@ -18,7 +18,8 @@
     "lookup": "mrti/threats/lookup/",
     "comment": "mrti/threats/{hashkey}/comments/",
     "tag": "mrti/threats/{hashkey}/tags/",
-    "atom-values-extract": "mrti/threats/atom-values-extract/"
+    "atom-values-extract": "mrti/threats/atom-values-extract/",
+    "bulk-scoring-edits": "mrti/threats/bulk-scoring-edits/"
   },
   "threats-manual-bulk-size": 100,
   "api_version": "v2/"
