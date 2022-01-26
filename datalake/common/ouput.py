@@ -11,6 +11,7 @@ class Output(Enum):
     STIX = 'application/stix+json'
     JSON_ZIP = 'application/zip'
     CSV_ZIP = 'text/x-csv-zip'
+    STIX_ZIP = 'text/x-stix-zip'
 
     def __str__(self):
         return self.name
