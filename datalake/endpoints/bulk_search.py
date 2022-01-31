@@ -12,6 +12,7 @@ class BulkSearch(Endpoint):
 
     def create_task(
             self,
+            for_stix_export: bool = False,
             query_body: dict = None,
             query_hash: str = None,
             query_fields: list = None
@@ -24,6 +25,8 @@ class BulkSearch(Endpoint):
             body['query_body'] = query_body
         else:
             body['query_hash'] = query_hash
+        if for_stix_export:
+            body['for_stix_export'] = for_stix_export
 
         url = self._build_url_for_endpoint('bulk-search')
         response = self.datalake_requests(url, 'post', post_body=body, headers=self._post_headers()).json()
@@ -39,7 +42,7 @@ class BulkSearch(Endpoint):
         bs_as_json = results[0]
         return BulkSearchTask(endpoint=self, **bs_as_json)
 
-    @output_supported({Output.JSON, Output.JSON_ZIP, Output.CSV, Output.CSV_ZIP})
+    @output_supported({Output.JSON, Output.JSON_ZIP, Output.STIX, Output.STIX_ZIP, Output.CSV, Output.CSV_ZIP})
     def download(self, task_uuid, output=Output.JSON):
         url = self._build_url_for_endpoint('retrieve-bulk-search')
         url = url.format(task_uuid=task_uuid)

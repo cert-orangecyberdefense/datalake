@@ -210,7 +210,8 @@ def test_bulk_search_task_download_not_ready(bulk_search_task: BulkSearchTask):
 def test_bulk_search_task_download_invalid_output(bulk_search_task: BulkSearchTask):
     with pytest.raises(ValueError) as err:
         bulk_search_task.download(Output.MISP)
-    assert str(err.value) == f'MISP output type is not supported. Outputs supported are: CSV, CSV_ZIP, JSON, JSON_ZIP'
+    assert str(err.value) == f'MISP output type is not supported. Outputs supported are: CSV, CSV_ZIP, JSON, JSON_ZIP,'\
+                             ' STIX, STIX_ZIP'
 
 
 @responses.activate

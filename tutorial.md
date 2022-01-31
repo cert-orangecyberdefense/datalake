@@ -72,8 +72,22 @@ A convenient download_sync method is provided:
 task = dtl.BulkSearch.create_task(query_hash='<some query hash>')
 csv = task.download_sync(output=Output.CSV)
 ```
+The following Output format are available:
+* JSON
+* JSON_ZIP
+* CSV
+* CSV_ZIP
+* STIX
+* STIX_ZIP
 
-But depending of your use case, you can call an async version to parallelize the wait of bulk search for example:
+The STIX and STIX_ZIP format are **only** available if when creating the task it is specified that it is for stix export, using the `for_stix_export` parameter
+
+```python
+task = dtl.BulkSearch.create_task(for_stix_export=True, query_hash='<some query hash>')
+stix = task.download_sync(output=Output.STIX)
+```
+
+Depending of your use case, you can call an async version to parallelize the wait of bulk search for example:
 ```python
 # Queuing multiple bulk searches at once saves a lot of time
 # However you will receive HTTP 400 error if you try to enqueue too many bulk search at once (more than 10)
