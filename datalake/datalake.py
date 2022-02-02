@@ -7,6 +7,7 @@ from datalake.common.token_manager import TokenManager
 from datalake.endpoints.threats import Threats
 from datalake.endpoints.bulk_search import BulkSearch
 from datalake.endpoints.tags import Tags
+from datalake.endpoints.advanced_search import AdvancedSearch
 
 
 class Datalake:
@@ -25,3 +26,4 @@ class Datalake:
         self.Threats = Threats(endpoint_config, env, token_manager)
         self.BulkSearch = BulkSearch(endpoint_config, env, token_manager)
         self.Tags = Tags(endpoint_config, env, token_manager)
+        self.AdvancedSearch = AdvancedSearch(endpoint_config, env, token_manager)

@@ -16,7 +16,9 @@ class TestData:
             'threats': 'mrti/threats/',
             'threats-manual': 'mrti/threats-manual/',
             'token': 'auth/token/',
-            "advanced-search": "mrti/advanced-queries/threats/",
+            'advanced-search': 'mrti/advanced-queries/threats/',
+            'advanced-search-hash': 'mrti/advanced-queries/threats/{query_hash}/?limit={limit}&offset={offset}&ordering'\
+            '={ordering}',
             'refresh_token': 'auth/refresh-token/',
             'lookup': 'mrti/threats/lookup/',
             'comment': 'mrti/threats/{hashkey}/comments/',

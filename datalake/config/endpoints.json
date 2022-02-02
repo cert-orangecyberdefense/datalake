@@ -9,6 +9,7 @@
     "retrieve-bulk-search": "mrti/bulk-search/task/{task_uuid}/",
     "threats": "mrti/threats/",
     "advanced-search": "mrti/advanced-queries/threats/",
+    "advanced-search-hash": "mrti/advanced-queries/threats/{query_hash}/?limit={limit}&offset={offset}&ordering={ordering}",
     "threats-manual": "mrti/threats-manual/",
     "threats-bulk-lookup": "mrti/threats/bulk-lookup/",
     "threats-manual-bulk": "mrti/bulk-manual-threats/",
