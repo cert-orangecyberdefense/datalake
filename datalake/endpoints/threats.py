@@ -335,7 +335,6 @@ class Threats(Endpoint):
             'scores': scores,
             'tags': tags,
             'content': {},
-            'threat_types': []
         }
         url = self._build_url_for_endpoint('threats-manual')
         return_value = []

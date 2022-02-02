@@ -95,105 +95,12 @@ class CommentsPost(PostEngine):
         return_value = []
         for hashkey in hashkeys:
             response = self._post_comment(hashkey, comment, visibility)
-            if response.get('message'):
-                logger.warning('\x1b[6;30;41m' + hashkey + ': ' + response.get('message') + '\x1b[0m')
-                return_value.append(hashkey + ': ' + response.get('message'))
+            if not response:
+                logger.warning(f'\x1b[6;30;41m{hashkey}: KO\x1b[0m')
+                return_value.append(hashkey + ': KO')
             else:
                 return_value.append(hashkey + ': OK')
-                logger.info('\x1b[6;30;42m' + hashkey + ': OK\x1b[0m')
-        return return_value
-
-
-class TagsPost(PostEngine):
-    """
-    Threats tags engine.
-    """
-
-    def _build_url(self, endpoint_config: dict, environment: str):
-        return self._build_url_for_endpoint('tag')
-
-    def _post_tags_to_hashkey(self, hashkey: str, tags: List[str], visibility: str = 'organization') -> dict:
-        """
-        Post tags on a single threat hashkey
-        """
-        tags_payload = []
-        for tag in tags:
-            tags_payload.append(
-                {
-                    'name': tag,
-                    'visibility': visibility,
-                }
-            )
-        payload = {
-            'tags': tags_payload,
-        }
-        url = self.url.format(hashkey=hashkey)
-        logger.debug(url)
-        return self.datalake_requests(url, 'post', self._post_headers(), payload)
-
-    def post_tags(self, hashkeys: Set[str], tags: List[str], *, public=True) -> list:
-        """
-        Post tags on threat hashkeys
-        """
-        visibility = 'public' if public else 'organization'
-        return_value = []
-        for hashkey in hashkeys:
-            response = self._post_tags_to_hashkey(hashkey, tags, visibility)
-            if response.get('message'):
-                logger.warning('\x1b[6;30;41m' + hashkey + ': ' + response.get('message') + '\x1b[0m')
-                return_value.append(hashkey + ': ' + response.get('message'))
-            else:
-                return_value.append(hashkey + ': OK')
-                logger.info('\x1b[6;30;42m' + hashkey + ': OK\x1b[0m')
-        return return_value
-
-
-class ScorePost(PostEngine):
-    """
-    Threats score engine.
-    """
-
-    def _build_url(self, endpoint_config: dict, environment: str):
-        return self._build_url_for_endpoint('threats')
-
-    def _post_new_score(self, hashkey: str, scores: Dict[str, int], override_type: str = 'temporary') -> dict:
-        """
-        Post new score to the API
-        """
-        payload = {
-            'override_type': override_type,
-            'scores': []
-        }
-        for threat_type, score in scores.items():
-            if score is None:
-                return {'message': 'No score to modify'}
-            payload['scores'].append(
-                {
-                    'threat_type': threat_type,
-                    'score': {
-                        'risk': score
-                    }
-                }
-            )
-
-        logger.debug('url : ' + repr(self.url))
-        return self.datalake_requests(f'{self.url}{hashkey}/scoring-edits/', 'post', self._post_headers(), payload)
-
-    def post_new_score_from_list(self, hashkeys: list, scores: Dict[str, int],
-                                 override_type: str = 'temporary') -> list:
-        """
-        Post new score to the API from a list of hashkeys
-        """
-        return_value = []
-        for hashkey in hashkeys:
-            response = self._post_new_score(hashkey, scores, override_type)
-            if not response or response.get('message'):
-                response = response or {}  # handle case where no response is returned
-                logger.warning('\x1b[6;30;41m' + hashkey + ': ' + response.get('message', 'Error happened') + '\x1b[0m')
-                return_value.append(hashkey + ': ' + response.get('message', 'Error happened'))
-            else:
-                return_value.append(hashkey + ': OK')
-                logger.info('\x1b[6;30;42m' + hashkey + ': OK\x1b[0m')
+                logger.info(f'\x1b[6;30;42m{hashkey}: OK\x1b[0m')
         return return_value
 
 

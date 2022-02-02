@@ -42,7 +42,7 @@ def test_access_token_expired(datalake):
     def lookup_callback(request):
         headers = {}
         if request.headers['Authorization'] == 'Token 12345':
-            return 401, headers, json.dumps({'msg': 'Token has expired'})
+            return 401, headers, json.dumps({'messages': 'Token has expired'})
         elif request.headers['Authorization'] == 'Token refreshed_token':
             return 200, headers, json.dumps(expected_json)
         else:
