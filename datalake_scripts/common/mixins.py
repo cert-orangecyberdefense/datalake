@@ -51,7 +51,7 @@ class HandleBulkTaskMixin(BaseEngine):
                 json_response = potential_json_response
             elif response.status_code == 401:
                 logger.debug('Refreshing expired Token')
-                self.token_manager.process_auth_error(response.json().get('msg'))
+                self.token_manager.process_auth_error(response.json().get('messages'))
             elif time() - start_time + back_off_time < timeout:
                 sleep(back_off_time)
                 back_off_time = min(back_off_time * 2, self.OCD_DTL_MAX_BACK_OFF_TIME)

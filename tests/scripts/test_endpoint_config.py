@@ -1,7 +1,7 @@
 import pytest
 
 from datalake_scripts.engines.get_engine import ThreatsSearch
-from datalake_scripts.engines.post_engine import CommentsPost, ScorePost, TagsPost, BulkSearch
+from datalake_scripts.engines.post_engine import CommentsPost, BulkSearch
 from tests.common.fixture import token_manager, TestData  # noqa needed fixture import
 
 
@@ -15,8 +15,6 @@ def test_auth(token_manager):
     (ThreatsSearch, 'https://datalake.com/api/v42/mrti/threats/'),
     (BulkSearch, 'https://datalake.com/api/v42/mrti/bulk-search/'),
     (CommentsPost, 'https://datalake.com/api/v42/mrti/threats/{hashkey}/comments/'),
-    (TagsPost, 'https://datalake.com/api/v42/mrti/threats/{hashkey}/tags/'),
-    (ScorePost, 'https://datalake.com/api/v42/mrti/threats/'),
 ])
 def test_engine(token_manager, engine, expected_url):
     engine = engine(TestData.TEST_CONFIG, environment=TestData.TEST_ENV, token_manager=token_manager)

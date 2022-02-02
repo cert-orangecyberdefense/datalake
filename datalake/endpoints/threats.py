@@ -334,8 +334,7 @@ class Threats(Endpoint):
         payload['threat_data'] = {
             'scores': scores,
             'tags': tags,
-            'content': {},
-            'threat_types': []
+            'content': {}
         }
         url = self._build_url_for_endpoint('threats-manual')
         return_value = []
