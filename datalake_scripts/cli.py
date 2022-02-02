@@ -9,7 +9,7 @@ from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_s
 
 class Cli:
     CLI_NAME = 'ocd-dtl'
-    VERSION = '2.5.1'
+    VERSION = '2.5.2rc1'
 
     def __init__(self):
         parser = argparse.ArgumentParser(
