@@ -37,62 +37,21 @@ def mock_api_resp():
             "count": 1,
             "href_query": "https://ti.extranet.mrti-center.com/api/v2/mrti/advanced-queries/threats/de70393f1c250ae675'\
             '66ec37c2032d1b/",
-            "query_body": {
-                "AND": [
-                    {
-                        "AND": [
-                            {
-                                "field": "atom_type",
-                                "multi_values": [
-                                    "phone_number"
-                                ],
-                                "type": "filter"
-                            },
-                            {
-                                "field": "risk",
-                                "range": {
-                                    "gt": 90
-                                },
-                                "type": "filter"
-                            }
-                        ]
-                    }
-                ]
-            },
+            "query_body": query_body,
             "query_hash": "8697fbe09069e882e2de169ad480c2bf",
             "results": []
         }
     )
     responses.add(
         responses.GET,
-        'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/advanced-queries/threats/8697fbe09069e882e2de169ad480c2bf/?limit=0&offset=0&ordering=first_seen',
+        'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/advanced-queries/threats'
+        '/8697fbe09069e882e2de169ad480c2bf/?limit=0&offset=0', 
         status=200,
         json={
             "count": 1,
-            "href_query": "https://datalake.ce...dvanced-queries/threats/8697fbe09069e882e2de169ad480c2bf/'\
-            '66ec37c2032d1b/",
-            "query_body": {
-                "AND": [
-                    {
-                        "AND": [
-                            {
-                                "field": "atom_type",
-                                "multi_values": [
-                                    "phone_number"
-                                ],
-                                "type": "filter"
-                            },
-                            {
-                                "field": "risk",
-                                "range": {
-                                    "gt": 90
-                                },
-                                "type": "filter"
-                            }
-                        ]
-                    }
-                ]
-            },
+            "href_query": "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/advanced-queries/threats"
+                          "/8697fbe09069e882e2de169ad480c2bf/66ec37c2032d1b/", 
+            "query_body": query_body,
             "query_hash": "8697fbe09069e882e2de169ad480c2bf",
             "results": []
         }
@@ -127,7 +86,7 @@ def test_advanced_search_from_query_hash_no_hash(datalake: Datalake):
 
 def test_advanced_search_from_query_hash_bad_ordering(datalake: Datalake):
     with pytest.raises(ValueError) as exec_error:
-        datalake.AdvancedSearch.advanced_search_from_query_hash(query_hash, limit=0, ordering='')
+        datalake.AdvancedSearch.advanced_search_from_query_hash(query_hash, limit=0, ordering='badbad')
     assert str(exec_error.value) == "ordering needs to be one of the following str : first_seen, -first-seen, " \
                                     "last_updated, -last_updated, events_count, -events_count, sources_count, " \
                                     "-sources_count"

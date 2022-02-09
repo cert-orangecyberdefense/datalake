@@ -14,7 +14,7 @@ def main(override_args=None):
     parser = BaseScripts.start('Retrieve a query hash from a query body (a json used for the Advanced Search).')
     required_named = parser.add_argument_group('required arguments')
     required_named.add_argument(
-        '--query_body_path',
+        'query_body_path',
         help='path to the json file containing the query body',
     )
     if override_args:

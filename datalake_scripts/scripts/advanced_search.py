@@ -47,10 +47,8 @@ def main(override_args=None):
     else:
         args = parser.parse_args()
     logger.debug(f'START: advanced_search.py')
-    if not args.input and not args.query_hash or args.input and args.query_hash:
+    if bool(args.input) == bool(args.query_hash):
         raise ValueError('Either an input file with a query body or a query hash needs to be provided.')
-    if not args.output:
-        raise ValueError('Specify an output file to save the results of your advanced search')
     try:
         output_type = Output[args.output_type.upper()]
     except KeyError:
@@ -61,13 +59,13 @@ def main(override_args=None):
     if args.input:
         query_body = load_json(args.input)
         resp = dtl.AdvancedSearch.advanced_search_from_query_body(query_body, limit=args.limit, offset=args.offset,
-                                                                  output=output_type)
+                                                                  output=output_type, ordering=args.ordering)
     else:
         resp = dtl.AdvancedSearch.advanced_search_from_query_hash(args.query_hash, limit=args.limit, offset=args.offset,
-                                                                  output=output_type)
+                                                                  output=output_type, ordering=args.ordering)
     save_output(args.output, resp)
     logger.info(f'\x1b[0;30;42m OK: MATCHING THREATS SAVED IN {args.output} \x1b[0m')
-    logger.debug(f'END: lookup_threats.py')
+    logger.debug(f'END: advanced_search.py')
 
 
 if __name__ == '__main__':
