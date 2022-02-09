@@ -39,7 +39,7 @@ def main(override_args=None):
     parser.add_argument(
         '--ordering',
         help='threat field to filter on. To sort the results by relevance (if any "search" is applied), just skip '
-             'this field. To use the reversed order, use minus, i.e. "-last_updated". '
+             'this field. To use the reversed order, use minus, i.e. --ordering="-last_updated" in your command line.'
     )
 
     if override_args:
