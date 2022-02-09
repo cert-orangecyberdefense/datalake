@@ -1,5 +1,6 @@
 from datalake.endpoints.endpoint import Endpoint
 from datalake.common.ouput import parse_response, Output, output_supported
+from requests.sessions import PreparedRequest
 
 
 class AdvancedSearch(Endpoint):
@@ -31,9 +32,10 @@ class AdvancedSearch(Endpoint):
             raise ValueError("query_hash is required")
         if ordering and ordering not in self.ordering_list:
             raise ValueError(f'ordering needs to be one of the following str : {", ".join(self.ordering_list)}')
-        url = self._build_url_for_endpoint('advanced-search-hash').format(query_hash=query_hash, limit=limit,
-                                                                          offset=offset)
-        if ordering:
-            url = url + f'&ordering={ordering}'
+        url = self._build_url_for_endpoint('advanced-search-hash').format(query_hash=query_hash)
+        params = {'limit': limit, 'offset': offset, 'ordering': ordering}
+        req = PreparedRequest()
+        req.prepare_url(url, params)
+        url = req.url
         response = self.datalake_requests(url, 'get', headers=self._get_headers(output=output))
         return parse_response(response)
