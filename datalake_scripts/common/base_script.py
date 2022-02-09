@@ -16,7 +16,7 @@ FOLDER_ABSOLUTE_PATH = os.path.normpath(os.path.dirname(os.path.abspath(__file__
 class BaseScripts:
 
     @staticmethod
-    def start(description: str) -> argparse.ArgumentParser:
+    def start(description: str, output_file_required: bool = False) -> argparse.ArgumentParser:
         """
         Create a common parser for all the scripts. 
             Parser will contain: 
@@ -33,6 +33,7 @@ class BaseScripts:
             '-o',
             '--output',
             help='Output FILE path from script',
+            required=output_file_required,
         )
         parser.add_argument(
             '-e',

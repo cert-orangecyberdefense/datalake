@@ -192,5 +192,42 @@ override_type = OverrideType.TEMPORARY
 
 dtl.Threats.edit_score_by_query_body_hash(query_body_hash, threat_scores_list, override_type)
 ```
+
+### Advanced Search
+The library can be used to execute advanced search if you have a query hash or a query to body, using `advanced_search_from_query_hash` or `advanced_search_from_query_body`  .
+````python
+from datalake.common.ouput import Output
+
+query_body = {
+  "AND": [
+    {
+      "AND": [
+        {
+          "field": "atom_type",
+          "multi_values": [
+            "ip"
+          ],
+          "type": "filter"
+        },
+        {
+          "field": "risk",
+          "range": {
+            "gt": 60
+          },
+          "type": "filter"
+        }
+      ]
+    }
+  ]
+}
+query_hash = 'cece3117abc823cee81e69c2143e6268'
+
+adv_search_hash_resp = dtl.AdvancedSearch.advanced_search_from_query_hash(query_hash, limit=20, offset=0, 
+                                                                          ordering='first_seen', output=Output.JSON)
+
+adv_search_body_resp = dtl.AdvancedSearch.advanced_search_from_query_body(query_bodylimit=20, offset=0, 
+                                                                          ordering='-first_seen', output=Output.JSON)
+````
+
 ### API documentation
 For more information on the API used by this library, see [the documentation](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)

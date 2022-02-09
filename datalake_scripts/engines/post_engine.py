@@ -133,24 +133,6 @@ class BulkSearch(PostEngine, HandleBulkTaskMixin):
         return self._handle_bulk_search_task(task_uuid=response['task_uuid'])
 
 
-class AdvancedSearch(PostEngine):
-    """Advanced search engine."""
-
-    def _build_url(self, endpoint_config: dict, environment: str):
-        return self._build_url_for_endpoint('advanced-search')
-
-    def get_threats(self, query_body: BaseEngine.Json, limit=10, response_format="application/json") -> dict:
-        query_body = self.build_full_query_body(query_body)
-        payload = {
-            "limit": limit,
-            "offset": 0,
-            "query_body": query_body
-        }
-        headers = self._post_headers()
-        headers['Accept'] = response_format
-        return self.datalake_requests(self.url, 'post', headers, payload)
-
-
 class BulkLookupThreats(PostEngine):
     """Bulk Lookup Threats"""
 

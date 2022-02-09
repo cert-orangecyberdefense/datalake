@@ -35,6 +35,10 @@ def load_list(file_name: str) -> list:
     return [line.rstrip('\n') for line in open(file_name)]
 
 
+def load_json(file_name: str) -> dict:
+    return json.load(open(file_name))
+
+
 def split_input_file(input_file, n):
     """Yield successive n-sized chunks from the input file if it exceeds the limit (n)."""
     yield from split_list(load_list(input_file), n)
