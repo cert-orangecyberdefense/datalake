@@ -127,7 +127,7 @@ def main(override_args=None):
     list_new_threats = list(OrderedDict.fromkeys(list_new_threats))  # removing duplicates while preserving order
     args.threat_types = flatten_list(args.threat_types)
     threat_types = parse_threat_types(args.threat_types)
-    atom_type = AtomType[args.atom_type]
+    atom_type = AtomType[args.atom_type.upper()]
     dtl = Datalake(env=args.env, log_level=args.loglevel)
 
     spinner = Halo(text=f'Creating threats', spinner='dots')
