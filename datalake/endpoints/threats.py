@@ -39,6 +39,7 @@ class Threats(Endpoint):
 
         body: dict = typed_atoms
         body['hashkey_only'] = hashkey_only
+        body['return_search_hashkey'] = True
         url = self._build_url_for_endpoint('threats-bulk-lookup')
         response = self.datalake_requests(url, 'post', self._post_headers(output=output), body)
         return parse_response(response)

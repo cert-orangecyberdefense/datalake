@@ -181,7 +181,6 @@ def pretty_print(raw_response, stdout_format):
         True: ('FOUND', '\x1b[6;30;42m'),
         False: ('NOT_FOUND', '\x1b[6;30;41m')
     }
-
     for atom_type in raw_response.keys():
         logger.info(
             f'{blue_bg}{"#" * 60} {atom_type.upper()} {"#" * (60 - len(atom_type))}{eol}')
