@@ -62,7 +62,8 @@ dtl.Threats.bulk_lookup(
     atom_values=threats, 
     atom_type=AtomType.DOMAIN,
     hashkey_only=False,
-    output=Output.CSV
+    output=Output.CSV,
+    return_search_hashkey=False
 )
 ```
 

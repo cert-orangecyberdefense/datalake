@@ -190,6 +190,44 @@ def test_bulk_lookup_threats(datalake):
 
 
 @responses.activate
+def test_bulk_lookup_return_search_hashkey(datalake):
+    extractor_response = {
+        "found": 1,
+        "not_found": 0,
+        "results": {
+            "domain": [
+                "mayoclinic.org"
+            ]
+        }
+    }
+    bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
+    responses.add(responses.POST, atom_values_extract_url, json=extractor_response, status=200)
+    # <editor-fold desc="bulk_resp">
+    bulk_resp = {
+        'domain': [
+            {
+                'access_permission': True,
+                'atom_value': 'mayoclinic.org',
+                'hashkey': '13166b76877347b83ec060f44b847071',
+                'threat_found': True
+            }
+        ],
+        'search_hashkey': '83fd935d302db70155cceddd09b15dfd'}  # </editor-fold>
+    expected_resp = {
+        'domain': [
+            {
+                'access_permission': True,
+                'atom_value': 'mayoclinic.org',
+                'hashkey': '13166b76877347b83ec060f44b847071',
+                'threat_found': True
+            }
+        ],
+        'search_hashkey': ['83fd935d302db70155cceddd09b15dfd']}
+    responses.add(responses.POST, bulk_lookup_url, json=bulk_resp, status=200)
+    assert datalake.Threats.bulk_lookup(atom_values=atoms, return_search_hashkey=True) == expected_resp
+
+
+@responses.activate
 def test_bulk_lookup_threats_on_typed_atoms(datalake):
     bulk_lookup_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/'
 
@@ -362,14 +400,14 @@ def test_add_threats_no_bulk(datalake: Datalake):
             'content': {
                 'ip_content': {
                     'ip_address': '11.11.111.1', 'ip_version': 4}},
-                    'scores': [
-                        {
-                            'score': {
-                                'risk': 0
-                            },
-                            'threat_type': 'ddos'
-                        }
-                    ],
+            'scores': [
+                {
+                    'score': {
+                        'risk': 0
+                    },
+                    'threat_type': 'ddos'
+                }
+            ],
             'tags': ['test_tag', 'ocd']
         },
         'timestamp_created': '2021-12-23T15:57:23.306039+00:00',
@@ -384,4 +422,5 @@ def test_add_threats_no_bulk(datalake: Datalake):
 
     atom_list = ['11.11.111.1']
     threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
-    assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) == [resp]
+    assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) == [
+        resp]
