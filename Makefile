@@ -8,4 +8,4 @@ test:
 deploy_test: clean build_release
 	python3 -m twine upload --repository testpypi dist/*
 deploy_prod: clean build_release
-	rpython3 -m twine upload dist/*
+	python3 -m twine upload dist/*
