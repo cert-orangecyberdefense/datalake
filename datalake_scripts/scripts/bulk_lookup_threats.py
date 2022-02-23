@@ -185,8 +185,7 @@ def pretty_print(raw_response, stdout_format, env, dtl):
         logger.info(raw_response)
         return
 
-    search_hashkeys = raw_response['search_hashkey'] if 'search_hashkey' in raw_response else None
-    raw_response.pop('search_hashkey')
+    search_hashkeys = raw_response.pop('search_hashkey', None)
     blue_bg = '\033[104m'
     eol = '\x1b[0m'
     boolean_to_text_and_color = {
@@ -210,9 +209,10 @@ def pretty_print(raw_response, stdout_format, env, dtl):
         for search_hashkey in search_hashkeys:
             url = base_url + search_hashkey
             logger.info(f'Results available here : {url}')
+    elif search_hashkeys and len(search_hashkeys) > 10:
+        logger.info('Too many search hashkeys to display, check the output for the full list.')
     else:
-        logger.info('To many search hashkeys to display, check the output for the full list.')
-
+        logger.info('No search haskeys available for this lookup.')
 
 if __name__ == '__main__':
     sys.exit(main())

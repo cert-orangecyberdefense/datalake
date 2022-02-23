@@ -422,5 +422,5 @@ def test_add_threats_no_bulk(datalake: Datalake):
 
     atom_list = ['11.11.111.1']
     threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
-    assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) == [
-        resp]
+    assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) \
+           == [resp]

@@ -23,7 +23,7 @@ class Threats(Endpoint):
             atom_type: AtomType = None,
             hashkey_only=False,
             output=Output.JSON,
-            return_search_hashkey=False
+            return_search_hashkey=False,
     ) -> dict:
         """Bulk lookup done on maximum _NB_ATOMS_PER_BULK_LOOKUP atoms"""
         typed_atoms = {}
@@ -52,7 +52,7 @@ class Threats(Endpoint):
             atom_type: AtomType = None,
             hashkey_only=False,
             output=Output.JSON,
-            return_search_hashkey=False
+            return_search_hashkey=False,
     ) -> Union[dict, str]:
         """
         Look up multiple threats at once in the API, returning their ids and if they are present in Datalake.
@@ -69,13 +69,12 @@ class Threats(Endpoint):
                                                    output,
                                                    return_search_hashkey)
             if 'search_hashkey' in batch_result:
-                search_hashkey_list.append(batch_result['search_hashkey'])
-                batch_result.pop('search_hashkey')
+                search_hashkey_list.append(batch_result.pop('search_hashkey'))
             aggregated_response = aggregate_csv_or_json_api_response(
                 aggregated_response,
                 batch_result,
             )
-        if len(search_hashkey_list) > 0:
+        if search_hashkey_list:
             aggregated_response['search_hashkey'] = search_hashkey_list
         if output is Output.CSV:
             aggregated_response = '\n'.join(aggregated_response)  # a string is expected for CSV output
