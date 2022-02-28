@@ -212,7 +212,7 @@ def pretty_print(raw_response, stdout_format, env, dtl):
     elif search_hashkeys and len(search_hashkeys) > 10:
         logger.info('Too many search hashkeys to display, check the output for the full list.')
     else:
-        logger.info('No search haskeys available for this lookup.')
+        logger.info('No search hashkeys available for this lookup.')
 
 if __name__ == '__main__':
     sys.exit(main())
