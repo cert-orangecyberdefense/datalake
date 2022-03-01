@@ -22,7 +22,8 @@ class Threats(Endpoint):
             atom_values: list,
             atom_type: AtomType = None,
             hashkey_only=False,
-            output=Output.JSON
+            output=Output.JSON,
+            return_search_hashkey=False,
     ) -> dict:
         """Bulk lookup done on maximum _NB_ATOMS_PER_BULK_LOOKUP atoms"""
         typed_atoms = {}
@@ -39,6 +40,7 @@ class Threats(Endpoint):
 
         body: dict = typed_atoms
         body['hashkey_only'] = hashkey_only
+        body['return_search_hashkey'] = return_search_hashkey
         url = self._build_url_for_endpoint('threats-bulk-lookup')
         response = self.datalake_requests(url, 'post', self._post_headers(output=output), body)
         return parse_response(response)
@@ -49,7 +51,8 @@ class Threats(Endpoint):
             atom_values: list,
             atom_type: AtomType = None,
             hashkey_only=False,
-            output=Output.JSON
+            output=Output.JSON,
+            return_search_hashkey=False,
     ) -> Union[dict, str]:
         """
         Look up multiple threats at once in the API, returning their ids and if they are present in Datalake.
@@ -58,12 +61,21 @@ class Threats(Endpoint):
         However, fewer outputs types are supported as of now.
         """
         aggregated_response = [] if output is Output.CSV else {}
+        search_hashkey_list = []
         for atom_values_batch in split_list(atom_values, self._NB_ATOMS_PER_BULK_LOOKUP):
-            batch_result = self._bulk_lookup_batch(atom_values_batch, atom_type, hashkey_only, output)
+            batch_result = self._bulk_lookup_batch(atom_values_batch,
+                                                   atom_type,
+                                                   hashkey_only,
+                                                   output,
+                                                   return_search_hashkey)
+            if 'search_hashkey' in batch_result:
+                search_hashkey_list.append(batch_result.pop('search_hashkey'))
             aggregated_response = aggregate_csv_or_json_api_response(
                 aggregated_response,
                 batch_result,
             )
+        if search_hashkey_list:
+            aggregated_response['search_hashkey'] = search_hashkey_list
         if output is Output.CSV:
             aggregated_response = '\n'.join(aggregated_response)  # a string is expected for CSV output
         return aggregated_response

@@ -1,4 +1,4 @@
-# Returns weather or not threats are in the database
+# Returns whether threats are in the database or not
 
 ### Using input files
 This command can read one or multiple files at the same time as atom input. To pass them, using `-i` or `--input` 
@@ -24,10 +24,10 @@ You can pass files as typed or untyped, it means that you will indicate which ki
   ```
 
   ```shell
-  $ ocd-dt bulk_lookup_threats -i ip:path/to/file/myiplist.txt -i file:path/to/file/myfilelist.txt
+  $ ocd-dtl bulk_lookup_threats -i ip:path/to/file/myiplist.txt -i file:path/to/file/myfilelist.txt
                                   --------- ip typed ---------    --------- file typed -----------
                                   
-  $ ocd-dt bulk_lookup_threats -i path/to/file/myatomlist.txt
+  $ ocd-dtl bulk_lookup_threats -i path/to/file/myatomlist.txt
                                   --------- untyped ---------
   ```
 
@@ -36,18 +36,18 @@ As input files, you can pass one or multiple **typed** or **untyped** atoms by C
 
 * **typed atoms**: Each atom has its own flag called exactly the same as the atom type.
   ```shell
-  $ ocd-dt bulk_lookup_threats --ip 113.223.40.103 --ip 5.78.23.158 --domain reverso.net  --file f0f5d30e91006c8ca7a528f26432ftt5 
+  $ ocd-dtl bulk_lookup_threats --ip 113.223.40.103 --ip 5.78.23.158 --domain reverso.net  --file f0f5d30e91006c8ca7a528f26432ftt5 
   ```     
 
 * **untyped atoms**: If you don't know the atom type, pass them as positional arguments, and the command will find out its type. 
   ```shell
-  $ ocd-dt bulk_lookup_threats 113.223.40.103 5.78.23.158 reverso.net f0f5d30e91006c8ca7a528f26432ftt5 
+  $ ocd-dtl bulk_lookup_threats 113.223.40.103 5.78.23.158 reverso.net f0f5d30e91006c8ca7a528f26432ftt5 
   ```     
   
 
 With all that in mind, you can combine them to fit your needs:
 ```shell
-$ ocd-dt bulk_lookup_threats reverso.net 113.223.40.103 --domain paiza.com --ip 45.96.65.132 -i ip:path/to/file/myiplist.txt -i path/to/file/myfilelist.txt
+$ ocd-dtl bulk_lookup_threats reverso.net 113.223.40.103 --domain paiza.com --ip 45.96.65.132 -i ip:path/to/file/myiplist.txt -i path/to/file/myfilelist.txt
                              ----untyped domain ip----- ---typed domain--- ----typed ip----  -------typed file as ip-------- ---------untyped file---------                                                
 ```
 
