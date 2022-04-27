@@ -389,9 +389,10 @@ def test_add_threats_bad_atom(datalake: Datalake):
 @responses.activate
 def test_add_threats_no_bulk(datalake: Datalake):
     url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats-manual/'
+    ip = '11.11.111.1'
     resp = {
         'atom_type': 'ip',
-        'atom_value': '11.11.111.1',
+        'atom_value': ip,
         'delivery_timestamp': '2021-12-23T15:57:23.450107+00:00',
         'hashkey': '3e3f43a23fadc97a5d4c72424d62f48a',
         'override_type': 'lock',
@@ -399,7 +400,7 @@ def test_add_threats_no_bulk(datalake: Datalake):
         'threat_data': {
             'content': {
                 'ip_content': {
-                    'ip_address': '11.11.111.1', 'ip_version': 4}},
+                    'ip_address': ip, 'ip_version': 4}},
             'scores': [
                 {
                     'score': {
@@ -420,10 +421,8 @@ def test_add_threats_no_bulk(datalake: Datalake):
     }
     responses.add(responses.POST, url, json=resp, status=200)
 
-    atom_list = ['11.11.111.1']
     threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
-    assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) \
-           == [resp]
+    assert datalake.Threats.add_threat(ip, AtomType.IP, threat_types, OverrideType.TEMPORARY) == resp
 
 
 @responses.activate
