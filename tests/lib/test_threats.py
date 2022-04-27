@@ -424,3 +424,51 @@ def test_add_threats_no_bulk(datalake: Datalake):
     threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
     assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True) \
            == [resp]
+
+
+@responses.activate
+def test_add_threats_bulk(datalake: Datalake):
+    url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-manual-threats/'
+    atom_list = ['1.1.1.1', '1.1.1.2']
+    task_uid = "5b127e18-b471-44ae-ae34-e616d74d63a9"
+    hashkeys = ['498838952afbf8a47b68563206fbfca4', '4c7711a6bdbcb8626e3f07d4aaa317aa']
+    post_resp = {
+        "hashkeys": hashkeys,
+        "task_uuid": task_uid
+    }
+    responses.add(responses.POST, url, json=post_resp, status=202)
+
+    url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-manual-threats/task/{task_uid}/'
+    get_resp = {  # Returns the DONE response right away
+        "atom_type": "ip",
+        "atom_values": atom_list,
+        "created_at": "2022-04-27T07:49:55.027385+00:00",
+        "finished_at": "2022-04-27T07:49:58.186193+00:00",
+        "hashkeys": hashkeys,
+        "public": True,
+        "queue_position": None,
+        "started_at": "2022-04-27T07:49:57.919530+00:00",
+        "state": "DONE",
+        "tags": [],
+        "user": {
+            "email": "johnny.english@orange.com",
+            "full_name": "johnny english",
+            "id": 287,
+            "organization": {"id": 4, "name": "OCD", "path_names": ["OCD"]}
+        },
+        "uuid": task_uid
+    }
+    responses.add(responses.GET, url, json=get_resp, status=200)
+
+    threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
+    assert datalake.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY) == [
+        {
+            'success': [
+                {
+                    'created_hashkeys': hashkeys,
+                    'created_atom_values': ['1.1.1.1', '1.1.1.2']
+                }
+            ],
+            'failed': []
+        }
+    ]

@@ -206,8 +206,7 @@ class Threats(Endpoint):
             raise ValueError('Invalid OverrideType input')
         if any(len(atom) < 1 for atom in atom_list):
             raise ValueError('Empty atom in atom_list')
-        if not tags:
-            tags = []  # API doesn't accept no tags, needs an empty list
+        tags = tags or []  # API requires a tag field, default to an empty list
         payload = {
             'override_type': override_type.value,
             'public': public
