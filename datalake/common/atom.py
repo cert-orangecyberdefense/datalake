@@ -2,6 +2,7 @@
 Enums for atom properties
 """
 from enum import Enum
+from typing import Dict, Union
 
 
 class AtomType(Enum):
@@ -35,6 +36,13 @@ class ThreatType(Enum):
     SCAN = 'scan'
     SPAM = 'spam'
 
+
+ScoreMap = Dict[str, Union[int, ThreatType]]  # Should be replaced by a TypedDict when we drop python 3.7 support
+"""
+Group a threat type with a score using the following keys:
+score -> int (from 0 to 100 included)
+threat_type -> ThreatType
+"""
 
 class OverrideType(Enum):
     PERMANENT = 'permanent'

@@ -5,6 +5,7 @@ from time import time, sleep
 from requests.sessions import PreparedRequest
 
 from datalake import AtomType, ThreatType, OverrideType
+from datalake.common.atom import ScoreMap
 from datalake.common.ouput import Output, output_supported, parse_response
 from datalake.common.utils import split_list, aggregate_csv_or_json_api_response
 from datalake.endpoints.endpoint import Endpoint
@@ -125,7 +126,7 @@ class Threats(Endpoint):
     def edit_score_by_hashkeys(self, hashkeys, scores_list, override_type: OverrideType = OverrideType.TEMPORARY):
         """
         Edit the score of a list of threats using the API. Default is 100. This function will receive a list of 
-        hashkey to edit, a list of dictonaries defining the score the set and an override type. Can only process a 
+        hashkey to edit, a list of dictionaries defining the score the set and an override type. Can only process a
         limited number of hashkeys at one time. Can be modified with the environment variable 
         OCD_DTL_MAX_EDIT_SCORE_HASHKEYS.
         """
@@ -147,8 +148,8 @@ class Threats(Endpoint):
         return parse_response(response)
 
     def edit_score_by_query_body_hash(self,
-                                      query_body_hash,
-                                      scores_list,
+                                      query_body_hash: str,
+                                      scores_list: List[ScoreMap],
                                       override_type: OverrideType = OverrideType.TEMPORARY):
         """
         Edit the score of a list of threats using the API.
@@ -167,7 +168,7 @@ class Threats(Endpoint):
         return parse_response(response)
 
     @staticmethod
-    def _build_scores(scores_list: List[Dict[str, int]]):
+    def _build_scores(scores_list: List[ScoreMap]):
         scores_body = []
         for score_dict in scores_list:
             if not isinstance(score_dict['threat_type'], ThreatType):
@@ -183,44 +184,48 @@ class Threats(Endpoint):
             })
         return scores_body
 
+    @staticmethod
+    def _build_whitelist_scores():
+        scores = []
+        for threat in ThreatType:
+            scores.append({'score': {'risk': 0}, 'threat_type': threat.value})
+        return scores
+
     def add_threats(
             self,
             atom_list: List[str],
             atom_type: AtomType,
-            threat_types: List[Dict[str, int]] = None,
+            threat_types: List[ScoreMap] = None,
             override_type: OverrideType = OverrideType.TEMPORARY,
             whitelist: bool = False,
             public: bool = True,
             tags: List = None,
             external_analysis_link: List = None,
-            no_bulk: bool = False
     ):
         """
         Add a list of threats to datalake using the API.
         The type of atom provided in the list of threats to add need to be the same, for example a list of IPs.
-        When bulk add is enabled, will add threats by batch of 100 threats.
         """
+        self.check_add_threats_params(atom_list, override_type, threat_types, whitelist)
+        tags = tags or []  # API requires a tag field, default to an empty list
+        payload = {
+            'override_type': override_type.value,
+            'public': public
+        }
+        if whitelist:
+            scores = self._build_whitelist_scores()
+        else:
+            scores = self._build_scores(threat_types)
+        return self._bulk_add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
+
+    @staticmethod
+    def check_add_threats_params(atom_list, override_type, threat_types, whitelist):
         if not threat_types and not whitelist:
             raise ValueError('threat_types is required if the atom is not for whitelisting')
         if not isinstance(override_type, OverrideType):
             raise ValueError('Invalid OverrideType input')
         if any(len(atom) < 1 for atom in atom_list):
             raise ValueError('Empty atom in atom_list')
-        if not tags:
-            tags = []  # API doesn't accept no tags, needs an empty list
-        payload = {
-            'override_type': override_type.value,
-            'public': public
-        }
-        scores = []
-        if whitelist:
-            for threat in ThreatType:
-                scores.append({'score': {'risk': 0}, 'threat_type': threat.value})
-        else:
-            scores = self._build_scores(threat_types)
-        if no_bulk:
-            return self._add_threats(atom_list, atom_type, payload, tags, scores, external_analysis_link)
-        return self._bulk_add_threat(atom_list, atom_type, payload, tags, scores, external_analysis_link)
 
     def _bulk_add_threat(
             self,
@@ -334,33 +339,43 @@ class Threats(Endpoint):
                 )
         return json_response
 
-    def _add_threats(
+    def add_threat(
             self,
-            atom_list: List,
+            atom_value: str,
             atom_type: AtomType,
-            payload: Dict,
-            tags: List,
-            scores: List[Dict],
-            external_analysis_link: List = None
+            threat_types: List[ScoreMap] = None,
+            override_type: OverrideType = OverrideType.TEMPORARY,
+            whitelist: bool = False,
+            public: bool = True,
+            tags: List = None,
+            external_analysis_link: List = None,
     ):
-        payload['threat_data'] = {
-            'scores': scores,
-            'tags': tags,
-            'content': {},
+        """
+        Add a single threat to datalake using the API.
+        This method is slower than add_threats for submitting a large number of threats
+        """
+        self.check_add_threats_params([atom_value], override_type, threat_types, whitelist)
+        tags = tags or []  # API requires a tag field, default to an empty list
+        if whitelist:
+            scores = self._build_whitelist_scores()
+        else:
+            scores = self._build_scores(threat_types)
+        payload = {
+            'override_type': override_type.value,
+            'public': public,
+            'threat_data': {
+                'scores': scores,
+                'tags': tags,
+                'content': {},
+            }
         }
         url = self._build_url_for_endpoint('threats-manual')
-        return_value = []
-        for atom in atom_list:
-            response_dict = self._add_new_atom(atom, atom_type.value, payload, external_analysis_link, url)
-            return_value.append(response_dict)
-        return return_value
-
-    def _add_new_atom(self, atom_value: str, atom_type: str, payload: dict, links: list, url: str) -> dict:
-        final_payload = self._tune_payload_to_atom(atom_type, links, payload, atom_value)
+        final_payload = self._tune_payload_to_atom(atom_type.value, external_analysis_link, payload, atom_value)
         response = self.datalake_requests(url, 'post', self._post_headers(), final_payload)
         return parse_response(response)
 
-    def _tune_payload_to_atom(self, atom_type, links, payload, value):
+    @staticmethod
+    def _tune_payload_to_atom(atom_type, links, payload, value):
 
         def hash_to_name(hash_):
             hash_list = {32: 'md5', 40: 'sha1', 64: 'sha256', 128: 'sha512'}
