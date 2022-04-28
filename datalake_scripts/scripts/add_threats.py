@@ -1,3 +1,4 @@
+import json
 import re
 import sys
 
@@ -130,27 +131,25 @@ def main(override_args=None):
     atom_type = AtomType[args.atom_type.upper()]
     dtl = Datalake(env=args.env, log_level=args.loglevel)
 
-    spinner = Halo(text=f'Creating threats', spinner='dots')
-    spinner.start()
-
-    threat_response = dtl.Threats.add_threats(
-        list_new_threats,
-        atom_type,
-        threat_types,
-        override_type,
-        args.whitelist,
-        args.public,
-        args.tag,
-        args.link,
-        args.no_bulk
-    )
-
-    spinner.stop()
+    add_threat_params = (atom_type, threat_types, override_type, args.whitelist, args.public, args.tag, args.link)
     terminal_size = Endpoint._get_terminal_size()
     if args.no_bulk:
-        for threat in threat_response:
-            logger.info(f'{threat["hashkey"].ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m')
+        threat_response = []
+        for threat in list_new_threats:
+            try:
+                res = dtl.Threats.add_threat(threat, *add_threat_params)
+                threat_response.append(res)
+                logger.info(f'{threat.ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m')
+            except ValueError as ve:  # Wrong atom type most likely
+                error_message = str(ve)
+                threat_response.append({"atom_value": threat, "failed": True, "error_message": error_message})
+                logger.info(f'{threat.ljust(terminal_size - 6, " ")} '
+                            f'\x1b[0;30;41m  KO  \x1b[0m')
     else:
+        spinner = Halo(text=f'Creating threats', spinner='dots')
+        spinner.start()
+        threat_response = dtl.Threats.add_threats(list_new_threats, *add_threat_params)
+        spinner.succeed()
         failed = []
         failed_counter = 0
         created_counter = 0
@@ -166,10 +165,13 @@ def main(override_args=None):
                 logger.info(f'Creation failed for value {failed_atom_val.ljust(terminal_size - 6, " ")} \x1b[0;30;4\
                 1m  KO  \x1b[0m')
         logger.info(
-            f'Number of batches: {len(threat_response)}\nCreated threats: {created_counter}\nFailed threat creation: {failed_counter}')
+            f'Number of batches: {len(threat_response)}\n'
+            f'Created threats: {created_counter}\n'
+            f'Failed threat creation: {failed_counter}'
+        )
 
     if args.output:
-        save_output(args.output, threat_response)
+        save_output(args.output, json.dumps(threat_response))
         logger.debug(f'Results saved in {args.output}\n')
     logger.debug(f'END: add_new_threats.py')
 

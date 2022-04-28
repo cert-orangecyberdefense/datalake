@@ -129,7 +129,7 @@ from datalake import ThreatType, OverrideType, AtomType
 
 atom_list = ['01.01.111.1', '01.01.111.2']
 threat_types = [{'threat_type': ThreatType.DDOS, 'score': 0}]
-dtl.Threats.add_threat(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, no_bulk=True, public=False)
+dtl.Threats.add_threats(atom_list, AtomType.IP, threat_types, OverrideType.TEMPORARY, public=False)
 ```
 The following positional arguments are required:
 * `atom_list`: a List of strings. Contains the list of threats to add. In our example it's a list of IPs.
