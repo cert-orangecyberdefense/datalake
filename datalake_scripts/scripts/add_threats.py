@@ -10,7 +10,7 @@ from datalake.common.logger import logger
 from datalake.endpoints import Endpoint
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.helper_scripts.utils import load_csv, load_list, save_output, parse_threat_types, flatten_list
-
+from datalake import Hashes, FileAtom, AndroidApp, ApkAtom, AsAtom, CcAtom, CryptoAtom, CveAtom, Jarm, DomainAtom, EmailFlow, EmailAtom, FqdnAtom, IbanAtom, IpService, IpAtom, IpRangeAtom, PasteAtom, PhoneNumberAtom, RegKeyAtom, SslAtom, UrlAtom
 
 def main(override_args=None):
     """Method to start the script"""
@@ -131,13 +131,20 @@ def main(override_args=None):
     atom_type = AtomType[args.atom_type.upper()]
     dtl = Datalake(env=args.env, log_level=args.loglevel)
 
-    add_threat_params = (atom_type, threat_types, override_type, args.whitelist, args.public, args.tag, args.link)
     terminal_size = Endpoint._get_terminal_size()
     if args.no_bulk:
         threat_response = []
         for threat in list_new_threats:
             try:
-                res = dtl.Threats.add_threat(threat, *add_threat_params)
+                atom = _build_threat_from_atom_type(threat, atom_type, args.link)
+                res = dtl.Threats.add_threat(
+                    atom=atom,
+                    threat_types=threat_types,
+                    override_type=override_type,
+                    whitelist=args.whitelist,
+                    public=args.public,
+                    tags=args.tag,
+                )
                 threat_response.append(res)
                 logger.info(f'{threat.ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m')
             except ValueError as ve:  # Wrong atom type most likely
@@ -148,7 +155,16 @@ def main(override_args=None):
     else:
         spinner = Halo(text=f'Creating threats', spinner='dots')
         spinner.start()
-        threat_response = dtl.Threats.add_threats(list_new_threats, *add_threat_params)
+        threat_response = dtl.Threats.add_threats(
+            atom_list=list_new_threats,
+            atom_type=atom_type,
+            threat_types=threat_types,
+            override_type=override_type,
+            whitelist=args.whitelist,
+            public=args.public,
+            tags=args.tag,
+            external_analysis_link=args.link
+        )
         spinner.succeed()
         failed = []
         failed_counter = 0
@@ -204,6 +220,55 @@ def defang_threats(threats, atom_type):
                 logger.info(f'\'{unmodified_threat}\' has been modified as \'{threat}\'')
         defanged.append(threat)
     return defanged
+
+
+def hash_to_name(hash_):
+    hash_list = {32: 'md5', 40: 'sha1', 64: 'sha256', 128: 'sha512'}
+    return hash_list.get(len(hash_), 'ssdeep')
+
+
+def _build_threat_from_atom_type(value, atom_type, link=None):
+    if atom_type == AtomType.APK:
+        package_name, apk_hash = value.split(',')
+        hashes = Hashes(**{hash_to_name(apk_hash): apk_hash})
+        atom = ApkAtom(external_analysis_link=link, android=AndroidApp(package_name), hashes=hashes)
+    elif atom_type == AtomType.AS:
+        atom = AsAtom(external_analysis_link=link, asn=value)
+    elif atom_type == AtomType.CC:
+        atom = CcAtom(external_analysis_link=link, number=value)
+    elif atom_type == AtomType.CRYPTO:
+        address, network = value.split()
+        atom = CryptoAtom(external_analysis_link=link, crypto_address=address, crypto_network=network)
+    elif atom_type == AtomType.CVE:
+        atom = CveAtom(external_analysis_link=link, cve_id=value)
+    elif atom_type == AtomType.DOMAIN:
+        atom = DomainAtom(external_analysis_link=link, domain=value)
+    elif atom_type == AtomType.EMAIL:
+        atom = EmailAtom(external_analysis_link=link, email=value)
+    elif atom_type == AtomType.FILE:
+        hashes = Hashes(**{hash_to_name(value): value})
+        atom = FileAtom(external_analysis_link=link, hashes=hashes)
+    elif atom_type == AtomType.FQDN:
+        atom = FqdnAtom(external_analysis_link=link, fqdn=value)
+    elif atom_type == AtomType.IBAN:
+        atom = IbanAtom(external_analysis_link=link, iban=value)
+    elif atom_type == AtomType.IP:
+        atom = IpAtom(external_analysis_link=link, ip_address=value)
+    elif atom_type == AtomType.IP_RANGE:
+        atom = IpRangeAtom(external_analysis_link=link, cidr=value)
+    elif atom_type == AtomType.PASTE:
+        atom = PasteAtom(external_analysis_link=link, url=value)
+    elif atom_type == AtomType.PHONE_NUMBER:
+        key = 'international_phone_number' if value.startswith('+') else 'national_phone_number'
+        atom = PhoneNumberAtom(external_analysis_link=link, **{key: value})
+    elif atom_type == AtomType.REGKEY:
+        atom = RegKeyAtom(external_analysis_link=link, path=value)
+    elif atom_type == AtomType.SSL:
+        hashes = Hashes(**{hash_to_name(value): value})
+        atom = SslAtom(external_analysis_link=link, hashes=hashes)
+    elif atom_type == AtomType.URL:
+        atom = UrlAtom(external_analysis_link=link, url=value)
+    return atom
 
 
 if __name__ == '__main__':

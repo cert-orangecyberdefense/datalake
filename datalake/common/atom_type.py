@@ -43,10 +43,10 @@ class Atom:
         """
         Utility method to returns a filtered json from the data given to the atom class for the API.
         """
+        prefix = self._get_sightings_prefix()
         if for_sightings:
-            prefix = self._get_sightings_prefix()
             return {f'{prefix}_list': [asdict(self, dict_factory=self._sightings_factory)]}
-        return asdict(self, dict_factory=self._factory)
+        return {f'{prefix}_content': asdict(self, dict_factory=self._factory)}
 
 
 @dataclass
@@ -290,7 +290,7 @@ class IpAtom(Atom):
     """
     ip_address: str
     external_analysis_link: List[str] = None
-    hostanme: str = None
+    hostname: str = None
     ip_version: int = None
     jarm: Jarm = None
     malware_family: str = None
