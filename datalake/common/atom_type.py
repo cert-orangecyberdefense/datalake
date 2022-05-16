@@ -1,12 +1,14 @@
 from enum import Enum
 from dataclasses import dataclass, asdict
-
+from datalake.common.warn import Warn 
 from typing import List, Dict
+import warnings
 
 
 @dataclass
 class Atom:
     """
+    Base class for atom types.
     """
     pass
 
@@ -21,6 +23,8 @@ class Atom:
         Utility method to returns a filtered json from the data given to the atom class for the API.
         """
         if for_sightings:
+            Warn().check_warning()
+            warnings.warn("Some keys aren't allowed for sightings and thus will be removed if you have set them. Check the classes for information on which keys are allowed. To stop this warning from showing, please set the IGNORE_SIGHTING_BUILDER_WARNING environment variable to True")
             return asdict(self, dict_factory=self._sightings_factory)
         return asdict(self, dict_factory=self._factory)
 
@@ -39,6 +43,9 @@ class Hashes:
 
 @dataclass
 class FileAtom(Atom):
+    """
+    Allowed sighting key: ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
+    """
     hashes: Hashes
     external_analysis_link: List[str] = None
     filesize: int = None
@@ -64,6 +71,9 @@ class AndroidApp:
 
 @dataclass
 class ApkAtom(Atom):
+    """
+    Allowed sighting key: ['android', 'package_name', 'version_name', 'hashes', 'md5', 'sha1', 'sha256', 'sha512']
+    """
     android: AndroidApp
     hashes: Hashes
     external_analysis_link: List[str] = None
@@ -81,6 +91,9 @@ class ApkAtom(Atom):
 
 @dataclass
 class AsAtom(Atom):
+    """
+    Allowed sighting key: ['asn']
+    """
     asn: int
     external_analysis_link: List[str] = None
     allocation_date: str = None
@@ -97,6 +110,7 @@ class AsAtom(Atom):
 @dataclass
 class CcAtom(Atom):
     """
+    Allowed sighting key: ['number']
     number: minLength = 8  maxLength = 19
     """
     number: str
@@ -114,6 +128,9 @@ class CcAtom(Atom):
 
 @dataclass
 class CryptoAtom(Atom):
+    """
+    Allowed sighting key: ['crypto_address', 'crypto_network']
+    """
     """
     first_used and last_used expect the following datetime format: '%Y-%m-%dT%H:%M:%SZ'
     """
@@ -133,6 +150,9 @@ class CryptoAtom(Atom):
 
 @dataclass
 class CveAtom(Atom):
+    """
+    Allowed sighting key: ['cve_id']
+    """
     """
     published_at expect the following datetime format: '%Y-%m-%dT%H:%M:%SZ'
     """
@@ -157,6 +177,9 @@ class Jarm:
 
 @dataclass
 class DomainAtom(Atom):
+    """
+    Allowed sighting key: ['domain']
+    """
     domain: str
     external_analysis_link: List[str] = None
     malware_family: str = None
@@ -174,6 +197,9 @@ class EmailFlow(Enum):
 
 @dataclass
 class EmailAtom(Atom):
+    """
+    Allowed sighting key: ['email']
+    """
     email: str
     email_flow: EmailFlow = None
     external_analysis_link: List[str] = None
@@ -185,6 +211,9 @@ class EmailAtom(Atom):
 
 @dataclass
 class FqdnAtom(Atom):
+    """
+    Allowed sighting key: ['fqdn']
+    """
     fqdn: str
     jarm: Jarm = None
     malware_family: str = None
@@ -199,6 +228,9 @@ class FqdnAtom(Atom):
 
 @dataclass
 class IbanAtom(Atom):
+    """
+    Allowed sighting key: ['iban']
+    """
     iban: str
     holder_name: str = None
     holder_address: str = None
@@ -222,6 +254,9 @@ class IpService:
 
 @dataclass
 class IpAtom(Atom):
+    """
+    Allowed sighting key: ['ip_address']
+    """
     ip_address: str
     external_analysis_link: List[str] = None
     hostanme: str = None
@@ -239,6 +274,9 @@ class IpAtom(Atom):
 
 @dataclass
 class IpRangeAtom(Atom):
+    """
+    Allowed sighting key: ['cidr']
+    """
     cidr: str
     country: str = None
     allocation_date: str = None
@@ -254,6 +292,9 @@ class IpRangeAtom(Atom):
 
 @dataclass
 class PasteAtom(Atom):
+    """
+    Allowed sighting key: ['url']
+    """
     url: str
     author: str = None
     title: str = None
@@ -267,6 +308,9 @@ class PasteAtom(Atom):
 
 @dataclass
 class PhoneNumberAtom(Atom):
+    """
+    Allowed sighting key: ['international_phone_number', 'national_phone_number']
+    """
     """
     country: minLength = 2  maxLength = 2
     """
@@ -283,6 +327,9 @@ class PhoneNumberAtom(Atom):
 
 @dataclass
 class RegKeyAtom(Atom):
+    """
+    Allowed sighting key: ['path']
+    """
     path: str
     regkey_value: str = None
     hive: str = None
@@ -295,6 +342,9 @@ class RegKeyAtom(Atom):
 
 @dataclass
 class SslAtom(Atom):
+    """
+    Allowed sighting key: ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
+    """
     hashes: Hashes
     issuer: str = None
     public_key: str = None
@@ -312,6 +362,9 @@ class SslAtom(Atom):
 
 @dataclass
 class UrlAtom(Atom):
+    """
+    Allowed sighting key: ['url']
+    """
     url: str
     malware_family: str = None
     jarm: Jarm = None

@@ -229,6 +229,37 @@ adv_search_hash_resp = dtl.AdvancedSearch.advanced_search_from_query_hash(query_
 adv_search_body_resp = dtl.AdvancedSearch.advanced_search_from_query_body(query_bodylimit=20, offset=0, 
                                                                           ordering='-first_seen', output=Output.JSON)
 ````
+### Sightings
+Sightings can be submitted using the library using a list of atoms:
+```python
+from datalake.common.atom_type import IpAtom, EmailAtom, UrlAtom
+from datalake.common.atom import SightingType, Visibility, ThreatType
+
+ip1 = IpAtom('8.8.8.8')
+ip2 = IpAtom('9.9.9.9')
+em1 = EmailAtom('hacker@hacker.ha')
+url1 = UrlAtom('notfishing.com')
+
+threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
+start = (datetime.fromtimestamp(1620656423)).strftime("%Y-%m-%dT%H:%M:%SZ")
+end = (datetime.fromtimestamp(1620742823)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+resp = dtl.Sightings.submit_sighting(start, end, SightingType.POSITIVE, Visibility.PUBLIC, 1, threat_types, atoms=[ip1, ip2, em1, url1])
+```
+Or using a list of hashkeys:
+```python
+from datalake.common.atom_type import IpAtom, EmailAtom, UrlAtom, Atom
+from datalake.common.atom import SightingType, Visibility, ThreatType
+
+threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
+start = (datetime.fromtimestamp(1620656423)).strftime("%Y-%m-%dT%H:%M:%SZ")
+end = (datetime.fromtimestamp(1620742823)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+resp = dtl.Sightings.submit_sighting(start, end, SightingType.POSITIVE, Visibility.PUBLIC, 1, threat_types, hashkeys=['mysightinghashkey'])
+```
+The atom_type file provides multiple classes to build each type of atom type used by the API. The classes will provide you with hints on the value expected for each atom_type, must of which aren't mandatory.
+For sightings, we won't use most of the fields. You can verify the fields that are used for sighting in the docstrings of each class, inside of your editor.
+
 
 ### API documentation
 For more information on the API used by this library, see [the documentation](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)
