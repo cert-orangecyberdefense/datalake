@@ -1,10 +1,9 @@
 import sys
 from collections import OrderedDict
-from parser import ParserError
 
 from datalake import Datalake
 from datalake.common.logger import logger
-from datalake_scripts.common.base_engine import BaseEngine
+from datalake_scripts.common.base_engine import BaseEngine, InvalidHeader
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.helper_scripts.output_builder import CsvBuilder
 from datalake_scripts.helper_scripts.utils import load_csv, load_list, save_output, parse_atom_type_or_exit
@@ -79,7 +78,7 @@ def main(override_args=None):
     if args.output_type:
         try:
             args.output_type = BaseEngine.output_type2header(args.output_type)
-        except ParserError as e:
+        except InvalidHeader as e:
             logger.exception(f'Exception raised while getting output type from headers # {str(e)}', exc_info=False)
             exit(1)
 
