@@ -4,7 +4,6 @@ Extend this engine to give it more functionality.
 """
 import json
 import os
-import parser
 from json.decoder import JSONDecodeError
 from typing import Union
 from urllib.parse import urljoin
