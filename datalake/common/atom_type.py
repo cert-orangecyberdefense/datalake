@@ -1,8 +1,8 @@
 from enum import Enum
+from abc import abstractmethod
 from dataclasses import dataclass, asdict
-from datalake.common.warn import Warn 
+from datalake.common.warn import Warn
 from typing import List, Dict
-import warnings
 
 
 @dataclass
@@ -13,19 +13,37 @@ class Atom:
     pass
 
     def _factory(self, data):
-        return {'content': dict(x for x in data if x[1] is not None)}
+        return dict(x for x in data if x[1] is not None)
 
+    @abstractmethod
     def _sightings_factory(self, data):
         pass
+
+    @abstractmethod
+    def _get_sightings_prefix(self):
+        pass
+
+    def _sub_sightings_factory(self, data, allowed):
+        fact_dict = {}
+        removed = False
+        for x in data:
+            if x[1] is not None:
+                if x[0] in allowed:
+                    fact_dict[x[0]] = x[1]
+                else:
+                    removed = True
+        if removed:
+            Warn.warning("Some keys aren't allowed for sightings and thus will be removed if you have set them. Check "
+                         "the classes for information on which keys are allowed. To stop this warning from showing, "
+                         "please set the IGNORE_SIGHTING_BUILDER_WARNING environment variable to True")
 
     def generate_atom_json(self, for_sightings=False):
         """
         Utility method to returns a filtered json from the data given to the atom class for the API.
         """
         if for_sightings:
-            Warn().check_warning()
-            warnings.warn("Some keys aren't allowed for sightings and thus will be removed if you have set them. Check the classes for information on which keys are allowed. To stop this warning from showing, please set the IGNORE_SIGHTING_BUILDER_WARNING environment variable to True")
-            return asdict(self, dict_factory=self._sightings_factory)
+            prefix = self._get_sightings_prefix()
+            return {f'${prefix}_list': [asdict(self, dict_factory=self._sightings_factory)]}
         return asdict(self, dict_factory=self._factory)
 
 
@@ -57,8 +75,10 @@ class FileAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
-        return {'file_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'file'
 
 @dataclass
 class AndroidApp:
@@ -86,8 +106,10 @@ class ApkAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['android', 'package_name', 'version_name', 'hashes', 'md5', 'sha1', 'sha256', 'sha512']
-        return {'apk_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'apk'
 
 @dataclass
 class AsAtom(Atom):
@@ -104,8 +126,10 @@ class AsAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['asn']
-        return {'as_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'as'
 
 @dataclass
 class CcAtom(Atom):
@@ -123,8 +147,10 @@ class CcAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['number']
-        return {'cc_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'cc'
 
 @dataclass
 class CryptoAtom(Atom):
@@ -145,8 +171,10 @@ class CryptoAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['crypto_address', 'crypto_network']
-        return {'crypto_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'crypto'
 
 @dataclass
 class CveAtom(Atom):
@@ -164,7 +192,10 @@ class CveAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['cve_id']
-        return {'cve_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
+
+    def _get_sightings_prefix(self):
+        return 'cve'
 
 
 @dataclass
@@ -187,8 +218,10 @@ class DomainAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['domain']
-        return {'domain_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'domain'
 
 class EmailFlow(Enum):
     TO = 'to'
@@ -206,8 +239,10 @@ class EmailAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['email']
-        return {'email_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'email'
 
 @dataclass
 class FqdnAtom(Atom):
@@ -218,13 +253,15 @@ class FqdnAtom(Atom):
     jarm: Jarm = None
     malware_family: str = None
     port: List[int] = None
-    ns_list: List[str] = None
+    ns: List[str] = None
     external_analysis_link: List[str] = None
 
     def _sightings_factory(self, data):
         allowed = ['fqdn']
-        return {'fqdn_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'fqdn'
 
 @dataclass
 class IbanAtom(Atom):
@@ -241,8 +278,10 @@ class IbanAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['iban']
-        return {'iban_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'iban'
 
 @dataclass
 class IpService:
@@ -269,8 +308,10 @@ class IpAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['ip_address']
-        return {'ip_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'ip'
 
 @dataclass
 class IpRangeAtom(Atom):
@@ -287,8 +328,10 @@ class IpRangeAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['cidr']
-        return {'ip_range_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'ip_range'
 
 @dataclass
 class PasteAtom(Atom):
@@ -303,8 +346,10 @@ class PasteAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['url']
-        return {'paste_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'paste'
 
 @dataclass
 class PhoneNumberAtom(Atom):
@@ -322,8 +367,10 @@ class PhoneNumberAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['international_phone_number', 'national_phone_number']
-        return {'phone_number_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'phone_number'
 
 @dataclass
 class RegKeyAtom(Atom):
@@ -337,8 +384,10 @@ class RegKeyAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['path']
-        return {'regkey_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
 
+    def _get_sightings_prefix(self):
+        return 'regkey'
 
 @dataclass
 class SslAtom(Atom):
@@ -357,7 +406,10 @@ class SslAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
-        return {'ssl_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
+
+    def _get_sightings_prefix(self):
+        return 'ssl'
 
 
 @dataclass
@@ -375,4 +427,7 @@ class UrlAtom(Atom):
 
     def _sightings_factory(self, data):
         allowed = ['url']
-        return {'url_list': [dict(x for x in data if x[1] is not None and x[0] in allowed)]}
+        return self._sub_sightings_factory(data, allowed)
+
+    def _get_sightings_prefix(self):
+        return 'url'

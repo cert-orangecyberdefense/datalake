@@ -252,10 +252,10 @@ from datalake.common.atom_type import IpAtom, EmailAtom, UrlAtom, Atom
 from datalake.common.atom import SightingType, Visibility, ThreatType
 
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
-start = (datetime.fromtimestamp(1620656423)).strftime("%Y-%m-%dT%H:%M:%SZ")
-end = (datetime.fromtimestamp(1620742823)).strftime("%Y-%m-%dT%H:%M:%SZ")
+start = (datetime.datetime.utcnow()).strftime("%Y-%m-%dT%H:%M:%SZ")
+end = (datetime.datetime.utcnow() - datetime.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-resp = dtl.Sightings.submit_sighting(start, end, SightingType.POSITIVE, Visibility.PUBLIC, 1, threat_types, hashkeys=['mysightinghashkey'])
+resp = dtl.Sightings.submit_sighting(start, end, SightingType.POSITIVE, Visibility.PUBLIC, 1, threat_types, hashkeys=['mythreathashkeys'])
 ```
 The atom_type file provides multiple classes to build each type of atom type used by the API. The classes will provide you with hints on the value expected for each atom_type, must of which aren't mandatory.
 For sightings, we won't use most of the fields. You can verify the fields that are used for sighting in the docstrings of each class, inside of your editor.
