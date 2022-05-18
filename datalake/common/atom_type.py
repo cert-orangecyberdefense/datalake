@@ -36,6 +36,7 @@ class Atom:
             Warn.warning("Some keys aren't allowed for sightings and thus will be removed if you have set them. Check "
                          "the classes for information on which keys are allowed. To stop this warning from showing, "
                          "please set the IGNORE_SIGHTING_BUILDER_WARNING environment variable to True")
+        return fact_dict
 
     def generate_atom_json(self, for_sightings=False):
         """
@@ -43,7 +44,7 @@ class Atom:
         """
         if for_sightings:
             prefix = self._get_sightings_prefix()
-            return {f'${prefix}_list': [asdict(self, dict_factory=self._sightings_factory)]}
+            return {f'{prefix}_list': [asdict(self, dict_factory=self._sightings_factory)]}
         return asdict(self, dict_factory=self._factory)
 
 
@@ -312,6 +313,7 @@ class IpAtom(Atom):
 
     def _get_sightings_prefix(self):
         return 'ip'
+
 
 @dataclass
 class IpRangeAtom(Atom):
