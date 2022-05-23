@@ -1,6 +1,5 @@
 import pytest
 import responses
-
 from datalake import Datalake
 from datetime import datetime
 from tests.common.fixture import datalake  # noqa needed fixture import
@@ -38,13 +37,11 @@ file_atom = FileAtom(
     filepath='some/path'
 )
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
-start = '2021-05-10T16:20:23Z'
-end = '2021-05-11T16:20:23Z'
+start = datetime.strptime('2021-05-10T16:20:23Z', "%Y-%m-%dT%H:%M:%SZ")
+end = datetime.strptime('2021-05-11T16:20:23Z', "%Y-%m-%dT%H:%M:%SZ")
 
 def test_prepare_sightings_payload(datalake):
     atoms = [file_atom, ip_atom, ip_atom1]
-    start = '2021-05-10T16:20:23Z'
-    end = '2021-05-11T16:20:23Z'
     sighting_type = SightingType.POSITIVE
     visibility = Visibility.PUBLIC
     count = 1
