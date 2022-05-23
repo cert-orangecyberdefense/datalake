@@ -1,12 +1,12 @@
 from datalake import ThreatType, SightingType, Visibility
-from datalake.common.ouput import Output, output_supported, parse_response
 from datalake.endpoints.endpoint import Endpoint
 from datalake.common.atom_type import Atom
+from datetime import datetime
 from typing import List
 
 
 class Sightings(Endpoint):
-    def submit_sighting(self, start_timestamp: str, end_timestamp: str, sighting_type: SightingType,
+    def submit_sighting(self, start_timestamp: datetime, end_timestamp: datetime, sighting_type: SightingType,
                         visibility: Visibility, count: int, threat_types: List[ThreatType] = None,
                         atoms: List[Atom] = None, hashkeys: List[str] = None):
         """
@@ -64,8 +64,8 @@ class Sightings(Endpoint):
         if hashkeys:
             payload['hashkeys'] = hashkeys
 
-        payload['start_timestamp'] = start_timestamp
-        payload['end_timestamp'] = end_timestamp
+        payload['start_timestamp'] = start_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+        payload['end_timestamp'] = end_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
         payload['visibility'] = visibility.value
         payload['type'] = sighting_type.value
         payload['count'] = count

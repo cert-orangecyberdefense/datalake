@@ -5,5 +5,5 @@ import warnings
 class Warn:
     @staticmethod
     def warning(message):
-        if bool(os.environ.get('IGNORE_SIGHTING_BUILDER_WARNING')):
+        if not os.environ.get('IGNORE_SIGHTING_BUILDER_WARNING', 'False').lower() in ('true', '1', 't'):
             warnings.warn(message)

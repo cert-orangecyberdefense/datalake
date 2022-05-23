@@ -16,14 +16,15 @@ class Atom:
         return dict(x for x in data if x[1] is not None)
 
     @abstractmethod
-    def _sightings_factory(self, data):
+    def _get_sightings_allowed_keys(self):
         pass
 
     @abstractmethod
     def _get_sightings_prefix(self):
         pass
 
-    def _sub_sightings_factory(self, data, allowed):
+    def _sightings_factory(self, data):
+        allowed = self._get_sightings_allowed_keys()
         fact_dict = {}
         removed = False
         for x in data:
@@ -74,9 +75,8 @@ class FileAtom(Atom):
     filename: str = None
     filepath: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
 
     def _get_sightings_prefix(self):
         return 'file'
@@ -105,9 +105,8 @@ class ApkAtom(Atom):
     filename: str = None
     filepath: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['android', 'package_name', 'version_name', 'hashes', 'md5', 'sha1', 'sha256', 'sha512']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['android', 'package_name', 'version_name', 'hashes', 'md5', 'sha1', 'sha256', 'sha512']
 
     def _get_sightings_prefix(self):
         return 'apk'
@@ -125,9 +124,8 @@ class AsAtom(Atom):
     owner: str = None
     registry: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['asn']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['asn']
 
     def _get_sightings_prefix(self):
         return 'as'
@@ -146,9 +144,8 @@ class CcAtom(Atom):
     description: str = None
     expiry_date: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['number']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['number']
 
     def _get_sightings_prefix(self):
         return 'cc'
@@ -170,9 +167,8 @@ class CryptoAtom(Atom):
     first_used: str = None
     last_used: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['crypto_address', 'crypto_network']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['crypto_address', 'crypto_network']
 
     def _get_sightings_prefix(self):
         return 'crypto'
@@ -191,9 +187,8 @@ class CveAtom(Atom):
     external_analysis_link: List[str] = None
     published_at: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['cve_id']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['cve_id']
 
     def _get_sightings_prefix(self):
         return 'cve'
@@ -217,9 +212,8 @@ class DomainAtom(Atom):
     malware_family: str = None
     jarm: Jarm = None
 
-    def _sightings_factory(self, data):
-        allowed = ['domain']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['domain']
 
     def _get_sightings_prefix(self):
         return 'domain'
@@ -238,9 +232,8 @@ class EmailAtom(Atom):
     email_flow: EmailFlow = None
     external_analysis_link: List[str] = None
 
-    def _sightings_factory(self, data):
-        allowed = ['email']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['email']
 
     def _get_sightings_prefix(self):
         return 'email'
@@ -257,9 +250,8 @@ class FqdnAtom(Atom):
     ns: List[str] = None
     external_analysis_link: List[str] = None
 
-    def _sightings_factory(self, data):
-        allowed = ['fqdn']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['fqdn']
 
     def _get_sightings_prefix(self):
         return 'fqdn'
@@ -277,9 +269,8 @@ class IbanAtom(Atom):
     bank_name: str = None
     bank_address: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['iban']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['iban']
 
     def _get_sightings_prefix(self):
         return 'iban'
@@ -307,9 +298,8 @@ class IpAtom(Atom):
     peer_asns: List[int] = None
     services: IpService = None
 
-    def _sightings_factory(self, data):
-        allowed = ['ip_address']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['ip_address']
 
     def _get_sightings_prefix(self):
         return 'ip'
@@ -328,9 +318,8 @@ class IpRangeAtom(Atom):
     owner_description: str = None
     registry: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['cidr']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['cidr']
 
     def _get_sightings_prefix(self):
         return 'ip_range'
@@ -346,9 +335,8 @@ class PasteAtom(Atom):
     content: str = None
     external_analysis_link: List[str] = None
 
-    def _sightings_factory(self, data):
-        allowed = ['url']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['url']
 
     def _get_sightings_prefix(self):
         return 'paste'
@@ -367,9 +355,8 @@ class PhoneNumberAtom(Atom):
     international_phone_number: str = None
     national_phone_number: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['international_phone_number', 'national_phone_number']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['international_phone_number', 'national_phone_number']
 
     def _get_sightings_prefix(self):
         return 'phone_number'
@@ -384,9 +371,8 @@ class RegKeyAtom(Atom):
     hive: str = None
     external_analysis_link: List[str] = None
 
-    def _sightings_factory(self, data):
-        allowed = ['path']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['path']
 
     def _get_sightings_prefix(self):
         return 'regkey'
@@ -406,9 +392,8 @@ class SslAtom(Atom):
     valid_not_after: str = None
     valid_not_before: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
 
     def _get_sightings_prefix(self):
         return 'ssl'
@@ -427,9 +412,8 @@ class UrlAtom(Atom):
     external_analysis_link: List[str] = None
     reason: str = None
 
-    def _sightings_factory(self, data):
-        allowed = ['url']
-        return self._sub_sightings_factory(data, allowed)
+    def _get_sightings_allowed_keys(self):
+        return ['url']
 
     def _get_sightings_prefix(self):
         return 'url'

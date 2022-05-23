@@ -241,19 +241,18 @@ em1 = EmailAtom('hacker@hacker.ha')
 url1 = UrlAtom('http://notfishing.com')
 
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
-start = (datetime.fromtimestamp(1620656423)).strftime("%Y-%m-%dT%H:%M:%SZ")
-end = (datetime.fromtimestamp(1620742823)).strftime("%Y-%m-%dT%H:%M:%SZ")
+start = datetime.datetime.utcnow()
+end = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
 
 resp = dtl.Sightings.submit_sighting(start, end, SightingType.POSITIVE, Visibility.PUBLIC, 1, threat_types, atoms=[ip1, f1, em1, url1])
 ```
 Or using a list of hashkeys:
 ```python
-from datalake.common.atom_type import IpAtom, EmailAtom, UrlAtom, Atom
 from datalake.common.atom import SightingType, Visibility, ThreatType
 
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
-start = (datetime.datetime.utcnow()).strftime("%Y-%m-%dT%H:%M:%SZ")
-end = (datetime.datetime.utcnow() - datetime.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+start = datetime.datetime.utcnow()
+end = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
 
 resp = dtl.Sightings.submit_sighting(start, end, SightingType.POSITIVE, Visibility.PUBLIC, 1, threat_types, hashkeys=['mythreathashkeys'])
 ```

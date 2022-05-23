@@ -1,20 +1,19 @@
-import pytest
-
 from tests.common.fixture import datalake  # noqa needed fixture import
 from datalake import IpAtom, FileAtom, Hashes, Jarm, IpService
+import warnings
 
 jarm = Jarm('12/12/2012 12:12:12', 'some_fingerprint', False, 'some_malware')
-ip_service = IpService(78, 'some_service', 'some_application', 'some_protocol')
+ip_service = IpService(port=78, service_name='some_service', application='some_application', protocol='some_protocol')
 ip_atom = IpAtom(
-    '8.8.8.8',
-    'https://some_url.co',
-    'some_host',
-    'ipv4',
-    jarm,
-    'some_malware',
-    'owmer',
-    [1, 2, 3],
-    ip_service
+    ip_address='8.8.8.8',
+    external_analysis_link=['https://some_url.co'],
+    hostanme='some_host',
+    ip_version=4,
+    jarm=jarm,
+    malware_family='some_malware',
+    owner='owmer',
+    peer_asns=[1, 2, 3],
+    services=ip_service
 )
 hashes = Hashes(
     md5='d26351ba789fba3385d2382aa9d24908',
@@ -50,9 +49,9 @@ def test_generate_atom_json_remove_unused_keys_for_sightings(datalake):
 def test_generate_atom_json(datalake):
     expect_output = {
         'ip_address': '8.8.8.8',
-        'external_analysis_link': 'https://some_url.co',
+        'external_analysis_link': ['https://some_url.co'],
         'hostanme': 'some_host',
-        'ip_version': 'ipv4',
+        'ip_version': 4,
         'jarm': {
             'calculated_at': '12/12/2012 12:12:12',
             'fingerprint': 'some_fingerprint',
@@ -91,6 +90,7 @@ def test_generate_atom_json_nested_remove_unused_keys_for_sightings(datalake):
 
     assert expected_output == output
 
+
 def test_generate_atom_json_nested(datalake):
     expected_output = {
         'hashes': {
@@ -108,5 +108,12 @@ def test_generate_atom_json_nested(datalake):
         'filepath': 'some/path'
     }
     output = file_atom.generate_atom_json(for_sightings=False)
-    
+
     assert expected_output == output
+
+
+def test_generate_atom_json_nested_remove_unused_keys_for_sightings_warning(datalake):
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        file_atom.generate_atom_json(for_sightings=True)
+        assert len(w) == 1
