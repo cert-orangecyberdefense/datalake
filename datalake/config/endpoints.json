@@ -1,6 +1,6 @@
 {
   "main": {
-    "preprod": "https://ti-dev.extranet.mrti-center.com/api/",
+    "preprod": "https://ti.extranet.mrti-center.com/api/",
     "prod": "https://datalake.cert.orangecyberdefense.com/api/"
   },
   "endpoints": {
