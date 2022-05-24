@@ -4,7 +4,6 @@ Extend this engine to give it more functionality.
 """
 import json
 import os
-import parser
 from json.decoder import JSONDecodeError
 from typing import Union
 from urllib.parse import urljoin
@@ -15,6 +14,10 @@ from datalake.common.logger import logger
 from datalake.common.token_manager import TokenManager
 from datalake.endpoints import Endpoint
 from datalake_scripts.common import suppress_insecure_request_warns
+
+
+class InvalidHeader(Exception):
+    pass
 
 
 class BaseEngine:
@@ -63,8 +66,7 @@ class BaseEngine:
         """
         if value.lower() in BaseEngine.ACCEPTED_HEADERS:
             return BaseEngine.ACCEPTED_HEADERS[value.lower()]
-
-        raise parser.ParserError(f'{value.lower()} is not a valid. Use some of {BaseEngine.ACCEPTED_HEADERS.keys()}')
+        raise InvalidHeader(f'{value.lower()} is not a valid. Use some of {BaseEngine.ACCEPTED_HEADERS.keys()}')
 
     @staticmethod
     def _load_response(api_response: Response):
