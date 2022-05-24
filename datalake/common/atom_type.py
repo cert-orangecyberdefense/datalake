@@ -391,6 +391,7 @@ class SslAtom(Atom):
     subject: str = None
     valid_not_after: str = None
     valid_not_before: str = None
+    external_analysis_link: str = None
 
     def _get_sightings_allowed_keys(self):
         return ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
