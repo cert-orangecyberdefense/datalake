@@ -44,7 +44,19 @@ score -> int (from 0 to 100 included)
 threat_type -> ThreatType
 """
 
+
 class OverrideType(Enum):
     PERMANENT = 'permanent'
     TEMPORARY = 'temporary'
     LOCK = 'lock'
+
+
+class SightingType(Enum):
+    POSITIVE = 'POSITIVE'
+    NEGATIVE = 'NEGATIVE'
+    NEUTRAL = 'NEUTRAL'
+
+
+class Visibility(Enum):
+    PUBLIC = 'PUBLIC'
+    ORGANIZATION = 'ORGANIZATION'

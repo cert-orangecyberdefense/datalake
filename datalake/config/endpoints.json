@@ -20,7 +20,10 @@
     "comment": "mrti/threats/{hashkey}/comments/",
     "tag": "mrti/threats/{hashkey}/tags/",
     "atom-values-extract": "mrti/threats/atom-values-extract/",
-    "bulk-scoring-edits": "mrti/threats/bulk-scoring-edits/"
+    "bulk-scoring-edits": "mrti/threats/bulk-scoring-edits/",
+    "submit-sightings": "mrti/threats/sighting/",
+    "sighting": "mrti/threats/sighting-file/{hashkey}/",
+    "sighting-filtered": "mrti/threats/sighting/filtered/"
   },
   "threats-manual-bulk-size": 100,
   "api_version": "v2/"
