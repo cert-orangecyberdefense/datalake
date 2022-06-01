@@ -1,5 +1,5 @@
-from datalake_scripts.scripts.add_threats import defang_threats
-
+from datalake_scripts.scripts.add_threats import defang_threats, _build_threat_from_atom_type
+from datalake import AtomType
 
 def test_defanging():
     threats = ['https://threta.com', 'https://another.com', 'another.com', 'domain[.]com', 'www(.)domain(.)com',
@@ -17,3 +17,17 @@ def test_defanging():
     ]
 
     assert defanged == planned_defanged
+
+
+def test_build_threat_from_atom_type():
+    expected_file_atom = {
+        'file_content': {
+            'hashes': {
+                'md5': 'd26351ba789fba3385d2382aa9d24908'
+            },
+            'external_analysis_link': ['https://someurl.co']
+        }
+    }
+    output = _build_threat_from_atom_type('d26351ba789fba3385d2382aa9d24908', AtomType.FILE, ['https://someurl.co']).generate_atom_json()
+
+    assert output == expected_file_atom
