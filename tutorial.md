@@ -233,6 +233,7 @@ adv_search_body_resp = dtl.AdvancedSearch.advanced_search_from_query_body(query_
 Sightings can be submitted using the library using a list of atoms:
 ```python
 from datalake import IpAtom, EmailAtom, UrlAtom, FileAtom, Hashes, SightingType, Visibility, ThreatType
+import datetime
 
 hashes = Hashes(md5='your_md5_hashes')
 f1 = FileAtom(hashes=hashes)
@@ -241,8 +242,8 @@ em1 = EmailAtom('hacker@hacker.ha')
 url1 = UrlAtom('http://notfishing.com')
 
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
-start = datetime.datetime.utcnow()
-end = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+start = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+end = datetime.datetime.utcnow()
 
 resp = dtl.Sightings.submit_sighting(start, end, SightingType.POSITIVE, Visibility.PUBLIC, 1, threat_types, atoms=[ip1, f1, em1, url1])
 ```
