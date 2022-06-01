@@ -3,7 +3,7 @@ import json
 import pytest
 import responses
 
-from datalake import Datalake, Output, AtomType, ThreatType, OverrideType
+from datalake import Datalake, Output, AtomType, ThreatType, OverrideType, IpAtom
 from tests.common.fixture import datalake  # noqa needed fixture import
 
 atoms = [
@@ -389,10 +389,15 @@ def test_add_threats_bad_atom(datalake: Datalake):
 @responses.activate
 def test_add_threats_no_bulk(datalake: Datalake):
     url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats-manual/'
-    ip = '11.11.111.1'
+    ip = IpAtom(
+        ip_address='11.11.111.1',
+        external_analysis_link=['https://somelink.co'],
+        hostname='hostname',
+        ip_version=4
+    )
     resp = {
         'atom_type': 'ip',
-        'atom_value': ip,
+        'atom_value': '11.11.111.1',
         'delivery_timestamp': '2021-12-23T15:57:23.450107+00:00',
         'hashkey': '3e3f43a23fadc97a5d4c72424d62f48a',
         'override_type': 'lock',
@@ -400,7 +405,12 @@ def test_add_threats_no_bulk(datalake: Datalake):
         'threat_data': {
             'content': {
                 'ip_content': {
-                    'ip_address': ip, 'ip_version': 4}},
+                    'ip_address': '11.11.111.1',
+                    'ip_version': 4,
+                    'external_analysis_link': ['https://somelink.co'],
+                    'hostname': 'hostname'
+                }
+            },
             'scores': [
                 {
                     'score': {
@@ -422,7 +432,8 @@ def test_add_threats_no_bulk(datalake: Datalake):
     responses.add(responses.POST, url, json=resp, status=200)
 
     threat_types = [{'threat_type': ThreatType('ddos'), 'score': 0}]
-    assert datalake.Threats.add_threat(ip, AtomType.IP, threat_types, OverrideType.TEMPORARY) == resp
+    output = datalake.Threats.add_threat(atom=ip, threat_types=threat_types, override_type=OverrideType.TEMPORARY)
+    assert output == resp
 
 
 @responses.activate

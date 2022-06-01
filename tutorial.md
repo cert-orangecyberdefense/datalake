@@ -121,9 +121,11 @@ print(result_per_query_hash)
 }
 ```
 
-### Add threat
-The library provides a convenient way to add threats.
-You can call the `add_threat` function the following way:
+### Add threats
+The library provides multiple ways to add threats depending on your use case.
+
+
+You can call the `add_threats` function to add threats in bulk:
 ```python
 from datalake import ThreatType, OverrideType, AtomType
 
@@ -148,10 +150,29 @@ then like a temporary.
 * `public`: A boolean, sets whether the threats should be public or private. Defaults to `True`.
 * `tags`: a List of strings. Will set the tags of the added threat(s).
 * `external_analysis_link`: a List of strings. A link to an external resource providing more information about the threat.
-* `no_bulk`: A boolean, wheter to execute a bulk creation or not. Should be set to `True` if your are adding a large number of threats. Defaults to `False`.
 
-Depending on whether `no_bulk` is set to `True` or not, the response provided by the library will be different.
-When `no_bulk` is to `True`, the return value will be a list of the details of the created threats. When it is set to `False`, the return value will be a list of dictionaries for each bulk request, containing the hashkeys and values of the threats created as well as the hashkeys and values of the threats that failed to be created when it's the case.
+You can call the `add_threat` function to add a single threat at a time and retrieve details from the newly submitted threat.
+```python
+from datalake import IpAtom, ThreatType, OverrideType
+atom = IpAtom(ip_address='01.01.111.1')
+threat_types = [{'threat_type': ThreatType.DDOS, 'score': 0}]
+dtl.Threats.add_threat(atom=atom, threat_types=threat_types, override_type=OverrideType.TEMPORARY, public=False)
+```
+The following positional arguments are required:
+* `atom`: an instance of a Atom class, for example `IpAtom`
+
+The following keyword arguments are available:
+* `threat_types`: A list of dictionaries containing a key named `threat_type` with a `ThreatType` value and a key named `score` with an integer value between **0** and **100**. Available ThreatType options are: **DDOS, FRAUD, HACK, LEAK, MALWARE, PHISHING, SCAM, SCAN, SPAM**. Defaults to `None`.
+ * `override_type`: an OverrideType. Available options are:
+    * `PERMANENT`: All values will override any values provided by both newer and
+older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
+    * `TEMPORARY`: All values should override any values provided by older IOCs,
+but not newer ones.
+    * `LOCK`: Will act like a permanent for three months,
+then like a temporary.
+* `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error. Defaults to `False`.
+* `public`: A boolean, sets whether the threats should be public or private. Defaults to `True`.
+* `tags`: a List of strings. Will set the tags of the added threat(s).
 
 ### Add tags
 A quick and easy way to add tags to a threat

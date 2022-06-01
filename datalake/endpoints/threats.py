@@ -4,7 +4,7 @@ from time import time, sleep
 
 from requests.sessions import PreparedRequest
 
-from datalake import AtomType, ThreatType, OverrideType
+from datalake import AtomType, ThreatType, OverrideType, Atom
 from datalake.common.atom import ScoreMap
 from datalake.common.ouput import Output, output_supported, parse_response
 from datalake.common.utils import split_list, aggregate_csv_or_json_api_response
@@ -339,22 +339,29 @@ class Threats(Endpoint):
                 )
         return json_response
 
+    @staticmethod
+    def check_add_threat_params(atom, override_type, threat_types, whitelist):
+        if not threat_types and not whitelist:
+            raise ValueError('threat_types is required if the atom is not for whitelisting')
+        if not isinstance(override_type, OverrideType):
+            raise ValueError('Invalid OverrideType input')
+        if type(atom) == Atom or not isinstance(atom, Atom):
+            raise TypeError("atom needs to be an Atom subclasses.")
+
     def add_threat(
             self,
-            atom_value: str,
-            atom_type: AtomType,
+            atom: Atom,
             threat_types: List[ScoreMap] = None,
             override_type: OverrideType = OverrideType.TEMPORARY,
             whitelist: bool = False,
             public: bool = True,
             tags: List = None,
-            external_analysis_link: List = None,
     ):
         """
         Add a single threat to datalake using the API.
-        This method is slower than add_threats for submitting a large number of threats
+        This method is slower than add_threats for submitting a large number of threats but allows to provide greater details
         """
-        self.check_add_threats_params([atom_value], override_type, threat_types, whitelist)
+        self.check_add_threat_params(atom, override_type, threat_types, whitelist)
         tags = tags or []  # API requires a tag field, default to an empty list
         if whitelist:
             scores = self._build_whitelist_scores()
@@ -366,69 +373,9 @@ class Threats(Endpoint):
             'threat_data': {
                 'scores': scores,
                 'tags': tags,
-                'content': {},
+                'content': atom.generate_atom_json(),
             }
         }
         url = self._build_url_for_endpoint('threats-manual')
-        final_payload = self._tune_payload_to_atom(atom_type.value, external_analysis_link, payload, atom_value)
-        response = self.datalake_requests(url, 'post', self._post_headers(), final_payload)
+        response = self.datalake_requests(url, 'post', self._post_headers(), payload)
         return parse_response(response)
-
-    @staticmethod
-    def _tune_payload_to_atom(atom_type, links, payload, value):
-
-        def hash_to_name(hash_):
-            hash_list = {32: 'md5', 40: 'sha1', 64: 'sha256', 128: 'sha512'}
-            hash_name_str = hash_list.get(len(hash_))
-            if not hash_name_str:
-                hash_name_str = 'ssdeep'
-            return hash_name_str
-
-        content = payload['threat_data']['content']
-        key_value = atom_type + '_content'
-        if atom_type == 'apk':
-            package_name, apk_version, apk_hash = value.split(',')
-            apk_details = {
-                'android': {
-                    'package_name': package_name,
-                },
-                'hashes': {hash_to_name(apk_hash): apk_hash}
-            }
-            if apk_version:
-                apk_details['android']['version_name'] = apk_version
-            content[key_value] = apk_details
-        elif atom_type == 'as':
-            content[key_value] = {'asn': int(value)}
-        elif atom_type == 'cc':
-            content[key_value] = {'number': int(value)}
-        elif atom_type == 'crypto':
-            address, network = value.split()
-            content[key_value] = {'crypto_address': address, 'crypto_network': network}
-        elif atom_type == 'cve':
-            content[key_value] = {'cve_id': value}
-        elif atom_type == 'domain':
-            content[key_value] = {'domain': value}
-        elif atom_type == 'email':
-            content[key_value] = {'email': value}
-        elif atom_type == 'file' or atom_type == 'ssl':
-            hash_name = hash_to_name(value)
-            content[key_value] = {'hashes': {hash_name: value}}
-        elif atom_type == 'fqdn':
-            content[key_value] = {'fqdn': value}
-        elif atom_type == 'iban':
-            content[key_value] = {'iban': value}
-        elif atom_type == 'ip':
-            ip_type = 4 if '.' in value else 6
-            content[key_value] = {'ip_address': value, 'ip_version': ip_type}
-        elif atom_type == 'ip_range':
-            content[key_value] = {'cidr': value}
-        elif atom_type == 'regkey':
-            content[key_value] = {'path': value}
-        elif atom_type == 'paste' or atom_type == 'url':
-            content[key_value] = {'url': value}
-        elif atom_type == 'phone_number':
-            key = 'international_phone_number' if value.startswith('+') else 'national_phone_number'
-            content[key_value] = {key: value}
-        if links:
-            content[key_value].update({'external_analysis_link': links})
-        return payload
