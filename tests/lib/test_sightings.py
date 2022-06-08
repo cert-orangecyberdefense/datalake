@@ -1,10 +1,8 @@
 import pytest
 import responses
-from datalake import Datalake
 from datetime import datetime
 from tests.common.fixture import datalake  # noqa needed fixture import
-from datalake import IpAtom, FileAtom, Hashes, Jarm, IpService,  SightingType, Visibility, ThreatType
-
+from datalake import IpAtom, FileAtom, Hashes, Jarm, IpService, SightingType, Visibility, ThreatType
 
 jarm = Jarm('12/12/2012 12:12:12', 'some_fingerprint', True, 'some_malware')
 ip_service = IpService(77, 'some_service', 'some_application', 'some_protocol')
@@ -39,6 +37,7 @@ file_atom = FileAtom(
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
 start = datetime.strptime('2021-05-10T16:20:23Z', "%Y-%m-%dT%H:%M:%SZ")
 end = datetime.strptime('2021-05-11T16:20:23Z', "%Y-%m-%dT%H:%M:%SZ")
+
 
 def test_prepare_sightings_payload(datalake):
     atoms = [file_atom, ip_atom, ip_atom1]
@@ -194,7 +193,8 @@ def test_submit_sightings_no_threat_types(datalake):
             1,
             atoms=[ip_atom, ip_atom1, file_atom]
         )
-    assert str(err.value) == 'For POSITIVE and NEGATIVE sightings "threat_types" field is required and has to be an instance of the Visibility class'
+    assert str(err.value) == 'For POSITIVE and NEGATIVE sightings "threat_types" field is required and' \
+                             ' has to be an instance of the Visibility class'
 
 
 def test_submit_sightings_neutral_with_threat_types(datalake):
