@@ -8,9 +8,9 @@ jarm = Jarm('12/12/2012 12:12:12', 'some_fingerprint', True, 'some_malware')
 ip_service = IpService(77, 'some_service', 'some_application', 'some_protocol')
 ip_atom = IpAtom(
     '8.8.8.8',
-    'https://some_url.co',
+    ['https://some_url.co'],
     'some_host',
-    'ipv4',
+    4,
     jarm,
     'some_malware',
     'owmer',
@@ -28,7 +28,7 @@ file_atom = FileAtom(
     hashes=hashes,
     filename='some_filename',
     file_url='some_url',
-    external_analysis_link='some_external_url',
+    external_analysis_link=['some_external_url'],
     filesize=666,
     filetype='jpg',
     mimetype='some_mime',
