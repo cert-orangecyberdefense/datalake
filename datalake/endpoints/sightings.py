@@ -8,6 +8,7 @@ from typing import List
 class Sightings(Endpoint):
     def submit_sighting(self, start_timestamp: datetime, end_timestamp: datetime, sighting_type: SightingType,
                         visibility: Visibility, count: int, threat_types: List[ThreatType] = None,
+                        tags: List[str] = None, description: str = None,
                         atoms: List[Atom] = None, hashkeys: List[str] = None):
         """
         Submit a list of sightings.
@@ -16,13 +17,13 @@ class Sightings(Endpoint):
         field is required. End date timestamp should always be in the past.
         """
         payload = self._prepare_sightings_payload(atoms, hashkeys, start_timestamp, end_timestamp, sighting_type,
-                                                  visibility,
-                                                  count, threat_types)
+                                                  visibility, count, threat_types, tags, description)
         url = self._build_url_for_endpoint('submit-sightings')
         res = self.datalake_requests(url, 'post', self._post_headers(), payload).json()
         return res
 
-    def _check_sightings_payload_parameters(self, atoms, hashkeys, sighting_type, visibility, count, threat_types):
+    @staticmethod
+    def _check_sightings_payload_parameters(atoms, hashkeys, sighting_type, visibility, count, threat_types):
         if not atoms and not hashkeys:
             raise ValueError('Either threat hashkeys or list of atom objects is required.')
         if count < 1:
@@ -39,7 +40,7 @@ class Sightings(Endpoint):
             raise ValueError('visibility has to be an instance of the Visibility class.')
 
     def _prepare_sightings_payload(self, atoms, hashkeys, start_timestamp, end_timestamp, sighting_type: SightingType,
-                                   visibility, count, threat_types):
+                                   visibility, count, threat_types=None, tags=None, description=None):
         """
         Internal function to prepare a list of Atoms for sighting submission to the format the API expects.
         """
@@ -72,5 +73,8 @@ class Sightings(Endpoint):
 
         if sighting_type in (SightingType.POSITIVE, SightingType.NEGATIVE):
             payload['threat_types'] = [threat_type.value for threat_type in threat_types]
-
+        if tags:
+            payload['tags'] = tags
+        if description:
+            payload['description'] = description
         return payload
