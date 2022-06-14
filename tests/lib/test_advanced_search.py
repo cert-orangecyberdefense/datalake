@@ -101,7 +101,7 @@ def test_advanced_search_from_query_hash_no_hash(datalake: Datalake):
 def test_advanced_search_from_query_hash_bad_ordering(datalake: Datalake):
     with pytest.raises(ValueError) as exec_error:
         datalake.AdvancedSearch.advanced_search_from_query_hash(query_hash, limit=0, ordering='badbad')
-    assert str(exec_error.value) == "ordering needs to be one of the following str : first_seen, -first-seen, " \
+    assert str(exec_error.value) == "ordering needs to be one of the following str : first_seen, -first_seen, " \
                                     "last_updated, -last_updated, events_count, -events_count, sources_count, " \
                                     "-sources_count"
 
