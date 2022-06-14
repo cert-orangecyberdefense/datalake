@@ -4,7 +4,7 @@ from requests.sessions import PreparedRequest
 
 
 class AdvancedSearch(Endpoint):
-    ordering_list = ['first_seen', '-first-seen', 'last_updated', '-last_updated', 'events_count', '-events_count',
+    ordering_list = ['first_seen', '-first_seen', 'last_updated', '-last_updated', 'events_count', '-events_count',
                      'sources_count', '-sources_count']
 
     @output_supported({Output.JSON, Output.STIX, Output.MISP, Output.CSV})
@@ -20,7 +20,7 @@ class AdvancedSearch(Endpoint):
             'offset': offset,
         }
         if ordering:
-            body['ordering'] = ordering
+            body['ordering'] = [ordering]
         url = self._build_url_for_endpoint('advanced-search')
         response = self.datalake_requests(url, 'post', post_body=body, headers=self._post_headers(output=output))
         return parse_response(response)
@@ -33,7 +33,9 @@ class AdvancedSearch(Endpoint):
         if ordering and ordering not in self.ordering_list:
             raise ValueError(f'ordering needs to be one of the following str : {", ".join(self.ordering_list)}')
         url = self._build_url_for_endpoint('advanced-search-hash').format(query_hash=query_hash)
-        params = {'limit': limit, 'offset': offset, 'ordering': ordering}
+        params = {'limit': limit, 'offset': offset}
+        if ordering:
+            params['ordering'] = [ordering]
         req = PreparedRequest()
         req.prepare_url(url, params)
         url = req.url
