@@ -28,6 +28,7 @@ tests/**/expected
 
 # Python 3
 **/__pycache__/
+*.pyc
 
 # i18n
 **.mo
@@ -38,6 +39,7 @@ tests/**/expected
 **/*.bkp
 **/*.log
 **/.~*
+
 
 # virtualenv
 /.venv
