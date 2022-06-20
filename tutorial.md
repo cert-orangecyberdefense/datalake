@@ -245,10 +245,10 @@ query_body = {
 query_hash = 'cece3117abc823cee81e69c2143e6268'
 
 adv_search_hash_resp = dtl.AdvancedSearch.advanced_search_from_query_hash(query_hash, limit=20, offset=0, 
-                                                                          ordering='first_seen', output=Output.JSON)
+                                                                          ordering=['first_seen'], output=Output.JSON)
 
 adv_search_body_resp = dtl.AdvancedSearch.advanced_search_from_query_body(query_body, limit=20, offset=0, 
-                                                                          ordering='-first_seen', output=Output.JSON)
+                                                                          ordering=['-first_seen'], output=Output.JSON)
 ````
 ### Sightings
 Sightings can be submitted using the library using a list of atoms:
