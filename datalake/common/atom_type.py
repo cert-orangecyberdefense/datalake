@@ -1,4 +1,3 @@
-from enum import Enum
 from abc import abstractmethod
 from dataclasses import dataclass, asdict
 from datalake.common.warn import Warn
@@ -81,6 +80,7 @@ class FileAtom(Atom):
     def _get_sightings_prefix(self):
         return 'file'
 
+
 @dataclass
 class AndroidApp:
     package_name: str
@@ -111,6 +111,7 @@ class ApkAtom(Atom):
     def _get_sightings_prefix(self):
         return 'apk'
 
+
 @dataclass
 class AsAtom(Atom):
     """
@@ -129,6 +130,7 @@ class AsAtom(Atom):
 
     def _get_sightings_prefix(self):
         return 'as'
+
 
 @dataclass
 class CcAtom(Atom):
@@ -149,6 +151,7 @@ class CcAtom(Atom):
 
     def _get_sightings_prefix(self):
         return 'cc'
+
 
 @dataclass
 class CryptoAtom(Atom):
@@ -172,6 +175,7 @@ class CryptoAtom(Atom):
 
     def _get_sightings_prefix(self):
         return 'crypto'
+
 
 @dataclass
 class CveAtom(Atom):
@@ -218,7 +222,8 @@ class DomainAtom(Atom):
     def _get_sightings_prefix(self):
         return 'domain'
 
-class EmailFlow(Enum):
+
+class EmailFlow:
     TO = 'to'
     FROM = 'from'
 
@@ -238,6 +243,7 @@ class EmailAtom(Atom):
     def _get_sightings_prefix(self):
         return 'email'
 
+
 @dataclass
 class FqdnAtom(Atom):
     """
@@ -255,6 +261,7 @@ class FqdnAtom(Atom):
 
     def _get_sightings_prefix(self):
         return 'fqdn'
+
 
 @dataclass
 class IbanAtom(Atom):
@@ -274,6 +281,7 @@ class IbanAtom(Atom):
 
     def _get_sightings_prefix(self):
         return 'iban'
+
 
 @dataclass
 class IpService:
@@ -296,7 +304,7 @@ class IpAtom(Atom):
     malware_family: str = None
     owner: str = None
     peer_asns: List[int] = None
-    services: IpService = None
+    services: List[IpService] = None
 
     def _get_sightings_allowed_keys(self):
         return ['ip_address']
@@ -324,6 +332,7 @@ class IpRangeAtom(Atom):
     def _get_sightings_prefix(self):
         return 'ip_range'
 
+
 @dataclass
 class PasteAtom(Atom):
     """
@@ -340,6 +349,7 @@ class PasteAtom(Atom):
 
     def _get_sightings_prefix(self):
         return 'paste'
+
 
 @dataclass
 class PhoneNumberAtom(Atom):
@@ -361,6 +371,7 @@ class PhoneNumberAtom(Atom):
     def _get_sightings_prefix(self):
         return 'phone_number'
 
+
 @dataclass
 class RegKeyAtom(Atom):
     """
@@ -376,6 +387,7 @@ class RegKeyAtom(Atom):
 
     def _get_sightings_prefix(self):
         return 'regkey'
+
 
 @dataclass
 class SslAtom(Atom):

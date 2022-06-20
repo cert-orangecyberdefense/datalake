@@ -59,10 +59,10 @@ def main(override_args=None):
     if args.input:
         query_body = load_json(args.input)
         resp = dtl.AdvancedSearch.advanced_search_from_query_body(query_body, limit=args.limit, offset=args.offset,
-                                                                  output=output_type, ordering=args.ordering)
+                                                                  output=output_type, ordering=[args.ordering])
     else:
         resp = dtl.AdvancedSearch.advanced_search_from_query_hash(args.query_hash, limit=args.limit, offset=args.offset,
-                                                                  output=output_type, ordering=args.ordering)
+                                                                  output=output_type, ordering=[args.ordering])
     save_output(args.output, resp)
     logger.info(f'\x1b[0;30;42m OK: MATCHING THREATS SAVED IN {args.output} \x1b[0m')
     logger.debug(f'END: advanced_search.py')

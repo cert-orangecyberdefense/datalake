@@ -1,18 +1,19 @@
 import pytest
 import responses
-from datalake import Datalake
 from datetime import datetime
-from tests.common.fixture import datalake  # noqa needed fixture import
-from datalake import IpAtom, FileAtom, Hashes, Jarm, IpService,  SightingType, Visibility, ThreatType
 
+from responses import matchers
+
+from tests.common.fixture import datalake  # noqa needed fixture import
+from datalake import IpAtom, FileAtom, Hashes, Jarm, IpService, SightingType, Visibility, ThreatType
 
 jarm = Jarm('12/12/2012 12:12:12', 'some_fingerprint', True, 'some_malware')
 ip_service = IpService(77, 'some_service', 'some_application', 'some_protocol')
 ip_atom = IpAtom(
     '8.8.8.8',
-    'https://some_url.co',
+    ['https://some_url.co'],
     'some_host',
-    'ipv4',
+    4,
     jarm,
     'some_malware',
     'owmer',
@@ -30,7 +31,7 @@ file_atom = FileAtom(
     hashes=hashes,
     filename='some_filename',
     file_url='some_url',
-    external_analysis_link='some_external_url',
+    external_analysis_link=['some_external_url'],
     filesize=666,
     filetype='jpg',
     mimetype='some_mime',
@@ -40,12 +41,13 @@ threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
 start = datetime.strptime('2021-05-10T16:20:23Z', "%Y-%m-%dT%H:%M:%SZ")
 end = datetime.strptime('2021-05-11T16:20:23Z', "%Y-%m-%dT%H:%M:%SZ")
 
+
 def test_prepare_sightings_payload(datalake):
     atoms = [file_atom, ip_atom, ip_atom1]
     sighting_type = SightingType.POSITIVE
     visibility = Visibility.PUBLIC
     count = 1
-    threat_types = [ThreatType.SCAM]
+    payload_threat_types = [ThreatType.SCAM]
 
     expected_payload = {
         'ip_list': [
@@ -77,7 +79,46 @@ def test_prepare_sightings_payload(datalake):
         sighting_type,
         visibility,
         count,
-        threat_types
+        payload_threat_types
+    )
+
+    assert expected_payload == payload
+
+
+def test_prepare_sightings_payload_with_empty_tags(datalake):
+    atoms = [file_atom]
+    sighting_type = SightingType.NEUTRAL
+    visibility = Visibility.ORGANIZATION
+    count = 1
+
+    expected_payload = {
+        'file_list': [
+            {
+                'hashes': {
+                    'md5': 'd26351ba789fba3385d2382aa9d24908',
+                    'sha1': 'a61e243f25b8b08661011869a53315363697a0f4',
+                    'sha256': 'c056f9206143bc43a7f524f946149ad77c0c491ce816a2865feb6e5f2eaf521e',
+                    'sha512': '01525491943d324e928e4d30702fa731db20a2c82dc6b1d8bf7cf157227517de'
+                              '48f10be15053a63be598f75618ea0179c33f8726bde620e976c7ff5a4fbaa944',
+                }
+            }
+        ],
+        'start_timestamp': '2021-05-10T16:20:23Z',
+        'end_timestamp': '2021-05-11T16:20:23Z',
+        'visibility': 'ORGANIZATION',
+        'type': 'NEUTRAL',
+        'count': 1,
+    }
+
+    payload = datalake.Sightings._prepare_sightings_payload(
+        atoms,
+        None,
+        start,
+        end,
+        sighting_type,
+        visibility,
+        count,
+        tags=[]
     )
 
     assert expected_payload == payload
@@ -87,6 +128,18 @@ def test_prepare_sightings_payload(datalake):
 def test_submit_sightings(datalake):
     url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/sighting/'
 
+    expected_request = {
+        "file_list": [{"hashes":
+                           {"md5": "d26351ba789fba3385d2382aa9d24908",
+                            "sha1": "a61e243f25b8b08661011869a53315363697a0f4",
+                            "sha256": "c056f9206143bc43a7f524f946149ad77c0c491ce816a2865feb6e5f2eaf521e",
+                            "sha512": "01525491943d324e928e4d30702fa731db20a2c82dc6b1d8bf7cf157227517de"
+                                      "48f10be15053a63be598f75618ea0179c33f8726bde620e976c7ff5a4fbaa944"}}],
+        "ip_list": [{"ip_address": "8.8.8.8"}, {"ip_address": "9.9.9.9"}],
+        "start_timestamp": "2021-05-10T16:20:23Z", "end_timestamp": "2021-05-11T16:20:23Z",
+        "visibility": "PUBLIC", "type": "POSITIVE", "count": 1, "threat_types": ["phishing", "scam"],
+        'tags': ['tag1', 'tag2'], 'description': 'some description',
+    }
     expected_res = {
         'count': 1,
         'end_timestamp': '2021-05-11T16:20:23Z',
@@ -128,7 +181,12 @@ def test_submit_sightings(datalake):
         'uid': '1d67a120-8983-4909-a6f0-eec4a7673395'
     }
 
-    responses.add(responses.POST, url, json=expected_res, status=200)
+    responses.post(
+        url=url,
+        json=expected_res,
+        status=200,
+        match=[matchers.json_params_matcher(expected_request)],
+    )
 
     res = datalake.Sightings.submit_sighting(
         start,
@@ -137,6 +195,8 @@ def test_submit_sightings(datalake):
         Visibility.PUBLIC,
         1,
         threat_types,
+        tags=['tag1', 'tag2'],
+        description='some description',
         atoms=[ip_atom, ip_atom1, file_atom]
     )
 
@@ -194,7 +254,8 @@ def test_submit_sightings_no_threat_types(datalake):
             1,
             atoms=[ip_atom, ip_atom1, file_atom]
         )
-    assert str(err.value) == 'For POSITIVE and NEGATIVE sightings "threat_types" field is required and has to be an instance of the Visibility class'
+    assert str(err.value) == 'For POSITIVE and NEGATIVE sightings "threat_types" field is required and' \
+                             ' has to be an instance of the Visibility class'
 
 
 def test_submit_sightings_neutral_with_threat_types(datalake):
