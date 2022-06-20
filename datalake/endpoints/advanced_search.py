@@ -13,10 +13,6 @@ class AdvancedSearch(Endpoint):
                                         ordering: List[str] = None, output=Output.JSON):
         if not query_body:
             raise ValueError("query_body is required")
-        if ordering and not isinstance(ordering, list):
-            raise ValueError(
-                f'ordering needs to be a list of at least one of the following str : {", ".join(self.ordering_list)}'
-            )
         if ordering and not set(ordering).issubset(self.ordering_list):
             raise ValueError(
                 f'ordering needs to be a list of at least one of the following str : {", ".join(self.ordering_list)}'
@@ -37,10 +33,6 @@ class AdvancedSearch(Endpoint):
                                         ordering: List[str] = None, output=Output.JSON):
         if not query_hash:
             raise ValueError("query_hash is required")
-        if ordering and not isinstance(ordering, list):
-            raise ValueError(
-                f'ordering needs to be a list of at least one of the following str : {", ".join(self.ordering_list)}'
-            )
         if ordering and not set(ordering).issubset(self.ordering_list):
             raise ValueError(
                 f'ordering needs to be a list of at least one of the following str : {", ".join(self.ordering_list)}'
