@@ -52,9 +52,9 @@ class OverrideType(Enum):
 
 
 class SightingType(Enum):
-    POSITIVE = 'POSITIVE'
-    NEGATIVE = 'NEGATIVE'
-    NEUTRAL = 'NEUTRAL'
+    POSITIVE = 'positive'
+    NEGATIVE = 'negative'
+    NEUTRAL = 'neutral'
 
 
 class Visibility(Enum):
