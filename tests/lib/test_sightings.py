@@ -66,7 +66,7 @@ def test_prepare_sightings_payload(datalake):
         'start_timestamp': '2021-05-10T16:20:23Z',
         'end_timestamp': '2021-05-11T16:20:23Z',
         'visibility': 'PUBLIC',
-        'type': 'POSITIVE',
+        'type': 'positive',
         'count': 1,
         'threat_types': ['scam']
     }
@@ -106,7 +106,7 @@ def test_prepare_sightings_payload_with_empty_tags(datalake):
         'start_timestamp': '2021-05-10T16:20:23Z',
         'end_timestamp': '2021-05-11T16:20:23Z',
         'visibility': 'ORGANIZATION',
-        'type': 'NEUTRAL',
+        'type': 'neutral',
         'count': 1,
     }
 
@@ -137,7 +137,7 @@ def test_submit_sightings(datalake):
                                       "48f10be15053a63be598f75618ea0179c33f8726bde620e976c7ff5a4fbaa944"}}],
         "ip_list": [{"ip_address": "8.8.8.8"}, {"ip_address": "9.9.9.9"}],
         "start_timestamp": "2021-05-10T16:20:23Z", "end_timestamp": "2021-05-11T16:20:23Z",
-        "visibility": "PUBLIC", "type": "POSITIVE", "count": 1, "threat_types": ["phishing", "scam"],
+        "visibility": "PUBLIC", "type": "positive", "count": 1, "threat_types": ["phishing", "scam"],
         'tags': ['tag1', 'tag2'], 'description': 'some description',
     }
     expected_res = {
