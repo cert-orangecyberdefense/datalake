@@ -123,6 +123,10 @@ task = dtl.BulkSearch.create_task(for_stix_export=True, query_hash='<some query 
 stix = task.download_sync(output=Output.STIX)
 ```
 
+> **Note**  
+> `download_sync` accepts a `stream=True` parameter that if passed change the return of the function. It is no longer the plain response body but the `Response` object from the `requests` library. This allow to retrieve the plain body as a stream.  
+> `task.download_sync_stream_to_file('<absolute output path>', output=Output.JSON)` is a helper function that do just that, storing the output in a file while keeping the RAM usage low and independent of the size of the bulksearch result.
+
 Depending of your use case, you can call an async version to parallelize the wait of bulk search for example:
 
 ```python

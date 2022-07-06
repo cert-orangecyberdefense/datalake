@@ -2,6 +2,7 @@ import asyncio
 import copy
 import datetime
 import json
+import tempfile
 from http.client import ResponseNotReady
 
 import pytest
@@ -244,8 +245,7 @@ def test_bulk_search_task_download_async(bulk_search_task: BulkSearchTask):
     expected_result = "bulk search download"
     responses.add(responses.GET, bs_download_url, json=expected_result, status=200)
 
-    loop = asyncio.get_event_loop()
-    download_result = loop.run_until_complete(bulk_search_task.download_async())
+    download_result = asyncio.run(bulk_search_task.download_async())
 
     assert download_result == expected_result
 
@@ -265,6 +265,46 @@ def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask):
     assert download_result == expected_result
 
 
+@responses.activate
+def test_bulk_search_task_download_sync_stream_to_file(bulk_search_task: BulkSearchTask):
+    bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+    responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
+    bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download is not ready yet
+    task_uuid = bulk_search_task.uuid
+    bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    expected_result = "bulk search download saved in file"
+    responses.add(responses.GET, bs_download_url, body=expected_result, status=200)
+    temporary_file = tempfile.NamedTemporaryFile()
+    output_path = temporary_file.name
+
+    bulk_search_task.download_sync_stream_to_file(output_path=output_path)
+
+    with open(output_path) as f:
+        download_result = f.read()
+    assert download_result == expected_result
+
+
+@responses.activate
+def test_bulk_search_task_download_sync_stream_to_file_zip(bulk_search_task: BulkSearchTask):
+    bs_status_url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
+    responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
+    bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS  # download is not ready yet
+    task_uuid = bulk_search_task.uuid
+    bs_download_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/'
+    # Gzip content
+    expected_result = b'\x1f\x8b\x08\x00\xe3\xaf\x2c\x57\x00\x03\x4b\xcb\xcf\x4f\x4a\x2c' \
+                      b'\xe2\x02\x00\x47\x97\x2c\xb2\x07\x00\x00\x00'
+    responses.add(responses.GET, bs_download_url, body=expected_result, status=200)
+    temporary_file = tempfile.NamedTemporaryFile()
+    output_path = temporary_file.name
+
+    bulk_search_task.download_sync_stream_to_file(output_path=output_path, output=Output.JSON_ZIP)
+
+    with open(output_path, 'rb') as f:
+        download_result = f.read()
+    assert download_result == expected_result
+
+
 @pytest.mark.asyncio
 async def test_bulk_search_task_download_async_timeout(bulk_search_task: BulkSearchTask):
     with responses.RequestsMock() as response_context:  # pytest.mark.asyncio is not compatible with responses decorator
@@ -274,8 +314,7 @@ async def test_bulk_search_task_download_async_timeout(bulk_search_task: BulkSea
         bs_status_url = f'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/'
         response_context.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
 
-        loop = asyncio.get_event_loop()
-        task = loop.create_task(bulk_search_task.download_async(timeout=0.2))
+        task = bulk_search_task.download_async(timeout=0.2)
         with pytest.raises(TimeoutError):
             await task
 
