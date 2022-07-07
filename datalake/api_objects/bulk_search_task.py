@@ -41,6 +41,7 @@ class BulkSearchTask:
     """
 
     REQUEST_INTERVAL = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 10))
+    STREAM_CHUNK_SIZE = 4096
 
     def __init__(
             self,
@@ -81,15 +82,15 @@ class BulkSearchTask:
         self.user = user
         self.uuid = uuid
 
-    def download(self, output=Output.JSON):
+    def download(self, output=Output.JSON, stream=False):
         """
         Download a bulk search task, if it is not ready to be downloaded, it'll return a ResponseNotReady error
 
         Use download_sync/download_async to automatically wait for the bulk search to be ready before downloading it
         """
-        return self._endpoint.download(self.uuid, output=output)
+        return self._endpoint.download(self.uuid, output=output, stream=stream)
 
-    async def download_async(self, output=Output.JSON, timeout=15 * 60):
+    async def download_async(self, output=Output.JSON, timeout=15 * 60, stream=False):
         """
         Wait asynchronously for the bulk search to be ready then return its result
 
@@ -106,12 +107,21 @@ class BulkSearchTask:
 
             await asyncio.sleep(self.REQUEST_INTERVAL)
             self.update()
-        return self.download(output=output)
+        return self.download(output=output, stream=stream)
 
-    def download_sync(self, output=Output.JSON, timeout=15 * 60):
+    def download_sync(self, output=Output.JSON, timeout=15 * 60, stream=False):
         """Blocking version of download_async, easier to use but doesn't allow parallelization"""
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.download_async(output, timeout))
+        return asyncio.run(self.download_async(output, timeout, stream=stream))
+
+    def download_sync_stream_to_file(self, output_path, output=Output.JSON, timeout=15 * 60):
+        """
+        Wrapper around download_sync that output the result to a file directly (reducing the memory usage).
+        output_path should be an absolute path.
+        """
+        raw_response = self.download_sync(output=output, timeout=timeout, stream=True)
+        with open(output_path, 'wb') as output_file:  # Binary is required for zip types
+            for chunk in raw_response.iter_content(chunk_size=self.STREAM_CHUNK_SIZE):
+                output_file.write(chunk)
 
     def update(self):
         """Query the API to refresh the tasks attributes"""

@@ -2,6 +2,7 @@
 Base class used by all endpoints to request the API
 """
 import json
+import logging
 import os
 from urllib.parse import urljoin
 
@@ -49,6 +50,7 @@ class Endpoint:
             method: str,
             headers: dict,
             post_body: dict = None,
+            stream=False,
     ) -> Response:
         """
         Use it to request the API
@@ -59,9 +61,11 @@ class Endpoint:
             headers['Authorization'] = self.token_manager.access_token
             logger.debug(self._pretty_debug_request(url, method, post_body, headers))
 
-            response = self._send_request(url, method, headers, post_body)
+            response = self._send_request(url, method, headers, post_body, stream=stream)
 
-            logger.debug(f'API response:\n{str(response.text)}')
+            if logger.isEnabledFor(logging.DEBUG):
+                # Don't compute response.text var if not needed, especially for streaming response
+                logger.debug('API response:\n%s', response.text)
             if response.status_code == 401:
                 logger.warning('Token expired or Missing authorization header. Updating token')
                 self.token_manager.process_auth_error(response.json().get('messages'))
@@ -90,7 +94,7 @@ class Endpoint:
         return {'Accept': output.value}
 
     @staticmethod
-    def _send_request(url: str, method: str, headers: dict, data: dict) -> Response:
+    def _send_request(url: str, method: str, headers: dict, data: dict, stream=False) -> Response:
         """
         Send the correct http request to url from method [get, post, delete, patch, put].
         Raise a TypeError 'Unknown method to requests {method}' when the method is not one of the above.
@@ -98,6 +102,7 @@ class Endpoint:
         common_kwargs = {
             'url': url,
             'headers': headers,
+            'stream': stream,
         }
 
         if method == 'get':

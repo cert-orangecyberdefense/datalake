@@ -43,10 +43,16 @@ class BulkSearch(Endpoint):
         return BulkSearchTask(endpoint=self, **bs_as_json)
 
     @output_supported({Output.JSON, Output.JSON_ZIP, Output.STIX, Output.STIX_ZIP, Output.CSV, Output.CSV_ZIP})
-    def download(self, task_uuid, output=Output.JSON):
+    def download(self, task_uuid, output=Output.JSON, stream=False):
+        """
+        Download the bulk search task with the given uuid.
+        Stream parameter enables the raw stream to be returned, allowing it to be processed by chunks.
+        """
         url = self._build_url_for_endpoint('retrieve-bulk-search')
         url = url.format(task_uuid=task_uuid)
-        response: Response = self.datalake_requests(url, 'get', headers=self._get_headers(output=output))
+        response: Response = self.datalake_requests(url, 'get', headers=self._get_headers(output=output), stream=stream)
         if response.status_code == 202:
             raise ResponseNotReady(response.json().get('message', ''))
+        if stream:
+            return response  # Return the raw response
         return parse_response(response)
