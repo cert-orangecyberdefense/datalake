@@ -1,4 +1,4 @@
-from datalake import ThreatType, SightingType, Visibility
+from datalake import ThreatType, SightingType, Visibility, SightingRelation
 from datalake.endpoints.endpoint import Endpoint
 from datalake.common.atom_type import Atom
 from datetime import datetime
@@ -9,21 +9,22 @@ class Sightings(Endpoint):
     def submit_sighting(self, start_timestamp: datetime, end_timestamp: datetime, sighting_type: SightingType,
                         visibility: Visibility, count: int, threat_types: List[ThreatType] = None,
                         tags: List[str] = None, description: str = None,
-                        atoms: List[Atom] = None, hashkeys: List[str] = None):
+                        atoms: List[Atom] = None, hashkeys: List[str] = None, relation: SightingRelation = None):
         """
         Submit a list of sightings.
         Either threat hashkeys or list of atom objects is required.
         Possible sightings type: POSITIVE, NEGATIVE, NEUTRAL. For POSITIVE and NEGATIVE sightings "threat_types"
         field is required. End date timestamp should always be in the past.
+        relation field requires specific permission for the user.
         """
         payload = self._prepare_sightings_payload(atoms, hashkeys, start_timestamp, end_timestamp, sighting_type,
-                                                  visibility, count, threat_types, tags, description)
+                                                  visibility, count, threat_types, tags, description, relation)
         url = self._build_url_for_endpoint('submit-sightings')
         res = self.datalake_requests(url, 'post', self._post_headers(), payload).json()
         return res
 
     @staticmethod
-    def _check_sightings_payload_parameters(atoms, hashkeys, sighting_type, visibility, count, threat_types):
+    def _check_sightings_payload_parameters(atoms, hashkeys, sighting_type, visibility, count, threat_types, relation):
         if not atoms and not hashkeys:
             raise ValueError('Either threat hashkeys or list of atom objects is required.')
         if count < 1:
@@ -38,13 +39,15 @@ class Sightings(Endpoint):
             raise ValueError("For NEUTRAL sightings, threat_types can't be passed.")
         if not isinstance(visibility, Visibility):
             raise ValueError('visibility has to be an instance of the Visibility class.')
+        if relation and not isinstance(relation, SightingRelation):
+            raise ValueError('relation has to be an instance of the SightingRelation class.')
 
     def _prepare_sightings_payload(self, atoms, hashkeys, start_timestamp, end_timestamp, sighting_type: SightingType,
-                                   visibility, count, threat_types=None, tags=None, description=None):
+                                   visibility, count, threat_types=None, tags=None, description=None, relation=None):
         """
         Internal function to prepare a list of Atoms for sighting submission to the format the API expects.
         """
-        self._check_sightings_payload_parameters(atoms, hashkeys, sighting_type, visibility, count, threat_types)
+        self._check_sightings_payload_parameters(atoms, hashkeys, sighting_type, visibility, count, threat_types, relation)
         payload = {}
         # atoms and hashkeys can both be None
         if atoms:
@@ -71,6 +74,8 @@ class Sightings(Endpoint):
         payload['type'] = sighting_type.value
         payload['count'] = count
 
+        if relation:
+            payload['relation_type'] = relation.value
         if sighting_type in (SightingType.POSITIVE, SightingType.NEGATIVE):
             payload['threat_types'] = [threat_type.value for threat_type in threat_types]
         if tags:
