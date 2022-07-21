@@ -68,7 +68,7 @@ class Endpoint:
                 logger.debug('API response:\n%s', response.text)
             if response.status_code == 401:
                 logger.warning('Token expired or Missing authorization header. Updating token')
-                self.token_manager.process_auth_error(response.json().get('messages'))
+                self.token_manager.process_auth_error(response.json().get('msg'))
             elif response.status_code == 422:
                 logger.warning('Bad authorization header. Updating token')
                 logger.debug(f'422 HTTP code: {response.text}')
