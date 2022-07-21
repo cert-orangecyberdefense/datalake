@@ -72,7 +72,8 @@ class TokenManager:
         """
         if error_msg in (
                 'Missing Authorization Header',
-                'Bad Authorization header. Expected value \'Token <JWT>\''
+                "Bad Authorization header. Expected value 'Token <JWT>'",
+                "Missing 'Token' type in 'Authorization' header. Expected 'Authorization: Token <JWT>'",
         ):
             self.get_token()
         elif error_msg == 'Token has expired':
