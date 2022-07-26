@@ -60,3 +60,8 @@ class SightingType(Enum):
 class Visibility(Enum):
     PUBLIC = 'PUBLIC'
     ORGANIZATION = 'ORGANIZATION'
+
+
+class SightingRelation(Enum):
+    SIGHTING = 'sighting'
+    DNS = 'dns'

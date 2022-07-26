@@ -1,5 +1,6 @@
 import json
 import logging
+from functools import partial
 
 import pytest
 import responses
@@ -38,23 +39,32 @@ def test_invalid_credentials(caplog):
     ]
 
 
+def lookup_callback(request, expired_token, valid_token, response_on_valid_token, response_on_expired_token=None):
+    headers = {}
+    if not response_on_expired_token:
+        response_on_expired_token = {'msg': 'Token has expired'}  # Default value
+    if request.headers['Authorization'] == f'Token {expired_token}':
+        return 401, headers, json.dumps(response_on_expired_token)
+    elif request.headers['Authorization'] == f'Token {valid_token}':
+        return 200, headers, json.dumps(response_on_valid_token)
+    else:
+        raise Exception()
+
+
 @responses.activate
 def test_access_token_expired(datalake, caplog):
+    caplog.set_level(level=logging.INFO, logger="OCD_DTL")
     expected_json = {'wow.com': 'bad'}
-
-    def lookup_callback(request):
-        headers = {}
-        if request.headers['Authorization'] == 'Token 12345':
-            return 401, headers, json.dumps({'msg': 'Token has expired'})
-        elif request.headers['Authorization'] == 'Token refreshed_token':
-            return 200, headers, json.dumps(expected_json)
-        else:
-            raise Exception()
 
     responses.add_callback(
         responses.GET,
         'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/',
-        callback=lookup_callback,
+        callback=partial(
+            lookup_callback,
+            expired_token='12345',
+            valid_token='refreshed_token',
+            response_on_valid_token=expected_json,
+        ),
         content_type='application/json',
     )
 
@@ -75,39 +85,74 @@ def test_access_token_expired(datalake, caplog):
 
 
 @responses.activate
-def test_invalid_token(datalake, caplog):
+def test_refresh_token_expired(datalake, caplog):
+    caplog.set_level(level=logging.INFO, logger="OCD_DTL")
     expected_json = {'wow.com': 'bad'}
-    invalid_access_token = '12345'
-
-    def lookup_callback(request):
-        headers = {}
-        if request.headers['Authorization'] == invalid_access_token:
-            return 401, headers, json.dumps(
-                {'msg': "Missing 'Token' type in 'Authorization' header. Expected 'Authorization: Token <JWT>'"}
-            )
-        elif request.headers['Authorization'] == 'Token valid_token':
-            return 200, headers, json.dumps(expected_json)
-        else:
-            raise Exception()
 
     responses.add_callback(
         responses.GET,
         'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/',
-        callback=lookup_callback,
+        callback=partial(
+            lookup_callback,
+            expired_token='12345',
+            valid_token='new_token',
+            response_on_valid_token=expected_json,
+        ),
         content_type='application/json',
     )
 
-    def token_callback(request):
-        return 200, {}, json.dumps({'access_token': 'valid_token', 'refresh_token': ''})
+    def refresh_token_callback(request):
+        headers = {}
+        assert request.headers['Authorization'] == 'Token 123456', 'token passed is not the refresh token'
+        return 401, headers, json.dumps({'msg': 'Token has expired'})
 
     responses.add_callback(
         responses.POST,
-        'https://datalake.cert.orangecyberdefense.com/api/v2/auth/token/',
-        callback=token_callback,
+        'https://datalake.cert.orangecyberdefense.com/api/v2/auth/refresh-token/',
+        callback=refresh_token_callback,
+        content_type='application/json',
+    )
+    responses.post(
+        url='https://datalake.cert.orangecyberdefense.com/api/v2/auth/token/',
+        json={'access_token': 'new_token', 'refresh_token': ''},
+        status=200,
+    )
+
+    assert datalake.Threats.lookup(atom_value='wow.com', atom_type=AtomType.DOMAIN) == expected_json
+    assert caplog.messages == [
+        'Token expired or Missing authorization header. Updating token',
+        'Refreshing the refresh token',
+    ]
+
+
+@responses.activate
+def test_invalid_token(datalake, caplog):
+    expected_json = {'wow.com': 'bad'}
+    invalid_access_token = 'not-valid-token'
+    valid_access_token = 'valid_token'
+
+    responses.add_callback(
+        responses.GET,
+        'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/',
+        callback=partial(
+            lookup_callback,
+            expired_token=invalid_access_token,
+            valid_token=valid_access_token,
+            response_on_valid_token=expected_json,
+            response_on_expired_token={
+                'msg': "Missing 'Token' type in 'Authorization' header. Expected 'Authorization: Token <JWT>'"
+            }
+        ),
         content_type='application/json',
     )
 
-    datalake.Threats.token_manager.access_token = invalid_access_token
+    responses.post(
+        'https://datalake.cert.orangecyberdefense.com/api/v2/auth/token/',
+        json={'access_token': valid_access_token, 'refresh_token': ''},
+        content_type='application/json',
+    )
+
+    datalake.Threats.token_manager.access_token = f'Token {invalid_access_token}'
 
     assert datalake.Threats.lookup(atom_value='wow.com', atom_type=AtomType.DOMAIN) == expected_json
     assert caplog.messages == ['Token expired or Missing authorization header. Updating token']
