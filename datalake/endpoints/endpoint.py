@@ -70,15 +70,15 @@ class Endpoint:
                 logger.warning('Token expired or Missing authorization header. Updating token')
                 self.token_manager.process_auth_error(response.json().get('msg'))
             elif response.status_code == 422:
-                if "msg" in response.json():
-                    logger.error(f'Error message: {response.json().get("msg")}')
-                elif "message" in response.json():
-                    logger.error(f'Error message: {response.json().get("message")}')
-                elif "messages" in response.json():
-                    logger.error(f'Error message: {response.json().get("messages")}')
+                json_resp = response.json()
+                if "msg" in json_resp:
+                    logger.error(f'Error message: {json_resp.get("msg")}')
+                elif "message" in json_resp:
+                    logger.error(f'Error message: {json_resp.get("message")}')
+                elif "messages" in json_resp:
+                    logger.error(f'Error message: {json_resp.get("messages")}')
                 else:
-                    logger.error(f'422 HTTP code: {response.text}')
-                break
+                    ValueError(f'422 HTTP code: {response.text}')
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(
                     f'API returned non 2xx response code : {response.status_code}\n{response.text}\n Retrying'
