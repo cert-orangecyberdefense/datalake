@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 import requests
 
 from datalake.common.logger import logger
+from datalake.common.utils import get_error_message
 
 
 class TokenManager:
@@ -66,10 +67,11 @@ class TokenManager:
                          f'response of the API: {response.text}')
             raise ValueError(f'Could not refresh the token: {response.text}')
 
-    def process_auth_error(self, error_msg: str):
+    def process_auth_error(self, json_resp: dict):
         """
         Allow to update token when API response is either Missing Authorization Header or Token has expired.
         """
+        error_msg = get_error_message(json_resp)
         if error_msg in (
                 'Missing Authorization Header',
                 "Bad Authorization header. Expected value 'Token <JWT>'",
