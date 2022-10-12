@@ -75,8 +75,8 @@ class Endpoint:
                 try:
                     error_msg = get_error_message(json_resp)
                 except ValueError:
-                    ValueError(f'422 HTTP code: {response.text}')
-                logger.error(f'Error message: {error_msg}')
+                    error_msg = response.text
+                raise ValueError(f'422 HTTP code: {error_msg}')
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(
                     f'API returned non 2xx response code : {response.status_code}\n{response.text}\n Retrying'

@@ -48,4 +48,4 @@ def get_error_message(resp_body: dict):
     elif "messages" in resp_body:
         return resp_body.get("messages")
     else:
-        ValueError("<no error message in api response>")
+        raise ValueError("no error message in api response")
