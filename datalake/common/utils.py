@@ -38,3 +38,14 @@ def parse_api_timestamp(timestamp: str) -> Optional[datetime.datetime]:
 def split_list(list_to_split: list, slice_size: int) -> Generator[list, None, None]:
     for i in range(0, len(list_to_split), slice_size):
         yield list_to_split[i:i + slice_size]
+
+
+def get_error_message(resp_body: dict):
+    if "msg" in resp_body:
+        return resp_body.get("msg")
+    elif "message" in resp_body:
+        return resp_body.get("message")
+    elif "messages" in resp_body:
+        return resp_body.get("messages")
+    else:
+        raise ValueError("no error message in api response")

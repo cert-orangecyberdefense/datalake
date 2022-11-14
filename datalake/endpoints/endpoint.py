@@ -13,6 +13,7 @@ from datalake.common.ouput import Output
 from datalake.common.logger import logger
 from datalake.common.throttler import throttle
 from datalake.common.token_manager import TokenManager
+from datalake.common.utils import get_error_message
 
 
 class Endpoint:
@@ -68,11 +69,14 @@ class Endpoint:
                 logger.debug('API response:\n%s', response.text)
             if response.status_code == 401:
                 logger.warning('Token expired or Missing authorization header. Updating token')
-                self.token_manager.process_auth_error(response.json().get('msg'))
+                self.token_manager.process_auth_error(response.json())
             elif response.status_code == 422:
-                logger.warning('Bad authorization header. Updating token')
-                logger.debug(f'422 HTTP code: {response.text}')
-                self.token_manager.process_auth_error(response.json().get('messages'))
+                json_resp = response.json()
+                try:
+                    error_msg = get_error_message(json_resp)
+                except ValueError:
+                    error_msg = response.text
+                raise ValueError(f'422 HTTP code: {error_msg}')
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(
                     f'API returned non 2xx response code : {response.status_code}\n{response.text}\n Retrying'
