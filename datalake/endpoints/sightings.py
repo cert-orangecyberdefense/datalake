@@ -9,7 +9,8 @@ class Sightings(Endpoint):
     def submit_sighting(self, start_timestamp: datetime, end_timestamp: datetime, sighting_type: SightingType,
                         visibility: Visibility, count: int, threat_types: List[ThreatType] = None,
                         tags: List[str] = None, description: str = None,
-                        atoms: List[Atom] = None, hashkeys: List[str] = None, relation: SightingRelation = None):
+                        atoms: List[Atom] = None, hashkeys: List[str] = None, relation: SightingRelation = None,
+                        editable: bool = None):
         """
         Submit a list of sightings.
         Either threat hashkeys or list of atom objects is required.
@@ -18,7 +19,7 @@ class Sightings(Endpoint):
         relation field requires specific permission for the user.
         """
         payload = self._prepare_sightings_payload(atoms, hashkeys, start_timestamp, end_timestamp, sighting_type,
-                                                  visibility, count, threat_types, tags, description, relation)
+                                                  visibility, count, threat_types, tags, description, relation, editable)
         url = self._build_url_for_endpoint('submit-sightings')
         res = self.datalake_requests(url, 'post', self._post_headers(), payload).json()
         return res
@@ -43,11 +44,13 @@ class Sightings(Endpoint):
             raise ValueError('relation has to be an instance of the SightingRelation class.')
 
     def _prepare_sightings_payload(self, atoms, hashkeys, start_timestamp, end_timestamp, sighting_type: SightingType,
-                                   visibility, count, threat_types=None, tags=None, description=None, relation=None):
+                                   visibility, count, threat_types=None, tags=None, description=None, relation=None,
+                                   editable=None):
         """
         Internal function to prepare a list of Atoms for sighting submission to the format the API expects.
         """
-        self._check_sightings_payload_parameters(atoms, hashkeys, sighting_type, visibility, count, threat_types, relation)
+        self._check_sightings_payload_parameters(atoms, hashkeys, sighting_type, visibility, count, threat_types,
+                                                 relation)
         payload = {}
         # atoms and hashkeys can both be None
         if atoms:
@@ -82,4 +85,6 @@ class Sightings(Endpoint):
             payload['tags'] = tags
         if description:
             payload['description'] = description
+        if editable is not None:
+            payload['editable'] = editable
         return payload
