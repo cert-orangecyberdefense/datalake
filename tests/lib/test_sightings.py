@@ -69,7 +69,7 @@ def test_prepare_sightings_payload(datalake):
         'type': 'positive',
         'count': 1,
         'threat_types': ['scam'],
-        'editable': True,
+        'editable': False,
     }
 
     payload = datalake.Sightings._prepare_sightings_payload(
@@ -81,7 +81,7 @@ def test_prepare_sightings_payload(datalake):
         visibility,
         count,
         payload_threat_types,
-        editable=True
+        editable=False
     )
 
     assert expected_payload == payload
