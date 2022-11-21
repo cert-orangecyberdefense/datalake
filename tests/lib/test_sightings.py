@@ -68,7 +68,8 @@ def test_prepare_sightings_payload(datalake):
         'visibility': 'PUBLIC',
         'type': 'positive',
         'count': 1,
-        'threat_types': ['scam']
+        'threat_types': ['scam'],
+        'editable': True,
     }
 
     payload = datalake.Sightings._prepare_sightings_payload(
@@ -79,7 +80,51 @@ def test_prepare_sightings_payload(datalake):
         sighting_type,
         visibility,
         count,
-        payload_threat_types
+        payload_threat_types,
+        editable=True
+    )
+
+    assert expected_payload == payload
+
+
+def test_submit_sightings_without_editable(datalake):
+    atoms = [file_atom, ip_atom, ip_atom1]
+    sighting_type = SightingType.POSITIVE
+    visibility = Visibility.PUBLIC
+    count = 1
+    payload_threat_types = [ThreatType.SCAM]
+
+    expected_payload = {
+        'ip_list': [
+            {'ip_address': '8.8.8.8'},
+            {'ip_address': '9.9.9.9'}
+        ],
+        'file_list': [
+            {
+                'hashes': {
+                    'md5': 'd26351ba789fba3385d2382aa9d24908',
+                    'sha1': 'a61e243f25b8b08661011869a53315363697a0f4',
+                    'sha256': 'c056f9206143bc43a7f524f946149ad77c0c491ce816a2865feb6e5f2eaf521e',
+                    'sha512': '01525491943d324e928e4d30702fa731db20a2c82dc6b1d8bf7cf157227517de48f10be15053a63be598f75618ea0179c33f8726bde620e976c7ff5a4fbaa944'}
+            }
+        ],
+        'start_timestamp': '2021-05-10T16:20:23Z',
+        'end_timestamp': '2021-05-11T16:20:23Z',
+        'visibility': 'PUBLIC',
+        'type': 'positive',
+        'count': 1,
+        'threat_types': ['scam'],
+    }
+
+    payload = datalake.Sightings._prepare_sightings_payload(
+        atoms,
+        None,
+        start,
+        end,
+        sighting_type,
+        visibility,
+        count,
+        payload_threat_types,
     )
 
     assert expected_payload == payload
