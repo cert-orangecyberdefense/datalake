@@ -384,7 +384,7 @@ end = datetime.datetime.utcnow()
 # submit sighting
 dtl.Sightings.submit_sighting(start_timestamp=start, end_timestamp=end, sighting_type=SightingType.POSITIVE,
                               visibility=Visibility.PUBLIC, count=1, threat_types=threat_types,
-                              atoms=[ip1, f1, em1, url1], tags=['some_tag'], description='some_description')
+                              atoms=[ip1, f1, em1, url1], tags=['some_tag'], description='some_description', editable=True)
 ```
 
 Or using a list of hashkeys:
