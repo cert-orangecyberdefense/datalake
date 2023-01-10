@@ -343,3 +343,56 @@ def test_submit_sightings_bad_atom(datalake):
             atoms=[ip_atom, ip_atom1, file_atom, 'not_an_atom']
         )
     assert str(err.value) == 'atoms needs to be a list of Atom subclasses.'
+
+
+def test_sightings_filtered_bad_ordering(datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Sightings.sightings_filtered(
+            ordering='bad_ordering'
+        )
+    assert str(
+        err.value) == 'ordering has to be one of the following: "start_timestamp", "-start_timestamp", "end_timestamp", "-end_timestamp", "timestamp_created", "-timestamp_created", "count", "-count"'
+
+
+def test_sightings_filtered_bad_type(datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Sightings.sightings_filtered(
+            sighting_type='bad_sighting_type'
+        )
+    assert str(err.value) == 'sighting_type has to be an instance of the SightingType class.'
+
+
+def test_sightings_filtered_bad_visibility(datalake):
+    with pytest.raises(ValueError) as err:
+        datalake.Sightings.sightings_filtered(
+            visibility='bad_visibility'
+        )
+    assert str(err.value) == 'visibility has to be an instance of the Visibility class.'
+
+
+@responses.activate
+def test_sightings_filtered(datalake):
+    url = 'https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/sighting/filtered/'
+    expected_payload = {
+        "threat_hashkey": "f39cbce3c4d30d61ccdc99c5fcb3bf6f"
+    }
+    expected = {
+        'count': 1,
+        'results': [
+            {'atom_type': 'ip', 'content': {'ip_content': {'ip_address': '8.8.8.8'}}, 'count': 1,
+             'end_timestamp': '2022-12-26T13:00:00Z', 'is_editable': False, 'reliability': 50,
+             'sighting_file_hashkey': 'some_hashkey',
+             'sighting_hashkey': 'another_hashkey', 'sighting_version': 1,
+             'source_context': {'source_id': 'org: org_name', 'source_policy': {'source_uses': ['commercial']}},
+             'start_timestamp': '2022-12-26T13:00:00Z', 'tags': [],
+             'threat_hashkey': 'f39cbce3c4d30d61ccdc99c5fcb3bf6f',
+             'threat_types': [], 'timestamp_created': '2022-12-26T13:41:20Z', 'type': 'neutral', 'visibility': 'PUBLIC'}
+        ]
+    }
+    responses.post(url=url,
+                  json=expected,
+                  status=200,
+                  match=[matchers.json_params_matcher(expected_payload)]
+                )
+    res = datalake.Sightings.sightings_filtered("f39cbce3c4d30d61ccdc99c5fcb3bf6f")
+    assert res == expected

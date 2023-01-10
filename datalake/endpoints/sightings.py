@@ -88,3 +88,33 @@ class Sightings(Endpoint):
         if editable is not None:
             payload['editable'] = editable
         return payload
+    
+    def sightings_filtered(self, threat_hashkey: str = None, limit: int = None, offset: int = None, ordering: str = None, organization_id: int = None, organization_name: str = None, start_timestamp_date: str = None, end_timestamp_date: str = None, tags: list = None, sighting_type: SightingType = None, visibility: Visibility  = None):
+        """
+        Retrieve a list of filtered sightings.
+        """
+        ordering_list = [ "start_timestamp", "-start_timestamp", "end_timestamp", "-end_timestamp", "timestamp_created", "-timestamp_created", "count", "-count" ]
+        if ordering is not None and ordering not in ordering_list:
+            raise ValueError('ordering has to be one of the following: "start_timestamp", "-start_timestamp", "end_timestamp", "-end_timestamp", "timestamp_created", "-timestamp_created", "count", "-count"')
+        if sighting_type is not None and sighting_type and not isinstance(sighting_type, SightingType):
+            raise ValueError('sighting_type has to be an instance of the SightingType class.')
+        if visibility is not None and visibility and not isinstance(visibility, Visibility):
+            raise ValueError('visibility has to be an instance of the Visibility class.')
+        
+        payload = {
+            "threat_hashkey": threat_hashkey,
+            "limit": limit,
+            "offset": offset,
+            "ordering": ordering,
+            "organization_id": organization_id,
+            "organization_name": organization_name,
+            "start_timestamp_date": start_timestamp_date,
+            "end_timestamp_date": end_timestamp_date,
+            "tags": tags,
+            "type": sighting_type.value if sighting_type is not None else None,
+            "visibility": visibility.value if visibility is not None else None
+        }
+        payload = {k: v for k, v in payload.items() if v is not None}
+        url = self._build_url_for_endpoint('sighting-filtered')
+        res = self.datalake_requests(url, 'post', self._post_headers(), payload).json()
+        return res
