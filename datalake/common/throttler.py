@@ -23,8 +23,10 @@ def throttle(*, period: int, call_per_period: int):
                 previous_call.pop(0)
             # Check if the number of call for the period don't allow the function to be called
             if len(previous_call) >= call_per_period:
-                time_since_first_call = (call_time - previous_call[0])
-                sleep(max(period - time_since_first_call, 0.1))  # Wait until a call has been made 'period' ago
+                time_since_first_call = call_time - previous_call[0]
+                sleep(
+                    max(period - time_since_first_call, 0.1)
+                )  # Wait until a call has been made 'period' ago
                 assert previous_call[0] + period <= time()
                 previous_call.pop(0)
             previous_call.append(time())
@@ -37,7 +39,7 @@ def throttle(*, period: int, call_per_period: int):
     return inner_decorator
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """Example on how to use the throttle wrapper"""
     random.seed(0)
     PERIOD = 1
@@ -48,9 +50,8 @@ if __name__ == '__main__':
         sleep(random.randint(0, 2))
         return "hello world"
 
-
     start = time()
     total_calls = 10
     for i in range(total_calls):
-        print(f'{f()} {i} {time()}')
+        print(f"{f()} {i} {time()}")
     assert time() > start + ((total_calls / CALL_PER_PERIOD) - 1) * PERIOD

@@ -3,31 +3,52 @@
 import argparse
 import sys
 
-from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
-    add_comments, lookup_threats, add_tags, get_query_hash, bulk_lookup_threats, advanced_search
+from datalake_scripts.scripts import (
+    add_threats,
+    get_threats_by_hashkey,
+    edit_score,
+    get_threats_from_query_hash,
+    add_comments,
+    lookup_threats,
+    add_tags,
+    get_query_hash,
+    bulk_lookup_threats,
+    advanced_search,
+)
 
 
 class Cli:
-    CLI_NAME = 'ocd-dtl'
-    VERSION = '2.6.4'
+    CLI_NAME = "ocd-dtl"
+    VERSION = "2.6.4"
 
     def __init__(self):
         parser = argparse.ArgumentParser(
-            description='Cli to interact with OCD\'s Datalake',
-            usage=f'''
+            description="Cli to interact with OCD's Datalake",
+            usage=f"""
             {self.CLI_NAME} <command> [<args>]
 
 The most commonly used {self.CLI_NAME} commands are:
    add_threats     Submit a new threat to Datalake from a file
    get_threats     Retrieve threats (as Json) from a list of ids (hashkeys)
    edit_score      Edit scores of a specified list of ids (hashkeys)
-            ''',
-            epilog='Don\'t hesitate to leave a feedback on https://datalake.cert.orangecyberdefense.com/gui/ using the '
-                   '"Add Feedback" button '
+            """,
+            epilog="Don't hesitate to leave a feedback on https://datalake.cert.orangecyberdefense.com/gui/ using the "
+            '"Add Feedback" button ',
         )
 
-        parser.add_argument('--version', '-V', default=False, action='store_true', help='prints the current version')
-        parser.add_argument('command', nargs='?', help='Subcommand to run', choices=self._list_commands_available())
+        parser.add_argument(
+            "--version",
+            "-V",
+            default=False,
+            action="store_true",
+            help="prints the current version",
+        )
+        parser.add_argument(
+            "command",
+            nargs="?",
+            help="Subcommand to run",
+            choices=self._list_commands_available(),
+        )
         # parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
         args = parser.parse_args(sys.argv[1:2])
@@ -37,7 +58,7 @@ The most commonly used {self.CLI_NAME} commands are:
             exit(0)
 
         if not args.command or not hasattr(self, args.command):
-            print('Unrecognized command')
+            print("Unrecognized command")
             parser.print_help()
             exit(1)
 
@@ -87,7 +108,7 @@ The most commonly used {self.CLI_NAME} commands are:
     def _list_commands_available(self):
         method_list = []
         for method_name in dir(self):
-            if method_name and method_name[0] != '_':
+            if method_name and method_name[0] != "_":
                 try:
                     if callable(getattr(self, method_name)):
                         method_list.append(str(method_name))
@@ -100,5 +121,5 @@ def main():  # Called in setup.py
     Cli()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
