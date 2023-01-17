@@ -52,6 +52,7 @@ Below are some examples to get you started
 - [Edit score](#edit-score)
 - [Advanced Search](#advanced-search)
 - [Sightings](#sightings)
+- [Search Sightings](#search-sightings)
 
 ### Lookup a threat
 
@@ -407,6 +408,40 @@ you with hints on the value expected for each atom_type, most of which aren't ma
 For sightings, we won't use most of the fields. You can verify the fields that are used for sighting in the docstrings
 of each class, inside your editor.
 
+### Search Sightings
+It is possible to search sightings from either a hashkey or an atom_value. All parameters are optional.
+
+From a hashkey:
+```python
+from datalake import Datalake, SightingType, Visibility
+
+dtl = Datalake(username='username', password='password')
+resp = dtl.Sightings.sightings_filtered(
+    "f39cbce3c4d30d61ccdc99c5fcb3bf6f", 
+    limit=100, 
+    offset=0,
+    sighting_type=SightingType.POSITIVE, 
+    visibility=Visibility.PUBLIC
+)
+```
+⚠️ Not providing a hashkey will return all sightings.
+
+
+From an atom value
+```python
+from datalake import Datalake, SightingType, Visibility
+
+dtl = Datalake(username='username', password='password')
+resp = dtl.sightings_filtered_from_atom_value(
+    "8.8.8.8", 
+    limit=100, 
+    offset=0, 
+    sighting_type=SightingType.POSITIVE, 
+    visibility=Visibility.PUBLIC
+)
+```
+
+See the API documentation below for a list of available options.
 ### API documentation
 
 For more information on the API used by this library,

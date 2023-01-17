@@ -17,13 +17,19 @@ from datalake.common.utils import get_error_message
 
 
 class Endpoint:
-    OCD_DTL_QUOTA_TIME = int(os.getenv('OCD_DTL_QUOTA_TIME', 1))
-    OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(os.getenv('OCD_DTL_REQUESTS_PER_QUOTA_TIME', 5))
-    logger.debug(f'Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s')
+    OCD_DTL_QUOTA_TIME = int(os.getenv("OCD_DTL_QUOTA_TIME", 1))
+    OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(
+        os.getenv("OCD_DTL_REQUESTS_PER_QUOTA_TIME", 5)
+    )
+    logger.debug(
+        f"Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s"
+    )
 
     SET_MAX_RETRY = 3
 
-    def __init__(self, endpoint_config: dict, environment: str, token_manager: TokenManager):
+    def __init__(
+        self, endpoint_config: dict, environment: str, token_manager: TokenManager
+    ):
         self.endpoint_config = endpoint_config
         self.environment = environment
         self.terminal_size = self._get_terminal_size()
@@ -46,12 +52,12 @@ class Endpoint:
         call_per_period=OCD_DTL_REQUESTS_PER_QUOTA_TIME,
     )
     def datalake_requests(
-            self,
-            url: str,
-            method: str,
-            headers: dict,
-            post_body: dict = None,
-            stream=False,
+        self,
+        url: str,
+        method: str,
+        headers: dict,
+        post_body: dict = None,
+        stream=False,
     ) -> Response:
         """
         Use it to request the API
@@ -59,16 +65,20 @@ class Endpoint:
         tries_left = self.SET_MAX_RETRY
 
         while tries_left > 0:
-            headers['Authorization'] = self.token_manager.access_token
+            headers["Authorization"] = self.token_manager.access_token
             logger.debug(self._pretty_debug_request(url, method, post_body, headers))
 
-            response = self._send_request(url, method, headers, post_body, stream=stream)
+            response = self._send_request(
+                url, method, headers, post_body, stream=stream
+            )
 
             if logger.isEnabledFor(logging.DEBUG):
                 # Don't compute response.text var if not needed, especially for streaming response
-                logger.debug('API response:\n%s', response.text)
+                logger.debug("API response:\n%s", response.text)
             if response.status_code == 401:
-                logger.warning('Token expired or Missing authorization header. Updating token')
+                logger.warning(
+                    "Token expired or Missing authorization header. Updating token"
+                )
                 self.token_manager.process_auth_error(response.json())
             elif response.status_code == 422:
                 json_resp = response.json()
@@ -76,67 +86,76 @@ class Endpoint:
                     error_msg = get_error_message(json_resp)
                 except ValueError:
                     error_msg = response.text
-                raise ValueError(f'422 HTTP code: {error_msg}')
+                raise ValueError(f"422 HTTP code: {error_msg}")
             elif response.status_code < 200 or response.status_code > 299:
                 logger.error(
-                    f'API returned non 2xx response code : {response.status_code}\n{response.text}\n Retrying'
+                    f"API returned non 2xx response code : {response.status_code}\n{response.text}\n Retrying"
                 )
             else:
                 return response
             tries_left -= 1
-        logger.error('Request failed')
-        raise ValueError(f'{response.status_code}: {response.text.strip()}')
+        logger.error("Request failed")
+        raise ValueError(f"{response.status_code}: {response.text.strip()}")
 
     @staticmethod
     def _post_headers(output=Output.JSON) -> dict:
         """headers for POST endpoints"""
-        return {'Accept': output.value, 'Content-Type': 'application/json'}
+        return {"Accept": output.value, "Content-Type": "application/json"}
 
     @staticmethod
     def _get_headers(output=Output.JSON) -> dict:
         """headers for GET endpoints"""
-        return {'Accept': output.value}
+        return {"Accept": output.value}
 
     @staticmethod
-    def _send_request(url: str, method: str, headers: dict, data: dict, stream=False) -> Response:
+    def _send_request(
+        url: str, method: str, headers: dict, data: dict, stream=False
+    ) -> Response:
         """
         Send the correct http request to url from method [get, post, delete, patch, put].
         Raise a TypeError 'Unknown method to requests {method}' when the method is not one of the above.
         """
         common_kwargs = {
-            'url': url,
-            'headers': headers,
-            'stream': stream,
+            "url": url,
+            "headers": headers,
+            "stream": stream,
         }
 
-        if method == 'get':
+        if method == "get":
             api_response = requests.get(**common_kwargs)
-        elif method == 'post':
+        elif method == "post":
             api_response = requests.post(**common_kwargs, data=json.dumps(data))
-        elif method == 'delete':
+        elif method == "delete":
             api_response = requests.delete(**common_kwargs, data=json.dumps(data))
-        elif method == 'patch':
+        elif method == "patch":
             api_response = requests.patch(**common_kwargs, data=json.dumps(data))
-        elif method == 'put':
+        elif method == "put":
             api_response = requests.put(**common_kwargs, data=json.dumps(data))
         else:
-            logger.debug('ERROR : Wrong requests, please only do [get, post, put, patch, delete] method')
-            raise TypeError('Unknown method to requests %s', method)
+            logger.debug(
+                "ERROR : Wrong requests, please only do [get, post, put, patch, delete] method"
+            )
+            raise TypeError("Unknown method to requests %s", method)
         return api_response
 
     def _pretty_debug_request(self, url: str, method: str, data: dict, headers: dict):
-        debug = ('-' * self.terminal_size +
-                 'DEBUG - datalake_requests:\n' +
-                 f' - url: \n{url}\n' +
-                 f' - method: \n{method}\n' +
-                 f' - headers: \n{headers}\n' +
-                 f' - data: \n{data}\n' +
-                 f' - token: \n{self.token_manager.access_token}\n' +
-                 f' - refresh_token: \n{self.token_manager.refresh_token}\n' +
-                 '-' * self.terminal_size)
+        debug = (
+            "-" * self.terminal_size
+            + "DEBUG - datalake_requests:\n"
+            + f" - url: \n{url}\n"
+            + f" - method: \n{method}\n"
+            + f" - headers: \n{headers}\n"
+            + f" - data: \n{data}\n"
+            + f" - token: \n{self.token_manager.access_token}\n"
+            + f" - refresh_token: \n{self.token_manager.refresh_token}\n"
+            + "-" * self.terminal_size
+        )
         return debug
 
     def _build_url_for_endpoint(self, endpoint_name):
-        base_url = urljoin(self.endpoint_config['main'][self.environment], self.endpoint_config['api_version'])
-        enpoints = self.endpoint_config['endpoints']
+        base_url = urljoin(
+            self.endpoint_config["main"][self.environment],
+            self.endpoint_config["api_version"],
+        )
+        enpoints = self.endpoint_config["endpoints"]
         return urljoin(base_url, enpoints[endpoint_name], allow_fragments=True)
