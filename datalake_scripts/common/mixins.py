@@ -12,13 +12,19 @@ from datalake_scripts.common.base_engine import BaseEngine
 
 class HandleBulkTaskMixin(BaseEngine):
 
-    OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 30))
+    OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv("OCD_DTL_MAX_BACK_OFF_TIME", 30))
 
     Json = Dict
     Check = Callable[[Json], bool]
 
-    def handle_bulk_task(self, task_uuid, retrieve_bulk_result_url, *, timeout, additional_checks: List[Check] = None) \
-            -> Json:
+    def handle_bulk_task(
+        self,
+        task_uuid,
+        retrieve_bulk_result_url,
+        *,
+        timeout,
+        additional_checks: List[Check] = None,
+    ) -> Json:
         """
         Handle a generic bulk task, blocking until the task is done or the timeout is up
 
@@ -32,7 +38,9 @@ class HandleBulkTaskMixin(BaseEngine):
 
         spinner = None
         if logger.isEnabledFor(logging.INFO):
-            spinner = Halo(text=f'Waiting for bulk task {task_uuid} response', spinner='dots')
+            spinner = Halo(
+                text=f"Waiting for bulk task {task_uuid} response", spinner="dots"
+            )
             spinner.start()
 
         start_time = time()
@@ -40,27 +48,33 @@ class HandleBulkTaskMixin(BaseEngine):
 
         json_response = None
         while not json_response:
-            headers = {'Authorization': self.token_manager.access_token}
-            response = requests.get(url=retrieve_bulk_result_url, headers=headers, verify=self.requests_ssl_verify)
+            headers = {"Authorization": self.token_manager.access_token}
+            response = requests.get(
+                url=retrieve_bulk_result_url,
+                headers=headers,
+                verify=self.requests_ssl_verify,
+            )
             if response.status_code == 200:
                 potential_json_response = response.json()
-                if additional_checks and not all(check(potential_json_response) for check in additional_checks):
+                if additional_checks and not all(
+                    check(potential_json_response) for check in additional_checks
+                ):
                     continue  # the json isn't valid
                 if spinner:
-                    spinner.succeed(f'bulk task {task_uuid} done')
+                    spinner.succeed(f"bulk task {task_uuid} done")
                 json_response = potential_json_response
             elif response.status_code == 401:
-                logger.debug('Refreshing expired Token')
+                logger.debug("Refreshing expired Token")
                 self.token_manager.process_auth_error(response.json())
             elif time() - start_time + back_off_time < timeout:
                 sleep(back_off_time)
                 back_off_time = min(back_off_time * 2, self.OCD_DTL_MAX_BACK_OFF_TIME)
             else:
                 if spinner:
-                    spinner.fail(f'bulk task {task_uuid} timeout')
+                    spinner.fail(f"bulk task {task_uuid} timeout")
                 logger.error()
                 raise TimeoutError(
-                    f'No bulk result after waiting {timeout / 60:.0f} mins\n'
+                    f"No bulk result after waiting {timeout / 60:.0f} mins\n"
                     f'task_uuid: "{task_uuid}"'
                 )
 
