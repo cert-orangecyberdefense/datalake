@@ -21,20 +21,17 @@ class InvalidHeader(Exception):
 
 
 class BaseEngine:
-    ACCEPTED_HEADERS = {"json": "application/json", "csv": "text/csv"}
-    OCD_DTL_QUOTA_TIME = int(os.getenv("OCD_DTL_QUOTA_TIME", 1))
-    OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(
-        os.getenv("OCD_DTL_REQUESTS_PER_QUOTA_TIME", 5)
-    )
-    logger.debug(
-        f"Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s"
-    )
+    ACCEPTED_HEADERS = {
+        'json': 'application/json',
+        'csv': 'text/csv'
+    }
+    OCD_DTL_QUOTA_TIME = int(os.getenv('OCD_DTL_QUOTA_TIME', 1))
+    OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(os.getenv('OCD_DTL_REQUESTS_PER_QUOTA_TIME', 5))
+    logger.debug(f'Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s')
 
     Json = Union[dict, list]  # json like object that can be a dict or root level array
 
-    def __init__(
-        self, endpoint_config: dict, environment: str, token_manager: TokenManager
-    ):
+    def __init__(self, endpoint_config: dict, environment: str, token_manager: TokenManager):
         self.endpoint_config = endpoint_config
         self.environment = environment
         self.requests_ssl_verify = suppress_insecure_request_warns(environment)
@@ -42,28 +39,23 @@ class BaseEngine:
         self.token_manager = token_manager
         self.endpoint = Endpoint(endpoint_config, environment, token_manager)
 
-    def datalake_requests(
-        self, url: str, method: str, headers: dict, post_body: dict = None
-    ):
+    def datalake_requests(self, url: str, method: str, headers: dict, post_body: dict = None):
         """
         Wrapper around the new datalake_requests to keep compatibility with old scrips
         """
         try:
             response = self.endpoint.datalake_requests(url, method, headers, post_body)
         except ValueError:
-            logger.error("Request failed: Will return nothing for this request")
+            logger.error('Request failed: Will return nothing for this request')
             return {}
-        if (
-            "Content-Type" in response.headers
-            and "text/csv" in response.headers["Content-Type"]
-        ):
+        if 'Content-Type' in response.headers and 'text/csv' in response.headers['Content-Type']:
             return response.text
         else:
             try:
                 dict_response = self._load_response(response)
                 return dict_response
             except JSONDecodeError:
-                logger.error("Request unexpectedly returned non dict value. Retrying")
+                logger.error('Request unexpectedly returned non dict value. Retrying')
 
     @staticmethod
     def output_type2header(value):
@@ -74,9 +66,7 @@ class BaseEngine:
         """
         if value.lower() in BaseEngine.ACCEPTED_HEADERS:
             return BaseEngine.ACCEPTED_HEADERS[value.lower()]
-        raise InvalidHeader(
-            f"{value.lower()} is not a valid. Use some of {BaseEngine.ACCEPTED_HEADERS.keys()}"
-        )
+        raise InvalidHeader(f'{value.lower()} is not a valid. Use some of {BaseEngine.ACCEPTED_HEADERS.keys()}')
 
     @staticmethod
     def _load_response(api_response: Response):
@@ -90,9 +80,9 @@ class BaseEngine:
         :param: api_response: dict
         :return: dict_response
         """
-        if api_response.text.startswith("[") and api_response.text.endswith("]\n"):
+        if api_response.text.startswith('[') and api_response.text.endswith(']\n'):
             # This condition is for the date-histogram endpoints
-            dict_response = {"response_length": len(api_response.text)}
+            dict_response = {'response_length': len(api_response.text)}
         else:
             dict_response = json.loads(api_response.text)
         return dict_response
@@ -102,9 +92,6 @@ class BaseEngine:
         raise NotImplemented()
 
     def _build_url_for_endpoint(self, endpoint_name):
-        base_url = urljoin(
-            self.endpoint_config["main"][self.environment],
-            self.endpoint_config["api_version"],
-        )
-        enpoints = self.endpoint_config["endpoints"]
+        base_url = urljoin(self.endpoint_config['main'][self.environment], self.endpoint_config['api_version'])
+        enpoints = self.endpoint_config['endpoints']
         return urljoin(base_url, enpoints[endpoint_name], allow_fragments=True)
