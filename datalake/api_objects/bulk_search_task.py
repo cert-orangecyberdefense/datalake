@@ -8,19 +8,19 @@ from datalake.common.utils import parse_api_timestamp
 
 
 class BulkSearchTaskState(Enum):
-    NEW = "NEW"
-    QUEUED = "QUEUED"
-    IN_PROGRESS = "IN_PROGRESS"
-    DONE = "DONE"
-    CANCELLED = "CANCELLED"
-    FAILED_ERROR = "FAILED_ERROR"
-    FAILED_TIMEOUT = "FAILED_TIMEOUT"
+    NEW = 'NEW'
+    QUEUED = 'QUEUED'
+    IN_PROGRESS = 'IN_PROGRESS'
+    DONE = 'DONE'
+    CANCELLED = 'CANCELLED'
+    FAILED_ERROR = 'FAILED_ERROR'
+    FAILED_TIMEOUT = 'FAILED_TIMEOUT'
 
 
 BULK_SEARCH_FAILED_STATE = {
     BulkSearchTaskState.CANCELLED,
     BulkSearchTaskState.FAILED_TIMEOUT,
-    BulkSearchTaskState.FAILED_ERROR,
+    BulkSearchTaskState.FAILED_ERROR
 }
 
 
@@ -40,33 +40,33 @@ class BulkSearchTask:
     This class is a thin wrapper around information returned by the API
     """
 
-    REQUEST_INTERVAL = float(os.getenv("OCD_DTL_MAX_BACK_OFF_TIME", 10))
+    REQUEST_INTERVAL = float(os.getenv('OCD_DTL_MAX_BACK_OFF_TIME', 10))
     STREAM_CHUNK_SIZE = 4096
 
     def __init__(
-        self,
-        endpoint: "BulkSearch",
-        bulk_search: dict,
-        bulk_search_hash: str,
-        created_at: str,
-        eta: str,
-        file_delete_after: str,
-        file_deleted: bool,
-        file_size: int,
-        finished_at: str,
-        progress: int,
-        queue_position: int,
-        results: int,
-        started_at: str,
-        state: str,
-        uuid: str,
-        user: dict,
+            self,
+            endpoint: "BulkSearch",
+            bulk_search: dict,
+            bulk_search_hash: str,
+            created_at: str,
+            eta: str,
+            file_delete_after: str,
+            file_deleted: bool,
+            file_size: int,
+            finished_at: str,
+            progress: int,
+            queue_position: int,
+            results: int,
+            started_at: str,
+            state: str,
+            uuid: str,
+            user: dict,
     ):
         """Do not call this method directly, use BulkSearch.create_task instead"""
         self._endpoint = endpoint
         # flatten bulk_search field
-        self.advanced_query_hash = bulk_search["advanced_query_hash"]
-        self.query_fields = bulk_search["query_fields"]
+        self.advanced_query_hash = bulk_search['advanced_query_hash']
+        self.query_fields = bulk_search['query_fields']
         self.bulk_search_hash = bulk_search_hash
         self.created_at = parse_api_timestamp(created_at)
         self.eta = parse_api_timestamp(eta)
@@ -113,15 +113,13 @@ class BulkSearchTask:
         """Blocking version of download_async, easier to use but doesn't allow parallelization"""
         return asyncio.run(self.download_async(output, timeout, stream=stream))
 
-    def download_sync_stream_to_file(
-        self, output_path, output=Output.JSON, timeout=15 * 60
-    ):
+    def download_sync_stream_to_file(self, output_path, output=Output.JSON, timeout=15 * 60):
         """
         Wrapper around download_sync that output the result to a file directly (reducing the memory usage).
         output_path should be an absolute path.
         """
         raw_response = self.download_sync(output=output, timeout=timeout, stream=True)
-        with open(output_path, "wb") as output_file:  # Binary is required for zip types
+        with open(output_path, 'wb') as output_file:  # Binary is required for zip types
             for chunk in raw_response.iter_content(chunk_size=self.STREAM_CHUNK_SIZE):
                 output_file.write(chunk)
 

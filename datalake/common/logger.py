@@ -2,8 +2,8 @@ import logging
 
 logger = logging.getLogger("OCD_DTL")
 
-DEBUG_FORMAT = "%(name)s:%(levelname)-4s %(message)s"
-INFO_FORMAT = "%(message)s"
+DEBUG_FORMAT = '%(name)s:%(levelname)-4s %(message)s'
+INFO_FORMAT = '%(message)s'
 
 
 def configure_logging(loglevel: int):
