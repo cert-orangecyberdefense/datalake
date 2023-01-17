@@ -11,26 +11,28 @@ from datalake_scripts.helper_scripts.utils import save_output
 def main(override_args=None):
     """Method to start the script"""
     # Load initial args
-    parser = BaseScripts.start('Add tags and/or comments to a specified list of hashkeys.')
-    parser.add_argument(
-        'hashkeys',
-        help='hashkeys of the threat to add tags and/or the comment',
-        nargs='*',
+    parser = BaseScripts.start(
+        "Add tags and/or comments to a specified list of hashkeys."
     )
     parser.add_argument(
-        '-i',
-        '--input_file',
-        help='hashkey txt file, with one hashkey by line',
+        "hashkeys",
+        help="hashkeys of the threat to add tags and/or the comment",
+        nargs="*",
     )
     parser.add_argument(
-        '-p',
-        '--public',
-        help='set the visibility to public',
-        action='store_true',
+        "-i",
+        "--input_file",
+        help="hashkey txt file, with one hashkey by line",
     )
     parser.add_argument(
-        '--comment',
-        help='add the given comment',
+        "-p",
+        "--public",
+        help="set the visibility to public",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--comment",
+        help="add the given comment",
         required=True,
     )
 
@@ -60,16 +62,16 @@ def main(override_args=None):
 
     if args.output:
         save_output(args.output, response_dict)
-        logger.debug(f'Results saved in {args.output}\n')
-    logger.debug(f'END: add_comments.py')
+        logger.debug(f"Results saved in {args.output}\n")
+    logger.debug(f"END: add_comments.py")
 
 
 def retrieve_hashkeys_from_file(input_file, hashkeys):
-    with open(input_file, 'r') as input_file:
+    with open(input_file, "r") as input_file:
         for line in input_file:
             if line:
                 hashkeys.add(line.strip())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
