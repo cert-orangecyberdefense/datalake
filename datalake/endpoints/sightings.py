@@ -20,6 +20,7 @@ class Sightings(Endpoint):
         hashkeys: List[str] = None,
         relation: SightingRelation = None,
         editable: bool = None,
+        impersonate_id: int = None,
     ):
         """
         Submit a list of sightings.
@@ -41,6 +42,7 @@ class Sightings(Endpoint):
             description,
             relation,
             editable,
+            impersonate_id,
         )
         url = self._build_url_for_endpoint("submit-sightings")
         res = self.datalake_requests(url, "post", self._post_headers(), payload).json()
@@ -93,6 +95,7 @@ class Sightings(Endpoint):
         description=None,
         relation=None,
         editable=None,
+        impersonate_id=None,
     ):
         """
         Internal function to prepare a list of Atoms for sighting submission to the format the API expects.
@@ -136,6 +139,8 @@ class Sightings(Endpoint):
             payload["description"] = description
         if editable is not None:
             payload["editable"] = editable
+        if impersonate_id:
+            payload["impersonate_id"] = impersonate_id
         return payload
 
     def sightings_filtered(
