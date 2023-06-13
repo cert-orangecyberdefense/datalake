@@ -167,6 +167,39 @@ def test_prepare_sightings_payload_with_empty_tags(datalake):
     assert expected_payload == payload
 
 
+def test_prepare_sightings_payload_with_impersonate_id(datalake):
+    atoms = [file_atom]
+    sighting_type = SightingType.NEUTRAL
+    visibility = Visibility.ORGANIZATION
+    count = 1
+    impersonate_id = "1234567890"
+
+    expected_payload = {
+        "file_list": [
+            {
+                "hashes": {
+                    "md5": "d26351ba789fba3385d2382aa9d24908",
+                    "sha1": "a61e243f25b8b08661011869a53315363697a0f4",
+                    "sha256": "c056f9206143bc43a7f524f946149ad77c0c491ce816a2865feb6e5f2eaf521e",
+                    "sha512": "01525491943d324e928e4d30702fa731db20a2c82dc6b1d8bf7cf157227517de"
+                    "48f10be15053a63be598f75618ea0179c33f8726bde620e976c7ff5a4fbaa944",
+                }
+            }
+        ],
+        "start_timestamp": "2021-05-10T16:20:23Z",
+        "end_timestamp": "2021-05-11T16:20:23Z",
+        "visibility": "ORGANIZATION",
+        "type": "neutral",
+        "count": 1,
+        "impersonate_id": "1234567890",
+    }
+
+    payload = datalake.Sightings._prepare_sightings_payload(
+        atoms, None, start, end, sighting_type, visibility, count, impersonate_id=impersonate_id
+    )
+
+    assert expected_payload == payload
+
 @responses.activate
 def test_submit_sightings(datalake):
     url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/sighting/"
