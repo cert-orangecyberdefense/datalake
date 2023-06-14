@@ -220,7 +220,7 @@ def test_bulk_search_task_download_invalid_output(bulk_search_task: BulkSearchTa
     assert (
         str(err.value)
         == f"MISP output type is not supported. Outputs supported are: CSV, CSV_ZIP, JSON, JSON_ZIP,"
-        " STIX, STIX_ZIP"
+        " STIX_ZIP"
     )
 
 

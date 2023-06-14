@@ -49,7 +49,6 @@ class BulkSearch(Endpoint):
         {
             Output.JSON,
             Output.JSON_ZIP,
-            Output.STIX,
             Output.STIX_ZIP,
             Output.CSV,
             Output.CSV_ZIP,
