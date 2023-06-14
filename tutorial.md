@@ -43,16 +43,16 @@ You can also set them in your os environment variables:
 
 Below are some examples to get you started
 
-- [Lookup a threat](#lookup-a-threat)
-- [Bulk look up](#bulk-look-up)
-- [Bulk search](#bulk-search)
-- [Add a threat (with all details)](#add-a-threat-with-all-details)
-- [Bulk add threats at once (atom values only)](#bulk-add-threats-at-once-atom-values-only)
-- [Add tags](#add-tags)
-- [Edit score](#edit-score)
-- [Advanced Search](#advanced-search)
-- [Sightings](#sightings)
-- [Search Sightings](#search-sightings)
+* [Lookup a threat](#lookup-a-threat)
+* [Bulk look up](#bulk-look-up)
+* [Bulk search](#bulk-search)
+* [Add a threat (with all details)](#add-a-threat-with-all-details)
+* [Bulk add threats at once (atom values only)](#bulk-add-threats-at-once-atom-values-only)
+* [Add tags](#add-tags)
+* [Edit score](#edit-score)
+* [Advanced Search](#advanced-search)
+* [Sightings](#sightings)
+* [Search Sightings](#search-sightings)
 
 ### Lookup a threat
 
@@ -113,16 +113,16 @@ The following Output format are available:
 * JSON_ZIP
 * CSV
 * CSV_ZIP
-* STIX
+* STIX_ZIP
 
-#TODO: Update doc to specify that stix format is only in zip
+The STIX_ZIP format is **only** available if when creating the task it is specified that it is for stix
+export, using the `for_stix_export` parameter.
 
-The STIX and STIX_ZIP format are **only** available if when creating the task it is specified that it is for stix
-export, using the `for_stix_export` parameter
+When using the STIX_ZIP format, the API will return a zip file containing json files with a maximum of 5000 threats per file.
 
 ```python
 task = dtl.BulkSearch.create_task(for_stix_export=True, query_hash='<some query hash>')
-stix = task.download_sync(output=Output.STIX)
+stix = task.download_sync_stream_to_file(output=Output.STIX, output_path="stix_export.zip")
 ```
 
 > **Note**  
@@ -216,11 +216,11 @@ The following keyword arguments are available:
   named `score` with an integer value between **0** and **100**. Available ThreatType options are: **DDOS, FRAUD, HACK,
   LEAK, MALWARE, PHISHING, SCAM, SCAN, SPAM**. Defaults to `None`.
 * `override_type`: an OverrideType. Available options are:
-    * `PERMANENT`: All values will override any values provided by both newer and
+  * `PERMANENT`: All values will override any values provided by both newer and
       older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
-    * `TEMPORARY`: All values should override any values provided by older IOCs,
+  * `TEMPORARY`: All values should override any values provided by older IOCs,
       but not newer ones.
-    * `LOCK`: Will act like a permanent for three months,
+  * `LOCK`: Will act like a permanent for three months,
       then like a temporary.
 * `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will
   then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error.
@@ -254,11 +254,11 @@ The following keyword arguments are available:
   named `score` with an integer value between **0** and **100**. Available ThreatType options are: **DDOS, FRAUD, HACK,
   LEAK, MALWARE, PHISHING, SCAM, SCAN, SPAM**. Defaults to `None`.
 * `override_type`: an OverrideType. Available options are:
-    * `PERMANENT`: All values will override any values provided by both newer and
+  * `PERMANENT`: All values will override any values provided by both newer and
       older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
-    * `TEMPORARY`: All values should override any values provided by older IOCs,
+  * `TEMPORARY`: All values should override any values provided by older IOCs,
       but not newer ones.
-    * `LOCK`: Will act like a permanent for three months,
+  * `LOCK`: Will act like a permanent for three months,
       then like a temporary.
 * `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will
   then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error.
@@ -410,9 +410,11 @@ For sightings, we won't use most of the fields. You can verify the fields that a
 of each class, inside your editor.
 
 ### Search Sightings
+
 It is possible to search sightings from either a hashkey or an atom_value. All parameters are optional.
 
 From a hashkey:
+
 ```python
 from datalake import Datalake, SightingType, Visibility
 
@@ -425,10 +427,11 @@ resp = dtl.Sightings.sightings_filtered(
     visibility=Visibility.PUBLIC
 )
 ```
+
 ⚠️ Not providing a hashkey will return all sightings.
 
-
 From an atom value
+
 ```python
 from datalake import Datalake, SightingType, Visibility
 
@@ -443,6 +446,7 @@ resp = dtl.sightings_filtered_from_atom_value(
 ```
 
 See the API documentation below for a list of available options.
+
 ### API documentation
 
 For more information on the API used by this library,
