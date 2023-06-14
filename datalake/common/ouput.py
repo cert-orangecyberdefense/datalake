@@ -9,9 +9,9 @@ class Output(Enum):
     CSV = "text/csv"
     MISP = "application/x-misp+json"
     STIX = "application/stix+json"
+    STIX_ZIP = "text/x-stix-zip"
     JSON_ZIP = "application/zip"
     CSV_ZIP = "text/x-csv-zip"
-    STIX_ZIP = "text/x-stix-zip"
 
     def __str__(self):
         return self.name
@@ -27,7 +27,7 @@ def parse_response(response: Response) -> Union[str, dict]:
         0
     ]  # we don't care about extra info on the content
     if content_type in {
-        output.value for output in [Output.CSV, Output.CSV_ZIP, Output.JSON_ZIP]
+        output.value for output in [Output.CSV, Output.CSV_ZIP, Output.JSON_ZIP, Output.STIX_ZIP]
     }:
         return response.text
     else:

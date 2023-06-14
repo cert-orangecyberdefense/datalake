@@ -114,7 +114,8 @@ The following Output format are available:
 * CSV
 * CSV_ZIP
 * STIX
-* STIX_ZIP
+
+#TODO: Update doc to specify that stix format is only in zip
 
 The STIX and STIX_ZIP format are **only** available if when creating the task it is specified that it is for stix
 export, using the `for_stix_export` parameter
