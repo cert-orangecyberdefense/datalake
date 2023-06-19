@@ -122,7 +122,7 @@ When using the STIX_ZIP format, the API will return a zip file containing json f
 
 ```python
 task = dtl.BulkSearch.create_task(for_stix_export=True, query_hash='<some query hash>')
-stix = task.download_sync_stream_to_file(output=Output.STIX, output_path="stix_export.zip")
+stix = task.download_sync_stream_to_file(output=Output.STIX_ZIP, output_path="stix_export.zip")
 ```
 
 > **Note**  
