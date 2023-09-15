@@ -13,6 +13,7 @@
     "threats-manual": "mrti/threats-manual/",
     "threats-bulk-lookup": "mrti/threats/bulk-lookup/",
     "threats-manual-bulk": "mrti/bulk-manual-threats/",
+    "threats-atom-values": "mrti/atom-values/",
     "retrieve-threats-manual-bulk": "mrti/bulk-manual-threats/task/{task_uuid}/",
     "token": "auth/token/",
     "refresh_token": "auth/refresh-token/",
