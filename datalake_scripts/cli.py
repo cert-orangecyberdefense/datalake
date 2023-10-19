@@ -4,12 +4,12 @@ import argparse
 import sys
 
 from datalake_scripts.scripts import add_threats, get_threats_by_hashkey, edit_score, get_threats_from_query_hash, \
-    add_comments, lookup_threats, add_tags, get_query_hash, bulk_lookup_threats, advanced_search
+    add_comments, lookup_threats, add_tags, get_query_hash, bulk_lookup_threats, advanced_search, get_atom_values
 
 
 class Cli:
     CLI_NAME = "ocd-dtl"
-    VERSION = "2.6.8"
+    VERSION = "2.6.9"
 
     def __init__(self):
         parser = argparse.ArgumentParser(
@@ -51,6 +51,10 @@ The most commonly used {self.CLI_NAME} commands are:
     def get_threats(self):
         args = sys.argv[2:]
         get_threats_by_hashkey.main(args)
+    
+    def get_atom_values(self):
+        args = sys.argv[2:]
+        get_atom_values.main(args)
 
     def get_threats_from_query_hash(self):
         args = sys.argv[2:]

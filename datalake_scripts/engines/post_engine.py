@@ -5,6 +5,7 @@ from typing import Set, Dict, List, Union
 from requests import PreparedRequest
 
 from datalake.common.logger import logger
+from datalake.common.ouput import Output, parse_response
 from datalake.endpoints import Endpoint
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.mixins import HandleBulkTaskMixin
@@ -58,8 +59,8 @@ class PostEngine(BaseEngine):
             if entry[key] == value:
                 return entry
 
-    def _post_headers(self) -> dict:
-        return {"Accept": "application/json", "Content-Type": "application/json"}
+    def _post_headers(self, output=Output.JSON ) -> dict:
+        return {"Accept": output.value, "Content-Type": "application/json"}
 
     @staticmethod
     def build_full_query_body(query_body):
@@ -176,3 +177,22 @@ class AtomValuesExtractor(PostEngine):
             "treat_hashes_like": treat_hashes_like,
         }
         return self.datalake_requests(self.url, "post", self._post_headers(), payload)
+
+
+class AtomSearch(PostEngine):
+    """Atom values by sources and time range"""
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint("threats-atom-values")
+
+    def get_atoms(
+        self, sources_list: List[str], since_ts: str, until_ts: str, type: Output
+    ) -> dict:
+        payload = {
+            "source_id": sources_list,
+            "normalized_timestamp_since": since_ts,
+            "normalized_timestamp_until": until_ts,
+            "ordering": ["atom_type"]
+        }
+        return self.datalake_requests(self.url, "post", self._post_headers(output=type), payload)
+        
+    

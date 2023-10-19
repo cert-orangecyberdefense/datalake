@@ -72,6 +72,39 @@ Note that only the atom_value is required:
 
     dtl.Threats.lookup('mayoclinic.org')
 
+### Atom values
+
+It is possible to get all atom values from a list of source ids and a time range. 
+
+Mandatory parameters are : 
+
+* source_id 
+* normalized_timestamp_since
+* normalized_timestamp_until
+
+Optional parameters are : 
+
+* output 
+* output_path, default is None, so no output file is created
+
+The following Output formats are available:
+
+* JSON (Default)
+* CSV
+
+```python
+from datalake import Datalake, Output
+
+dtl = Datalake(username='username', password='password')
+resp = dtl.Threats.atom_values(
+    source_id=["a","b"],
+    normalized_timestamp_since="2023-09-14T15:00:00.000Z",
+    normalized_timestamp_until="2023-09-15T15:12:13.825Z",
+    output=Output.JSON, 
+    output_path="atom_values.json"
+)
+```
+
 ### Bulk look up
 
 Compared to the lookup, the bulk_lookup method allows to lookup big batch of values faster as fewer API calls are
@@ -430,7 +463,7 @@ resp = dtl.Sightings.sightings_filtered(
 
 ⚠️ Not providing a hashkey will return all sightings.
 
-From an atom value
+From an atom value:
 
 ```python
 from datalake import Datalake, SightingType, Visibility
