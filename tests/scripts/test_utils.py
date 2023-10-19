@@ -1,4 +1,4 @@
-from datalake.common.utils import join_dicts
+from datalake.common.utils import join_dicts, check_normalized_timestamp, convert_date_to_normalized_timestamp
 from datalake_scripts.helper_scripts.utils import split_list
 
 
@@ -35,3 +35,15 @@ def test_join_dicts():
         "b1": ["b1", "b2"],
         "p1": ["p1", "p2"],
     }
+
+def test_normalized_timestamp():
+    assert check_normalized_timestamp("2023-09-14T15:00:00.000Z") == True
+    assert check_normalized_timestamp("2023-09-15T15:12:13.825Z") == True
+    assert check_normalized_timestamp("2023-9-15T15:12:13.825Z") == False
+    assert check_normalized_timestamp("2023-09-15T15:12:13.825321Z") == False
+    assert check_normalized_timestamp("2023-09-15 15:12:13.825Z") == False
+    assert check_normalized_timestamp("2023-09-10T15:12:13.825") == False
+
+def test_convert_date_to_normalized_timestamp():
+    assert convert_date_to_normalized_timestamp("2023-10-18", True) == "2023-10-18T00:00:00.000Z"
+    assert convert_date_to_normalized_timestamp("2023-07-18", False) == "2023-07-18T23:59:59.999Z"

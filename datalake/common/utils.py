@@ -1,4 +1,5 @@
-import datetime
+import datetime 
+import json
 from collections import defaultdict
 from typing import Dict, Optional, Generator
 
@@ -51,3 +52,48 @@ def get_error_message(resp_body: dict):
         return resp_body.get("messages")
     else:
         raise ValueError("no error message in api response")
+
+def save_output(file_name: str, data):
+    """
+    Save the data in a file.
+    If data is dict, file format will be JSON.
+    If data is a list, file format will be txt.
+    Else it will be saved as it comes.
+    """
+    with open(file_name, "w") as file_to_write:
+        if isinstance(data, dict):
+            file_to_write.write(json.dumps(data, sort_keys=True, indent=2))
+        elif isinstance(data, list):
+            for item in data:
+                file_to_write.write(f"{item}\n")
+        else:
+            file_to_write.write(data)
+
+def check_normalized_timestamp(ts: str) -> bool:
+    """
+    Check if the provided timestamp is in a normalized format
+    """
+    try :
+        if ts != datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]+'Z':
+            raise ValueError
+        return True
+    except ValueError:
+        return False
+    
+def convert_date_to_normalized_timestamp(date_input : str, start : bool) -> str:
+    """
+    Convert a given date into a normalized timestamp format
+    Either at the begining of the day (start at True) or at the end (start at False)
+    """
+    try :
+        if start:
+            date_ts=date_input+'T00:00:00.000Z'
+        else:
+            date_ts=date_input+'T23:59:59.999Z'
+        if check_normalized_timestamp(date_ts):
+            return date_ts 
+        else:
+            raise ValueError
+    except: 
+        raise ValueError
+    
