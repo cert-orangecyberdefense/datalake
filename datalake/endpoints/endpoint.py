@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import requests
 from requests import Response
 
-from datalake.common.ouput import Output
+from datalake.common.output import Output
 from datalake.common.logger import logger
 from datalake.common.throttler import throttle
 from datalake.common.token_manager import TokenManager

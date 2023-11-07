@@ -2,7 +2,7 @@ import sys
 
 from datalake.common.config import Config
 from datalake.common.logger import logger, configure_logging
-from datalake.common.ouput import Output
+from datalake.common.output import Output
 from datalake.common.token_manager import TokenManager
 from datalake.common.utils import (
     check_normalized_timestamp,

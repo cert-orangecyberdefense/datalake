@@ -14,6 +14,7 @@ from datalake_scripts.scripts import (
     bulk_lookup_threats,
     advanced_search,
     get_atom_values,
+    get_filtered_tag_subcategory,
 )
 
 
@@ -32,15 +33,13 @@ from datalake_scripts.scripts import (
         bulk_lookup_threats,
         advanced_search,
         get_atom_values,
+        get_filtered_tag_subcategory,
     ],
 )
 def test_name_function(function_script):
     command_name = function_script.__name__.split(".")[-1]
 
-    # Special cases in cli.py:
-    if command_name == "add_comments":
-        command_name = "add_comment"
-    elif command_name == "get_threats_by_hashkey":
+    if command_name == "get_threats_by_hashkey":
         command_name = "get_threats"
 
     with patch.object(
