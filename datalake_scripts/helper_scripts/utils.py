@@ -1,6 +1,8 @@
 import csv
+import os
 import json
-from typing import Generator, List
+from datetime import datetime
+from typing import Generator, List, Optional
 
 from datalake import AtomType, ThreatType
 from datalake.common.logger import logger
@@ -46,7 +48,7 @@ def split_input_file(input_file, n):
     yield from split_list(load_list(input_file), n)
 
 
-def save_output(file_name: str, data):
+def save_output(file_name: str, data, cls=None):
     """
     Save the data in a file.
     If data is dict, file format will be JSON.
@@ -55,7 +57,7 @@ def save_output(file_name: str, data):
     """
     with open(file_name, "w+") as file_to_write:
         if isinstance(data, dict):
-            file_to_write.write(json.dumps(data, sort_keys=True, indent=2))
+            file_to_write.write(json.dumps(data, sort_keys=True, indent=2, cls=cls))
         elif isinstance(data, list):
             for item in data:
                 file_to_write.write(f"{item}\n")
@@ -100,3 +102,10 @@ def parse_threat_types(threat_types: list) -> list:
 def flatten_list(list_to_flatten):
     flat_list = [item for sublist in list_to_flatten for item in sublist]
     return flat_list
+
+
+class SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)

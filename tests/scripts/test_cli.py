@@ -15,6 +15,7 @@ from datalake_scripts.scripts import (
     advanced_search,
     get_atom_values,
     get_filtered_tag_subcategory,
+    search_watch,
 )
 
 
@@ -34,6 +35,7 @@ from datalake_scripts.scripts import (
         advanced_search,
         get_atom_values,
         get_filtered_tag_subcategory,
+        search_watch,
     ],
 )
 def test_name_function(function_script):

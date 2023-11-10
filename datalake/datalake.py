@@ -10,6 +10,7 @@ from datalake.endpoints.tags import Tags
 from datalake.endpoints.advanced_search import AdvancedSearch
 from datalake.endpoints.sightings import Sightings
 from datalake.endpoints.filtered_tag_subcategory import FilteredTagSubcategory
+from datalake.miscellaneous.search_watch import SearchWatch
 
 
 class Datalake:
@@ -41,6 +42,7 @@ class Datalake:
         )
         self.AdvancedSearch = AdvancedSearch(endpoint_config, env, token_manager)
         self.Sightings = Sightings(endpoint_config, env, token_manager)
+        self.SearchWatch = SearchWatch(self.BulkSearch)
 
     def sightings_filtered_from_atom_value(
         self,
