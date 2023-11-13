@@ -636,7 +636,37 @@ def test_atom_values_bad_output(datalake: Datalake):
 
 
 @responses.activate
+def test_atom_values_bad_source(datalake: Datalake):
+    url = (
+        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/sources/"
+    )
+    get_resp = {"count": 1, "results": [{"description": "source_a description", "id": "source_a"}]}
+    responses.add(responses.GET, url, json=get_resp, status=200)
+
+    url = (
+        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/atom-values/"
+    )
+    post_resp = [
+        {"atom_value": "atom_value_1", "atom_type": "domain", "source_id": "source_a", "normalized_timestamp": "2023-09-17T08:08:23Z"},
+        {"atom_value": "atom_value_2", "atom_type": "domain", "source_id": "source_a", "normalized_timestamp": "2023-09-17T07:16:26Z"}
+    ]
+    responses.add(responses.POST, url, json=post_resp, status=200)
+
+    with pytest.raises(ValueError) as err:
+        datalake.Threats.atom_values(
+            ["source_a", "source_b"], "2023-09-17T07:16:26.345Z", "2023-09-17T08:08:23.345Z"
+        )
+    assert str(err.value) == "The following sources are invalid : ['source_b']"
+
+
+@responses.activate
 def test_atom_values(datalake: Datalake):
+    url = (
+        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/sources/"
+    )
+    get_resp = {"count": 1, "results": [{"description": "source_a description", "id": "source_a"}]}
+    responses.add(responses.GET, url, json=get_resp, status=200)
+
     url = (
         "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/atom-values/"
     )
@@ -652,6 +682,12 @@ def test_atom_values(datalake: Datalake):
 
 @responses.activate
 def test_preprod_atom_values():
+    url = (
+        "https://ti.extranet.mrti-center.com/api/v2/mrti/sources/"
+    )
+    get_resp = {"count": 1, "results": [{"description": "source_a description", "id": "source_a"}]}
+    responses.add(responses.GET, url, json=get_resp, status=200)
+
     url = "https://ti.extranet.mrti-center.com/api/v2/auth/token/"
     auth_response = {"access_token": "access_token", "refresh_token": "refresh_token"}
     responses.add(responses.POST, url, json=auth_response, status=200)
