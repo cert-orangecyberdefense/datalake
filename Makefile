@@ -4,12 +4,19 @@ test_dev_env:
 		python3 -m venv .venv; \
 		. .venv/bin/activate; \
 		pip install -r requirements.txt; \
+		black .; \
 		pytest $$path; \
 		deactivate \
 	)
 
-test:
+test: lint
 	@pytest $$path
+
+setup-prepush-hook:
+	sh setup-prepush-hook.sh
+
+lint:
+	black .
 
 
 # Make commands that are not supposed to be run manually but through GitHub pipelines :

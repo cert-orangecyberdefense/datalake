@@ -52,7 +52,6 @@ class Datalake:
         sighting_type: SightingType = None,
         visibility: Visibility = None,
     ):
-
         atom_extract = self.Threats.atom_values_extract([atom_value])
 
         if atom_extract["found"] == 0:
