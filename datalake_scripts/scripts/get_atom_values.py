@@ -6,6 +6,7 @@ from datalake.common.ouput import Output
 from datalake.common.token_manager import TokenManager
 from datalake.common.utils import check_normalized_timestamp, convert_date_to_normalized_timestamp
 from datalake_scripts.common.base_script import BaseScripts
+from datalake_scripts.engines.get_engine import Sources
 from datalake_scripts.engines.post_engine import AtomSearch
 from datalake_scripts.helper_scripts.utils import load_list, save_output
 
@@ -83,6 +84,15 @@ def main(override_args=None):
     # Load api_endpoints and tokens
     endpoint_config = Config().load_config()
     token_manager = TokenManager(endpoint_config, environment=args.env)
+    
+    # Check list of sources are valid
+    engine_check_sources = Sources(endpoint_config, args.env, token_manager)
+    all_sources_are_valid, list_invalid_sources = engine_check_sources.check_sources(sources_list)
+    if not all_sources_are_valid:
+        parser.error(
+            f"The following sources are invalid : {list_invalid_sources}"
+            )
+
     search_engine_atom_values = AtomSearch(endpoint_config, args.env, token_manager)
     if not args.output_type or args.output_type=="json":
         list_atom_values = search_engine_atom_values.get_atoms(sources_list, since_ts, until_ts, Output.JSON)

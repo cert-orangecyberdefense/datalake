@@ -459,6 +459,18 @@ class Threats(Endpoint):
         Get all atom values based on given source id list and from time range.
         """
         self.check_atom_values_params(source_id, normalized_timestamp_since, normalized_timestamp_until, output, output_path)
+        
+        url = self._build_url_for_endpoint("sources")
+        url = url + "?limit=1000&description_only=true"
+        for source in source_id:
+            url = url + "&source_ids=" + source
+        response = self.datalake_requests(url, "get", self._get_headers())
+        response = parse_response(response)
+        if response["count"] != len(source_id):
+            valid_sources = [response["results"][x]["id"] for x in range(0,len(response["results"]))]
+            invalid_sources = [source_id[y] for y in range(0,len(source_id)) if source_id[y] not in valid_sources]
+            raise ValueError(f"The following sources are invalid : {invalid_sources}")
+        
         payload = {
             "source_id": source_id,
             "normalized_timestamp_since": normalized_timestamp_since,
