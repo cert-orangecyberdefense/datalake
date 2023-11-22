@@ -1,5 +1,5 @@
 """All the engines that use a GET endpoint."""
-
+from typing import List, Tuple
 from requests import PreparedRequest
 
 from datalake.common.logger import logger
@@ -77,3 +77,23 @@ class Threats(GetEngine):
         headers = {"Accept": response_format}
         response = self.datalake_requests(req.url, "get", headers=headers)
         return response
+    
+
+class Sources(GetEngine):
+    """ Checks if a source exists"""
+
+    def _build_url(self, endpoint_config: dict, environment: str):
+        return self._build_url_for_endpoint("sources")
+    
+    def check_sources(self, sources_list: List[str]) -> Tuple[bool, List[str]]:
+        url = self.url + "?limit=1000&description_only=true"
+        for source in sources_list:
+            url = url + "&source_ids=" + source
+        response = self.datalake_requests(url, "get", self._get_headers())
+        if response["count"] == len(sources_list):
+            return True, []
+        else :
+            valid_sources = [response["results"][x]["id"] for x in range(0, len(response["results"]))]
+            invalid_sources = [sources_list[y] for y in range(0, len(sources_list)) if sources_list[y] not in valid_sources]
+            return False, invalid_sources
+

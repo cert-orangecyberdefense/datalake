@@ -67,7 +67,7 @@ class Endpoint:
         while tries_left > 0:
             headers["Authorization"] = self.token_manager.access_token
             logger.debug(self._pretty_debug_request(url, method, post_body, headers))
-
+            
             response = self._send_request(
                 url, method, headers, post_body, stream=stream
             )
