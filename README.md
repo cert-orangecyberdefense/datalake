@@ -58,3 +58,8 @@ Parameters common and optional for all commands:
 > -q will quiet the verbosity of the program (but still show errors / warnings)  
 
 For information about each command and more, please check [the documentation directory](https://github.com/cert-orangecyberdefense/datalake/tree/master/docs)
+
+
+### Contributing
+
+To develop on this repository, please refer to [this file](https://github.com/cert-orangecyberdefense/datalake/tree/master/CONTRIBUTING.md) 
