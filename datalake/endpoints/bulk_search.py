@@ -46,13 +46,7 @@ class BulkSearch(Endpoint):
         return BulkSearchTask(endpoint=self, **bs_as_json)
 
     @output_supported(
-        {
-            Output.JSON,
-            Output.JSON_ZIP,
-            Output.STIX_ZIP,
-            Output.CSV,
-            Output.CSV_ZIP,
-        }
+        {Output.JSON, Output.JSON_ZIP, Output.STIX_ZIP, Output.CSV, Output.CSV_ZIP}
     )
     def download(self, task_uuid, output=Output.JSON, stream=False):
         """

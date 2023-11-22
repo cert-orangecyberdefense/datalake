@@ -31,11 +31,7 @@ class AdvancedSearch(Endpoint):
             raise ValueError(
                 f'ordering needs to be a list of at least one of the following str : {", ".join(self.ordering_list)}'
             )
-        body = {
-            "query_body": query_body,
-            "limit": limit,
-            "offset": offset,
-        }
+        body = {"query_body": query_body, "limit": limit, "offset": offset}
         if ordering:
             body["ordering"] = ordering
         url = self._build_url_for_endpoint("advanced-search")

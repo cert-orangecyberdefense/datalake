@@ -1,4 +1,8 @@
 # Make commands for development tests :
+setup-prepush-hook:
+	sh setup-prepush-hook.sh
+lint:
+	black .
 test_dev_env:
 	( \
 		python3 -m venv .venv; \
@@ -10,7 +14,6 @@ test_dev_env:
 
 test:
 	@pytest $$path
-
 
 # Make commands that are not supposed to be run manually but through GitHub pipelines :
 build_release:
@@ -25,3 +28,4 @@ deploy_test: clean build_release
 
 deploy_prod: clean build_release
 	python3 -m twine upload dist/*
+

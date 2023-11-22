@@ -27,9 +27,7 @@ class BaseScripts:
                 --verbose, if set, will show information text
         """
 
-        parser = argparse.ArgumentParser(
-            description=description,
-        )
+        parser = argparse.ArgumentParser(description=description)
         parser.add_argument(
             "-o",
             "--output",
@@ -68,10 +66,7 @@ class BaseScripts:
         configure_logging(args.loglevel)
         endpoint_config = Config().load_config()
         token_manager = TokenManager(
-            endpoint_config,
-            username=username,
-            password=password,
-            environment=args.env,
+            endpoint_config, username=username, password=password, environment=args.env
         )
         try:
             token_manager.get_token()

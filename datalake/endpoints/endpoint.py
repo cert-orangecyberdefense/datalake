@@ -48,16 +48,10 @@ class Endpoint:
         return 80
 
     @throttle(
-        period=OCD_DTL_QUOTA_TIME,
-        call_per_period=OCD_DTL_REQUESTS_PER_QUOTA_TIME,
+        period=OCD_DTL_QUOTA_TIME, call_per_period=OCD_DTL_REQUESTS_PER_QUOTA_TIME
     )
     def datalake_requests(
-        self,
-        url: str,
-        method: str,
-        headers: dict,
-        post_body: dict = None,
-        stream=False,
+        self, url: str, method: str, headers: dict, post_body: dict = None, stream=False
     ) -> Response:
         """
         Use it to request the API
@@ -67,7 +61,7 @@ class Endpoint:
         while tries_left > 0:
             headers["Authorization"] = self.token_manager.access_token
             logger.debug(self._pretty_debug_request(url, method, post_body, headers))
-            
+
             response = self._send_request(
                 url, method, headers, post_body, stream=stream
             )
@@ -115,11 +109,7 @@ class Endpoint:
         Send the correct http request to url from method [get, post, delete, patch, put].
         Raise a TypeError 'Unknown method to requests {method}' when the method is not one of the above.
         """
-        common_kwargs = {
-            "url": url,
-            "headers": headers,
-            "stream": stream,
-        }
+        common_kwargs = {"url": url, "headers": headers, "stream": stream}
 
         if method == "get":
             api_response = requests.get(**common_kwargs)

@@ -18,9 +18,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/cert-orangecyberdefense/datalake/",
-    package_dir={
-        "": ".",
-    },
+    package_dir={"": "."},
     packages=find_packages(),
     install_requires=["requests", "halo"],
     test_suite="nose.collector",
@@ -33,7 +31,7 @@ setup(
             "edit_score = datalake_scripts.scripts.edit_score:main",
             "get_threats_from_query_hash = datalake_scripts.scripts.get_threats_from_query_hash:main",
             f"{Cli.CLI_NAME} = datalake_scripts.cli:main",
-        ),
+        )
     },
     classifiers=[
         "Programming Language :: Python :: 3.7",
@@ -46,8 +44,6 @@ setup(
         "Natural Language :: English",
     ],
     include_package_data=True,
-    package_data={
-        "datalake": ["config/endpoints.json"],
-    },
+    package_data={"datalake": ["config/endpoints.json"]},
     python_requires=">=3.6",
 )

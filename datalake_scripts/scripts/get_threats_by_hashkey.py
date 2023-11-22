@@ -17,19 +17,14 @@ def main(override_args=None):
         "Retrieve threats (as Json) from a list of ids (hashkeys)"
     )
     parser.add_argument(
-        "hashkeys",
-        help="hashkeys of the threats to retreive",
-        nargs="*",
+        "hashkeys", help="hashkeys of the threats to retreive", nargs="*"
     )
     parser.add_argument(
         "-i",
         "--input_file",
         help="list of threats ids (hashkeys) that need to be retrieved",
     )
-    parser.add_argument(
-        "--lost",
-        help="saved hashes that were not found",
-    )
+    parser.add_argument("--lost", help="saved hashes that were not found")
     if override_args:
         args = parser.parse_args(override_args)
     else:

@@ -20,21 +20,12 @@ def main(override_args=None):
         nargs="*",
     )
     parser.add_argument(
-        "-i",
-        "--input_file",
-        help="hashkey txt file, with one hashkey by line",
+        "-i", "--input_file", help="hashkey txt file, with one hashkey by line"
     )
     parser.add_argument(
-        "-p",
-        "--public",
-        help="set the visibility to public",
-        action="store_true",
+        "-p", "--public", help="set the visibility to public", action="store_true"
     )
-    parser.add_argument(
-        "--comment",
-        help="add the given comment",
-        required=True,
-    )
+    parser.add_argument("--comment", help="add the given comment", required=True)
 
     if override_args:
         args = parser.parse_args(override_args)
@@ -55,9 +46,7 @@ def main(override_args=None):
         retrieve_hashkeys_from_file(args.input_file, hashkeys)
 
     response_dict = post_engine_add_comments.post_comments(
-        hashkeys,
-        args.comment,
-        public=args.public,
+        hashkeys, args.comment, public=args.public
     )
 
     if args.output:

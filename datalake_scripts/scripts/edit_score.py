@@ -18,14 +18,10 @@ def main(override_args=None):
     # Load initial args
     parser = BaseScripts.start("Edit scores of a specified list of ids (hashkeys)")
     parser.add_argument(
-        "hashkeys",
-        help="hashkeys of the threat to edit score.",
-        nargs="*",
+        "hashkeys", help="hashkeys of the threat to edit score.", nargs="*"
     )
     parser.add_argument(
-        "-i",
-        "--input_file",
-        help="hashkey txt file, with one hashkey by line.",
+        "-i", "--input_file", help="hashkey txt file, with one hashkey by line."
     )
     parser.add_argument(
         "-t",

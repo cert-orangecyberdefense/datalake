@@ -122,14 +122,7 @@ def test_submit_sightings_without_editable(datalake):
     }
 
     payload = datalake.Sightings._prepare_sightings_payload(
-        atoms,
-        None,
-        start,
-        end,
-        sighting_type,
-        visibility,
-        count,
-        payload_threat_types,
+        atoms, None, start, end, sighting_type, visibility, count, payload_threat_types
     )
 
     assert expected_payload == payload
@@ -195,10 +188,18 @@ def test_prepare_sightings_payload_with_impersonate_id(datalake):
     }
 
     payload = datalake.Sightings._prepare_sightings_payload(
-        atoms, None, start, end, sighting_type, visibility, count, impersonate_id=impersonate_id
+        atoms,
+        None,
+        start,
+        end,
+        sighting_type,
+        visibility,
+        count,
+        impersonate_id=impersonate_id,
     )
 
     assert expected_payload == payload
+
 
 @responses.activate
 def test_submit_sightings(datalake):

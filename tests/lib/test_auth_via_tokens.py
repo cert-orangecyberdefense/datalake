@@ -11,10 +11,7 @@ from tests.common.fixture import datalake  # noqa needed fixture import
 
 @responses.activate
 def test_token_auth(datalake):
-    expected_tokens = {
-        "access_token": "12345",
-        "refresh_token": "123456",
-    }
+    expected_tokens = {"access_token": "12345", "refresh_token": "123456"}
 
     token_manager = datalake.Threats.token_manager
 

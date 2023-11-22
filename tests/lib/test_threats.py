@@ -118,16 +118,10 @@ def test_lookup_threat_specific_output(datalake: Datalake):
         return 200, {"Content-Type": "text/csv"}, some_csv
 
     responses.add_callback(
-        responses.GET,
-        lookup_url,
-        callback=request_callback,
-        match_querystring=True,
+        responses.GET, lookup_url, callback=request_callback, match_querystring=True
     )
     res = datalake.Threats.lookup(
-        "domain.net",
-        atom_type=AtomType.DOMAIN,
-        hashkey_only=True,
-        output=Output.CSV,
+        "domain.net", atom_type=AtomType.DOMAIN, hashkey_only=True, output=Output.CSV
     )
     assert some_csv == res
 
@@ -368,9 +362,7 @@ def test_bulk_lookup_threats_on_big_chunk_csv(datalake):
     )
 
     api_response = datalake.Threats.bulk_lookup(
-        atom_values=atom_values,
-        atom_type=AtomType.DOMAIN,
-        output=Output.CSV,
+        atom_values=atom_values, atom_type=AtomType.DOMAIN, output=Output.CSV
     )
 
     assert (
@@ -573,19 +565,24 @@ def test_add_threats_bulk(datalake: Datalake):
         }
     ]
 
+
 def test_atom_values_empty_source_id(datalake: Datalake):
     with pytest.raises(ValueError) as err:
         source_id = None
         normalized_timestamp_since = "2023-09-14T15:00:00.000Z"
         normalized_timestamp_until = "2023-09-14T16:00:00.000Z"
-        datalake.Threats.atom_values(source_id, normalized_timestamp_since, normalized_timestamp_until)
+        datalake.Threats.atom_values(
+            source_id, normalized_timestamp_since, normalized_timestamp_until
+        )
     assert str(err.value) == "A list of minimum one source id required"
 
     with pytest.raises(ValueError) as err:
         source_id = []
         normalized_timestamp_since = "2023-09-14T15:00:00.000Z"
         normalized_timestamp_until = "2023-09-14T16:00:00.000Z"
-        datalake.Threats.atom_values(source_id, normalized_timestamp_since, normalized_timestamp_until)
+        datalake.Threats.atom_values(
+            source_id, normalized_timestamp_since, normalized_timestamp_until
+        )
     assert str(err.value) == "A list of minimum one source id required"
 
 
@@ -599,21 +596,27 @@ def test_atom_values_bad_timestamps(datalake: Datalake):
     with pytest.raises(ValueError) as err:
         source_id = ["source_a"]
         normalized_timestamp_until = "2023-09-14T16:00:00.000Z"
-        datalake.Threats.atom_values(source_id=source_id, normalized_timestamp_until=normalized_timestamp_until)
+        datalake.Threats.atom_values(
+            source_id=source_id, normalized_timestamp_until=normalized_timestamp_until
+        )
     assert str(err.value) == "Both timestamps parameters are required"
 
     with pytest.raises(ValueError) as err:
         source_id = ["source_a"]
         normalized_timestamp_since = "2023-09-14 15:00:00.000Z"
         normalized_timestamp_until = "2023-09-14T16:00:00.000Z"
-        datalake.Threats.atom_values(source_id, normalized_timestamp_since, normalized_timestamp_until)
+        datalake.Threats.atom_values(
+            source_id, normalized_timestamp_since, normalized_timestamp_until
+        )
     assert str(err.value) == "Invalid normalized_timestamp_since format"
 
     with pytest.raises(ValueError) as err:
         source_id = ["source_a"]
         normalized_timestamp_since = "2023-09-14T15:00:00.000Z"
         normalized_timestamp_until = "2023-09-14T16:00:00.000"
-        datalake.Threats.atom_values(source_id, normalized_timestamp_since, normalized_timestamp_until)
+        datalake.Threats.atom_values(
+            source_id, normalized_timestamp_since, normalized_timestamp_until
+        )
     assert str(err.value) == "Invalid normalized_timestamp_until format"
 
 
@@ -622,88 +625,126 @@ def test_atom_values_bad_output(datalake: Datalake):
         source_id = ["source_a"]
         normalized_timestamp_since = "2023-09-14T15:00:00.000Z"
         normalized_timestamp_until = "2023-09-14T16:00:00.000Z"
-        output=Output.JSON_ZIP
-        datalake.Threats.atom_values(source_id, normalized_timestamp_since, normalized_timestamp_until, output)
+        output = Output.JSON_ZIP
+        datalake.Threats.atom_values(
+            source_id, normalized_timestamp_since, normalized_timestamp_until, output
+        )
     assert str(err.value) == "output needs to either be set to JSON or CSV"
 
     with pytest.raises(TypeError) as err:
         source_id = ["source_a"]
         normalized_timestamp_since = "2023-09-14T15:00:00.000Z"
         normalized_timestamp_until = "2023-09-14T16:00:00.000Z"
-        output="JSON"
-        datalake.Threats.atom_values(source_id, normalized_timestamp_since, normalized_timestamp_until, output)
+        output = "JSON"
+        datalake.Threats.atom_values(
+            source_id, normalized_timestamp_since, normalized_timestamp_until, output
+        )
     assert str(err.value) == "output needs to either be set to JSON or CSV"
 
 
 @responses.activate
 def test_atom_values_bad_source(datalake: Datalake):
-    url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/sources/"
-    )
-    get_resp = {"count": 1, "results": [{"description": "source_a description", "id": "source_a"}]}
+    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/sources/"
+    get_resp = {
+        "count": 1,
+        "results": [{"description": "source_a description", "id": "source_a"}],
+    }
     responses.add(responses.GET, url, json=get_resp, status=200)
 
-    url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/atom-values/"
-    )
+    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/atom-values/"
     post_resp = [
-        {"atom_value": "atom_value_1", "atom_type": "domain", "source_id": "source_a", "normalized_timestamp": "2023-09-17T08:08:23Z"},
-        {"atom_value": "atom_value_2", "atom_type": "domain", "source_id": "source_a", "normalized_timestamp": "2023-09-17T07:16:26Z"}
+        {
+            "atom_value": "atom_value_1",
+            "atom_type": "domain",
+            "source_id": "source_a",
+            "normalized_timestamp": "2023-09-17T08:08:23Z",
+        },
+        {
+            "atom_value": "atom_value_2",
+            "atom_type": "domain",
+            "source_id": "source_a",
+            "normalized_timestamp": "2023-09-17T07:16:26Z",
+        },
     ]
     responses.add(responses.POST, url, json=post_resp, status=200)
 
     with pytest.raises(ValueError) as err:
         datalake.Threats.atom_values(
-            ["source_a", "source_b"], "2023-09-17T07:16:26.345Z", "2023-09-17T08:08:23.345Z"
+            ["source_a", "source_b"],
+            "2023-09-17T07:16:26.345Z",
+            "2023-09-17T08:08:23.345Z",
         )
     assert str(err.value) == "The following sources are invalid : ['source_b']"
 
 
 @responses.activate
 def test_atom_values(datalake: Datalake):
-    url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/sources/"
-    )
-    get_resp = {"count": 1, "results": [{"description": "source_a description", "id": "source_a"}]}
+    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/sources/"
+    get_resp = {
+        "count": 1,
+        "results": [{"description": "source_a description", "id": "source_a"}],
+    }
     responses.add(responses.GET, url, json=get_resp, status=200)
 
-    url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/atom-values/"
-    )
+    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/atom-values/"
     post_resp = [
-        {"atom_value": "atom_value_1", "atom_type": "domain", "source_id": "source_a", "normalized_timestamp": "2023-09-17T08:08:23Z"},
-        {"atom_value": "atom_value_2", "atom_type": "domain", "source_id": "source_a", "normalized_timestamp": "2023-09-17T07:16:26Z"}
+        {
+            "atom_value": "atom_value_1",
+            "atom_type": "domain",
+            "source_id": "source_a",
+            "normalized_timestamp": "2023-09-17T08:08:23Z",
+        },
+        {
+            "atom_value": "atom_value_2",
+            "atom_type": "domain",
+            "source_id": "source_a",
+            "normalized_timestamp": "2023-09-17T07:16:26Z",
+        },
     ]
     responses.add(responses.POST, url, json=post_resp, status=200)
 
-    assert datalake.Threats.atom_values(
-        ["source_a"], "2023-09-17T07:16:26.345Z", "2023-09-17T08:08:23.345Z"
-    ) == post_resp
+    assert (
+        datalake.Threats.atom_values(
+            ["source_a"], "2023-09-17T07:16:26.345Z", "2023-09-17T08:08:23.345Z"
+        )
+        == post_resp
+    )
+
 
 @responses.activate
 def test_preprod_atom_values():
-    url = (
-        "https://ti.extranet.mrti-center.com/api/v2/mrti/sources/"
-    )
-    get_resp = {"count": 1, "results": [{"description": "source_a description", "id": "source_a"}]}
+    url = "https://ti.extranet.mrti-center.com/api/v2/mrti/sources/"
+    get_resp = {
+        "count": 1,
+        "results": [{"description": "source_a description", "id": "source_a"}],
+    }
     responses.add(responses.GET, url, json=get_resp, status=200)
 
     url = "https://ti.extranet.mrti-center.com/api/v2/auth/token/"
     auth_response = {"access_token": "access_token", "refresh_token": "refresh_token"}
     responses.add(responses.POST, url, json=auth_response, status=200)
 
-    url = (
-        "https://ti.extranet.mrti-center.com/api/v2/mrti/atom-values/"
-    )
+    url = "https://ti.extranet.mrti-center.com/api/v2/mrti/atom-values/"
     post_resp = [
-        {"atom_value": "atom_value_1", "atom_type": "domain", "source_id": "source_a", "normalized_timestamp": "2023-09-17T08:08:23Z"},
-        {"atom_value": "atom_value_2", "atom_type": "domain", "source_id": "source_a", "normalized_timestamp": "2023-09-17T07:16:26Z"}
+        {
+            "atom_value": "atom_value_1",
+            "atom_type": "domain",
+            "source_id": "source_a",
+            "normalized_timestamp": "2023-09-17T08:08:23Z",
+        },
+        {
+            "atom_value": "atom_value_2",
+            "atom_type": "domain",
+            "source_id": "source_a",
+            "normalized_timestamp": "2023-09-17T07:16:26Z",
+        },
     ]
     responses.add(responses.POST, url, json=post_resp, status=200)
 
-    datalake = Datalake(env='preprod', username="username", password="password")
-    assert datalake.Threats.atom_values(
-        ["source_a"], "2023-09-17T07:16:26.345Z", "2023-09-17T08:08:23.345Z"
-    ) == post_resp
-
-
+    datalake = Datalake(env="preprod", username="username", password="password")
+    assert (
+        datalake.Threats.atom_values(
+            ["source_a"], "2023-09-17T07:16:26.345Z", "2023-09-17T08:08:23.345Z"
+        )
+        == post_resp
+    )

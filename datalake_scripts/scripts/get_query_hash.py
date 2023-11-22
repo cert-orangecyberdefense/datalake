@@ -16,8 +16,7 @@ def main(override_args=None):
     )
     required_named = parser.add_argument_group("required arguments")
     required_named.add_argument(
-        "query_body_path",
-        help="path to the json file containing the query body",
+        "query_body_path", help="path to the json file containing the query body"
     )
     if override_args:
         args = parser.parse_args(override_args)

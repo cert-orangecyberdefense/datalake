@@ -25,16 +25,8 @@ def main(override_args=None):
     required_named = parser.add_argument_group("required arguments")
     csv_control = parser.add_argument_group("CSV control arguments")
 
-    parser.add_argument(
-        "threats",
-        help="threats to lookup",
-        nargs="*",
-    )
-    parser.add_argument(
-        "-i",
-        "--input",
-        help="read threats to add from FILE",
-    )
+    parser.add_argument("threats", help="threats to lookup", nargs="*")
+    parser.add_argument("-i", "--input", help="read threats to add from FILE")
     parser.add_argument(
         "-td",
         "--threat_details",
@@ -48,21 +40,13 @@ def main(override_args=None):
         help="set to the output type desired {json,csv}. Default is json if not specified",
     )
     required_named.add_argument(
-        "-a",
-        "--atom_type",
-        help="set it to define the atom type",
-        required=True,
+        "-a", "--atom_type", help="set it to define the atom type", required=True
     )
     csv_control.add_argument(
-        "--is_csv",
-        help="set if the file input is a CSV",
-        action="store_true",
+        "--is_csv", help="set if the file input is a CSV", action="store_true"
     )
     csv_control.add_argument(
-        "-d",
-        "--delimiter",
-        help="set the delimiter of the CSV file",
-        default=",",
+        "-d", "--delimiter", help="set the delimiter of the CSV file", default=","
     )
     csv_control.add_argument(
         "-c",
@@ -124,9 +108,7 @@ def main(override_args=None):
     if args.output:
         if args.output_type == "text/csv":
             full_response = CsvBuilder.create_look_up_csv(
-                full_response,
-                args.atom_type,
-                has_details=args.threat_details,
+                full_response, args.atom_type, has_details=args.threat_details
             )
         save_output(args.output, full_response)
         logger.debug(f"Results saved in {args.output}\n")

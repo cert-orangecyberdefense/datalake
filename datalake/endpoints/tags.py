@@ -15,15 +15,8 @@ class Tags(Endpoint):
         visibility = "public" if public else "organization"
         tags_payload = []
         for tag in tags:
-            tags_payload.append(
-                {
-                    "name": tag,
-                    "visibility": visibility,
-                }
-            )
-        payload = {
-            "tags": tags_payload,
-        }
+            tags_payload.append({"name": tag, "visibility": visibility})
+        payload = {"tags": tags_payload}
         url = self._build_url_for_endpoint("tag").format(hashkey=hashkey)
         response = self.datalake_requests(url, "post", self._post_headers(), payload)
         return parse_response(response)

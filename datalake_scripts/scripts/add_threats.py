@@ -49,27 +49,16 @@ def main(override_args=None):
     required_named = parser.add_argument_group("required arguments")
     csv_controle = parser.add_argument_group("CSV control arguments")
     required_named.add_argument(
-        "-i",
-        "--input",
-        help="read threats to add from FILE",
-        required=True,
+        "-i", "--input", help="read threats to add from FILE", required=True
     )
     required_named.add_argument(
-        "-a",
-        "--atom_type",
-        help="set it to define the atom type",
-        required=True,
+        "-a", "--atom_type", help="set it to define the atom type", required=True
     )
     csv_controle.add_argument(
-        "--is_csv",
-        help="set if the file input is a CSV",
-        action="store_true",
+        "--is_csv", help="set if the file input is a CSV", action="store_true"
     )
     csv_controle.add_argument(
-        "-d",
-        "--delimiter",
-        help="set the delimiter of the CSV file",
-        default=",",
+        "-d", "--delimiter", help="set the delimiter of the CSV file", default=","
     )
     csv_controle.add_argument(
         "-c",
@@ -79,10 +68,7 @@ def main(override_args=None):
         default=1,
     )
     parser.add_argument(
-        "-p",
-        "--public",
-        help="set the visibility to public",
-        action="store_true",
+        "-p", "--public", help="set the visibility to public", action="store_true"
     )
     parser.add_argument(
         "-w",
@@ -98,17 +84,8 @@ def main(override_args=None):
         default=[],
         action="append",
     )
-    parser.add_argument(
-        "--tag",
-        nargs="+",
-        help="add a list of tags",
-        default=[],
-    )
-    parser.add_argument(
-        "--link",
-        help="add link as external_analysis_link",
-        nargs="+",
-    )
+    parser.add_argument("--tag", nargs="+", help="add a list of tags", default=[])
+    parser.add_argument("--link", help="add link as external_analysis_link", nargs="+")
     parser.add_argument(
         "--permanent",
         help="sets override_type to permanent. Scores won't be updated by the algorithm. Default is temporary",

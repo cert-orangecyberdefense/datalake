@@ -153,8 +153,7 @@ def test_bulk_search_query_body(datalake: Datalake):
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
 
     bs = datalake.BulkSearch.create_task(
-        query_body=bs_query_body,
-        query_fields=["atom detail 1", "atom detail 2"],
+        query_body=bs_query_body, query_fields=["atom detail 1", "atom detail 2"]
     )
     assert bs.bulk_search_hash == "ff2d2dc27f17f115d85647dced7a3106"
     assert bs.uuid == "d9c00380-2784-4386-9bc3-aff35cfeeb41"
