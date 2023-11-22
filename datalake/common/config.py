@@ -5,7 +5,6 @@ FOLDER_ABSOLUTE_PATH = os.path.normpath(os.path.dirname(os.path.abspath(__file__
 
 
 class Config:
-
     _CONFIG_ENDPOINTS = os.path.join(
         FOLDER_ABSOLUTE_PATH, "..", "config", "endpoints.json"
     )

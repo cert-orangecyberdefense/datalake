@@ -110,3 +110,22 @@ Then run it :
 python3 test_script.py
 ```
 **Note**: Be careful to not include in your commit this test script, especially if it contains your login/password
+
+## Pushing to Github
+
+Before pushing to github, please use the following command:
+```shell script
+make setup-prepush-hook 
+```
+
+Before pushing to our repository, the pre-push hook will make a black --check
+to assert that the code is linted, if not, you'll have to run :
+
+```shell script
+make lint
+```
+
+setup-prepush-hook:
+  sh setup-prepush-hook.sh
+lint:
+  black .

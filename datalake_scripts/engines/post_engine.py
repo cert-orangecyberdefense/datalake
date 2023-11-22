@@ -59,7 +59,7 @@ class PostEngine(BaseEngine):
             if entry[key] == value:
                 return entry
 
-    def _post_headers(self, output=Output.JSON ) -> dict:
+    def _post_headers(self, output=Output.JSON) -> dict:
         return {"Accept": output.value, "Content-Type": "application/json"}
 
     @staticmethod
@@ -181,6 +181,7 @@ class AtomValuesExtractor(PostEngine):
 
 class AtomSearch(PostEngine):
     """Atom values by sources and time range"""
+
     def _build_url(self, endpoint_config: dict, environment: str):
         return self._build_url_for_endpoint("threats-atom-values")
 
@@ -191,8 +192,8 @@ class AtomSearch(PostEngine):
             "source_id": sources_list,
             "normalized_timestamp_since": since_ts,
             "normalized_timestamp_until": until_ts,
-            "ordering": ["atom_type"]
+            "ordering": ["atom_type"],
         }
-        return self.datalake_requests(self.url, "post", self._post_headers(output=type), payload)
-        
-    
+        return self.datalake_requests(
+            self.url, "post", self._post_headers(output=type), payload
+        )

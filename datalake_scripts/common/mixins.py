@@ -11,7 +11,6 @@ from datalake_scripts.common.base_engine import BaseEngine
 
 
 class HandleBulkTaskMixin(BaseEngine):
-
     OCD_DTL_MAX_BACK_OFF_TIME = float(os.getenv("OCD_DTL_MAX_BACK_OFF_TIME", 30))
 
     Json = Dict
