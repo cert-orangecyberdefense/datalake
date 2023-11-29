@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import requests
 from requests import Response
 
-from datalake.common.ouput import Output
+from datalake.common.output import Output
 from datalake.common.logger import logger
 from datalake.common.throttler import throttle
 from datalake.common.token_manager import TokenManager
@@ -67,7 +67,7 @@ class Endpoint:
         while tries_left > 0:
             headers["Authorization"] = self.token_manager.access_token
             logger.debug(self._pretty_debug_request(url, method, post_body, headers))
-            
+
             response = self._send_request(
                 url, method, headers, post_body, stream=stream
             )

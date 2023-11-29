@@ -316,6 +316,47 @@ public = False
 dtl.Tags.add_to_threat(hashkey, tags, public)
 ```
 
+### Get filtered tag subcategory
+
+Filtered & Sorted Tags/Subcategory List Retrieval Tutorial
+
+#### Implementation
+
+#### Step 1: Import Dependency
+
+Ensure you have the required module imported into your script:
+
+```python
+from datalake import Datalake
+```
+
+#### Step 2: Instantiate `FilteredTagSubcategory`
+
+Create an object of the `FilteredTagSubcategory` with the necessary configuration:
+
+```python
+dtl = Datalake(username='<username>', password='<password>')
+tag_subcategory_list = dtl.FilteredTagSubcategory.get_filtered_and_sorted_list()
+```
+####  Step 3: Data Retrieval
+
+Invoke the `get_filtered_and_sorted_list` method with the desired parameters:
+
+#### Step 4: Output Handling
+
+Choose the output method that best suits your needs:
+
+```python
+import json
+
+# To print to console
+print(json.dumps(tag_subcategory_list, indent=4))
+
+# To write to a file
+with open('output.json', 'w') as f:
+    json.dump(subcategories, f, indent=4)
+```
+
 ### Edit score
 
 Mutliple threats can be edited at once, each threat type independently:

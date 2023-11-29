@@ -9,6 +9,7 @@ from datalake.endpoints.bulk_search import BulkSearch
 from datalake.endpoints.tags import Tags
 from datalake.endpoints.advanced_search import AdvancedSearch
 from datalake.endpoints.sightings import Sightings
+from datalake.endpoints.filtered_tag_subcategory import FilteredTagSubcategory
 
 
 class Datalake:
@@ -35,6 +36,9 @@ class Datalake:
         self.Threats = Threats(endpoint_config, env, token_manager)
         self.BulkSearch = BulkSearch(endpoint_config, env, token_manager)
         self.Tags = Tags(endpoint_config, env, token_manager)
+        self.FilteredTagSubcategory = FilteredTagSubcategory(
+            endpoint_config, env, token_manager
+        )
         self.AdvancedSearch = AdvancedSearch(endpoint_config, env, token_manager)
         self.Sightings = Sightings(endpoint_config, env, token_manager)
 
@@ -52,7 +56,6 @@ class Datalake:
         sighting_type: SightingType = None,
         visibility: Visibility = None,
     ):
-
         atom_extract = self.Threats.atom_values_extract([atom_value])
 
         if atom_extract["found"] == 0:

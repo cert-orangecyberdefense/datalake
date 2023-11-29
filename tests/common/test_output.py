@@ -4,7 +4,7 @@ import pytest
 from requests import Response
 
 from datalake import Output
-from datalake.common.ouput import parse_response
+from datalake.common.output import parse_response
 
 
 @pytest.mark.parametrize(

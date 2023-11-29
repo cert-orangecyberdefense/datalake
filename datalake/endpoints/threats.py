@@ -6,8 +6,13 @@ from requests.sessions import PreparedRequest
 
 from datalake import AtomType, ThreatType, OverrideType, Atom
 from datalake.common.atom import ScoreMap
-from datalake.common.ouput import Output, output_supported, parse_response
-from datalake.common.utils import split_list, aggregate_csv_or_json_api_response, save_output, check_normalized_timestamp
+from datalake.common.output import Output, output_supported, parse_response
+from datalake.common.utils import (
+    split_list,
+    aggregate_csv_or_json_api_response,
+    save_output,
+    check_normalized_timestamp,
+)
 from datalake.endpoints.endpoint import Endpoint
 
 
@@ -432,11 +437,16 @@ class Threats(Endpoint):
         url = self._build_url_for_endpoint("threats-manual")
         response = self.datalake_requests(url, "post", self._post_headers(), payload)
         return parse_response(response)
-    
 
     @staticmethod
-    def check_atom_values_params(source_id, normalized_timestamp_since, normalized_timestamp_until, output, output_path):
-        if not source_id or len(source_id)<1:
+    def check_atom_values_params(
+        source_id,
+        normalized_timestamp_since,
+        normalized_timestamp_until,
+        output,
+        output_path,
+    ):
+        if not source_id or len(source_id) < 1:
             raise ValueError("A list of minimum one source id required")
         if not normalized_timestamp_since or not normalized_timestamp_until:
             raise ValueError("Both timestamps parameters are required")
@@ -444,7 +454,7 @@ class Threats(Endpoint):
             raise ValueError("Invalid normalized_timestamp_since format")
         if not check_normalized_timestamp(normalized_timestamp_until):
             raise ValueError("Invalid normalized_timestamp_until format")
-        if output!=Output.JSON and output!=Output.CSV:
+        if output != Output.JSON and output != Output.CSV:
             raise TypeError("output needs to either be set to JSON or CSV")
 
     def atom_values(
@@ -452,14 +462,20 @@ class Threats(Endpoint):
         source_id: List = None,
         normalized_timestamp_since: str = None,
         normalized_timestamp_until: str = None,
-        output: Output = Output.JSON, 
-        output_path: str = None
+        output: Output = Output.JSON,
+        output_path: str = None,
     ):
         """
         Get all atom values based on given source id list and from time range.
         """
-        self.check_atom_values_params(source_id, normalized_timestamp_since, normalized_timestamp_until, output, output_path)
-        
+        self.check_atom_values_params(
+            source_id,
+            normalized_timestamp_since,
+            normalized_timestamp_until,
+            output,
+            output_path,
+        )
+
         url = self._build_url_for_endpoint("sources")
         url = url + "?limit=1000&description_only=true"
         for source in source_id:
@@ -467,18 +483,26 @@ class Threats(Endpoint):
         response = self.datalake_requests(url, "get", self._get_headers())
         response = parse_response(response)
         if response["count"] != len(source_id):
-            valid_sources = [response["results"][x]["id"] for x in range(0,len(response["results"]))]
-            invalid_sources = [source_id[y] for y in range(0,len(source_id)) if source_id[y] not in valid_sources]
+            valid_sources = [
+                response["results"][x]["id"] for x in range(0, len(response["results"]))
+            ]
+            invalid_sources = [
+                source_id[y]
+                for y in range(0, len(source_id))
+                if source_id[y] not in valid_sources
+            ]
             raise ValueError(f"The following sources are invalid : {invalid_sources}")
-        
+
         payload = {
             "source_id": source_id,
             "normalized_timestamp_since": normalized_timestamp_since,
             "normalized_timestamp_until": normalized_timestamp_until,
-            "ordering": ["atom_type"]
+            "ordering": ["atom_type"],
         }
         url = self._build_url_for_endpoint("threats-atom-values")
-        response = self.datalake_requests(url, "post", self._post_headers(output), payload)
+        response = self.datalake_requests(
+            url, "post", self._post_headers(output), payload
+        )
 
         if output_path:
             save_output(output_path, parse_response(response))

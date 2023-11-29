@@ -37,6 +37,6 @@ from .common.atom_type import (
     SslAtom,
     UrlAtom,
 )
-from .common.ouput import Output
+from .common.output import Output
 
 from .datalake import Datalake
