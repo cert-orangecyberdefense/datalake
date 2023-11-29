@@ -1,7 +1,7 @@
 import pytest
 import responses
 from datalake import Datalake
-from tests.common.fixture import datalake  # noqa needed fixture import
+from tests.common.fixture import datalake
 
 value_error_msg = "Tags has to be a list of string"
 

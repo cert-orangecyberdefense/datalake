@@ -3,7 +3,7 @@ import datetime
 import os
 from enum import Enum
 
-from datalake.common.ouput import Output
+from datalake.common.output import Output
 from datalake.common.utils import parse_api_timestamp
 
 

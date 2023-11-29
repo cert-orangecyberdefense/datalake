@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-
 import argparse
 import sys
-
 from datalake_scripts.scripts import (
     add_threats,
     get_threats_by_hashkey,
@@ -15,6 +13,7 @@ from datalake_scripts.scripts import (
     bulk_lookup_threats,
     advanced_search,
     get_atom_values,
+    get_filtered_tag_subcategory,
 )
 
 
@@ -25,104 +24,57 @@ class Cli:
     def __init__(self):
         parser = argparse.ArgumentParser(
             description="Cli to interact with OCD's Datalake",
-            usage=f"""
-            {self.CLI_NAME} <command> [<args>]
-
-The most commonly used {self.CLI_NAME} commands are:
-   add_threats     Submit a new threat to Datalake from a file
-   get_threats     Retrieve threats (as Json) from a list of ids (hashkeys)
-   edit_score      Edit scores of a specified list of ids (hashkeys)
-            """,
-            epilog="Don't hesitate to leave a feedback on https://datalake.cert.orangecyberdefense.com/gui/ using the "
-            '"Add Feedback" button ',
-        )
-
-        parser.add_argument(
-            "--version",
-            "-V",
-            default=False,
-            action="store_true",
-            help="prints the current version",
+            usage=f"{self.CLI_NAME} <command> [<args>]",
         )
         parser.add_argument(
-            "command",
-            nargs="?",
-            help="Subcommand to run",
-            choices=self._list_commands_available(),
+            "--version", "-V", action="store_true", help="prints the current version"
         )
-        # parse_args defaults to [1:] for args, but you need to
-        # exclude the rest of the args too, or validation will fail
+        subparsers = parser.add_subparsers(dest="command")
+
+        # Add a subparser for each command
+        self._add_command_subparser(subparsers, "add_threats", add_threats.main)
+        self._add_command_subparser(
+            subparsers, "get_threats", get_threats_by_hashkey.main
+        )
+        self._add_command_subparser(subparsers, "get_atom_values", get_atom_values.main)
+        self._add_command_subparser(
+            subparsers, "get_threats_from_query_hash", get_threats_from_query_hash.main
+        )
+        self._add_command_subparser(subparsers, "get_query_hash", get_query_hash.main)
+        self._add_command_subparser(subparsers, "edit_score", edit_score.main)
+        self._add_command_subparser(subparsers, "add_comments", add_comments.main)
+        self._add_command_subparser(subparsers, "add_tags", add_tags.main)
+        self._add_command_subparser(subparsers, "lookup_threats", lookup_threats.main)
+        self._add_command_subparser(
+            subparsers, "bulk_lookup_threats", bulk_lookup_threats.main
+        )
+        self._add_command_subparser(subparsers, "advanced_search", advanced_search.main)
+        self._add_command_subparser(
+            subparsers,
+            "get_filtered_tag_subcategory",
+            get_filtered_tag_subcategory.main,
+        )
+
         args = parser.parse_args(sys.argv[1:2])
 
         if args.version:
             print(self.VERSION)
             exit(0)
 
-        if not args.command or not hasattr(self, args.command):
-            print("Unrecognized command")
+        if not args.command:
+            print("You must specify a command")
             parser.print_help()
             exit(1)
 
-        # use dispatch pattern to invoke method with same name
-        getattr(self, args.command)()
+        # Call the subcommand method
+        args.func(sys.argv[2:])
 
-    def add_threats(self):
-        args = sys.argv[2:]
-        add_threats.main(args)
-
-    def get_threats(self):
-        args = sys.argv[2:]
-        get_threats_by_hashkey.main(args)
-
-    def get_atom_values(self):
-        args = sys.argv[2:]
-        get_atom_values.main(args)
-
-    def get_threats_from_query_hash(self):
-        args = sys.argv[2:]
-        get_threats_from_query_hash.main(args)
-
-    def get_query_hash(self):
-        args = sys.argv[2:]
-        get_query_hash.main(args)
-
-    def edit_score(self):
-        args = sys.argv[2:]
-        edit_score.main(args)
-
-    def add_comment(self):
-        args = sys.argv[2:]
-        add_comments.main(args)
-
-    def add_tags(self):
-        args = sys.argv[2:]
-        add_tags.main(args)
-
-    def lookup_threats(self):
-        args = sys.argv[2:]
-        lookup_threats.main(args)
-
-    def bulk_lookup_threats(self):
-        args = sys.argv[2:]
-        bulk_lookup_threats.main(args)
-
-    def advanced_search(self):
-        args = sys.argv[2:]
-        advanced_search.main(args)
-
-    def _list_commands_available(self):
-        method_list = []
-        for method_name in dir(self):
-            if method_name and method_name[0] != "_":
-                try:
-                    if callable(getattr(self, method_name)):
-                        method_list.append(str(method_name))
-                except:
-                    method_list.append(str(method_name))
-        return method_list
+    def _add_command_subparser(self, subparsers, name, method):
+        command_parser = subparsers.add_parser(name)
+        command_parser.set_defaults(func=method)
 
 
-def main():  # Called in setup.py
+def main():
     Cli()
 
 

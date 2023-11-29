@@ -2,7 +2,7 @@ import json
 import sys
 
 from datalake import Datalake
-from datalake.common.ouput import Output
+from datalake.common.output import Output
 from datalake.common.logger import logger, configure_logging
 from datalake_scripts.common.base_script import BaseScripts
 

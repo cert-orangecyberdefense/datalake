@@ -5,7 +5,7 @@ from typing import Set, Dict, List, Union
 from requests import PreparedRequest
 
 from datalake.common.logger import logger
-from datalake.common.ouput import Output, parse_response
+from datalake.common.output import Output, parse_response
 from datalake.endpoints import Endpoint
 from datalake_scripts.common.base_engine import BaseEngine
 from datalake_scripts.common.mixins import HandleBulkTaskMixin

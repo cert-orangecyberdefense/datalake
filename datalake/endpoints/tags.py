@@ -1,5 +1,5 @@
 from datalake.endpoints.endpoint import Endpoint
-from datalake.common.ouput import parse_response
+from datalake.common.output import parse_response
 
 
 class Tags(Endpoint):

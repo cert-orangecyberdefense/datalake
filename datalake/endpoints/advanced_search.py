@@ -1,5 +1,5 @@
 from datalake.endpoints.endpoint import Endpoint
-from datalake.common.ouput import parse_response, Output, output_supported
+from datalake.common.output import parse_response, Output, output_supported
 from requests.sessions import PreparedRequest
 from typing import List
 
