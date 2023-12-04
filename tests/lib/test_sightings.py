@@ -1,8 +1,11 @@
+from unittest.mock import patch
 import pytest
 import responses
 from datetime import datetime
 
 from responses import matchers
+import os
+
 
 from tests.common.fixture import datalake  # noqa needed fixture import
 from datalake import (
@@ -79,17 +82,24 @@ def test_prepare_sightings_payload(datalake):
         "editable": False,
     }
 
-    payload = datalake.Sightings._prepare_sightings_payload(
-        atoms,
-        None,
-        start,
-        end,
-        sighting_type,
-        visibility,
-        count,
-        payload_threat_types,
-        editable=False,
-    )
+    with patch.dict(
+        os.environ,
+        {
+            "IGNORE_SIGHTING_BUILDER_WARNING": "1",
+        },
+        clear=True,
+    ):
+        payload = datalake.Sightings._prepare_sightings_payload(
+            atoms,
+            None,
+            start,
+            end,
+            sighting_type,
+            visibility,
+            count,
+            payload_threat_types,
+            editable=False,
+        )
 
     assert expected_payload == payload
 
@@ -121,16 +131,23 @@ def test_submit_sightings_without_editable(datalake):
         "threat_types": ["scam"],
     }
 
-    payload = datalake.Sightings._prepare_sightings_payload(
-        atoms,
-        None,
-        start,
-        end,
-        sighting_type,
-        visibility,
-        count,
-        payload_threat_types,
-    )
+    with patch.dict(
+        os.environ,
+        {
+            "IGNORE_SIGHTING_BUILDER_WARNING": "1",
+        },
+        clear=True,
+    ):
+        payload = datalake.Sightings._prepare_sightings_payload(
+            atoms,
+            None,
+            start,
+            end,
+            sighting_type,
+            visibility,
+            count,
+            payload_threat_types,
+        )
 
     assert expected_payload == payload
 
@@ -160,9 +177,16 @@ def test_prepare_sightings_payload_with_empty_tags(datalake):
         "count": 1,
     }
 
-    payload = datalake.Sightings._prepare_sightings_payload(
-        atoms, None, start, end, sighting_type, visibility, count, tags=[]
-    )
+    with patch.dict(
+        os.environ,
+        {
+            "IGNORE_SIGHTING_BUILDER_WARNING": "1",
+        },
+        clear=True,
+    ):
+        payload = datalake.Sightings._prepare_sightings_payload(
+            atoms, None, start, end, sighting_type, visibility, count, tags=[]
+        )
 
     assert expected_payload == payload
 
@@ -194,16 +218,23 @@ def test_prepare_sightings_payload_with_impersonate_id(datalake):
         "impersonate_id": "1234567890",
     }
 
-    payload = datalake.Sightings._prepare_sightings_payload(
-        atoms,
-        None,
-        start,
-        end,
-        sighting_type,
-        visibility,
-        count,
-        impersonate_id=impersonate_id,
-    )
+    with patch.dict(
+        os.environ,
+        {
+            "IGNORE_SIGHTING_BUILDER_WARNING": "1",
+        },
+        clear=True,
+    ):
+        payload = datalake.Sightings._prepare_sightings_payload(
+            atoms,
+            None,
+            start,
+            end,
+            sighting_type,
+            visibility,
+            count,
+            impersonate_id=impersonate_id,
+        )
 
     assert expected_payload == payload
 
@@ -274,17 +305,24 @@ def test_submit_sightings(datalake):
         match=[matchers.json_params_matcher(expected_request)],
     )
 
-    res = datalake.Sightings.submit_sighting(
-        start,
-        end,
-        SightingType.POSITIVE,
-        Visibility.PUBLIC,
-        1,
-        threat_types,
-        tags=["tag1", "tag2"],
-        description="some description",
-        atoms=[ip_atom, ip_atom1, file_atom],
-    )
+    with patch.dict(
+        os.environ,
+        {
+            "IGNORE_SIGHTING_BUILDER_WARNING": "1",
+        },
+        clear=True,
+    ):
+        res = datalake.Sightings.submit_sighting(
+            start,
+            end,
+            SightingType.POSITIVE,
+            Visibility.PUBLIC,
+            1,
+            threat_types,
+            tags=["tag1", "tag2"],
+            description="some description",
+            atoms=[ip_atom, ip_atom1, file_atom],
+        )
 
     assert res == expected_res
 
@@ -377,15 +415,22 @@ def test_submit_sightings_bad_visibility(datalake):
 
 def test_submit_sightings_bad_atom(datalake):
     with pytest.raises(TypeError) as err:
-        datalake.Sightings.submit_sighting(
-            start,
-            end,
-            SightingType.POSITIVE,
-            Visibility.PUBLIC,
-            1,
-            threat_types,
-            atoms=[ip_atom, ip_atom1, file_atom, "not_an_atom"],
-        )
+        with patch.dict(
+            os.environ,
+            {
+                "IGNORE_SIGHTING_BUILDER_WARNING": "1",
+            },
+            clear=True,
+        ):
+            datalake.Sightings.submit_sighting(
+                start,
+                end,
+                SightingType.POSITIVE,
+                Visibility.PUBLIC,
+                1,
+                threat_types,
+                atoms=[ip_atom, ip_atom1, file_atom, "not_an_atom"],
+            )
     assert str(err.value) == "atoms needs to be a list of Atom subclasses."
 
 
