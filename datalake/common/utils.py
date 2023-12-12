@@ -54,16 +54,16 @@ def get_error_message(resp_body: dict):
         raise ValueError("no error message in api response")
 
 
-def save_output(file_name: str, data):
+def save_output(file_name: str, data, cls=None):
     """
     Save the data in a file.
     If data is dict, file format will be JSON.
     If data is a list, file format will be txt.
     Else it will be saved as it comes.
     """
-    with open(file_name, "w") as file_to_write:
+    with open(file_name, "w+") as file_to_write:
         if isinstance(data, dict):
-            file_to_write.write(json.dumps(data, sort_keys=True, indent=2))
+            file_to_write.write(json.dumps(data, sort_keys=True, indent=2, cls=cls))
         elif isinstance(data, list):
             for item in data:
                 file_to_write.write(f"{item}\n")
@@ -105,3 +105,14 @@ def convert_date_to_normalized_timestamp(date_input: str, start: bool) -> str:
             raise ValueError
     except:
         raise ValueError
+
+
+def load_json(file_name: str) -> dict:
+    return json.load(open(file_name))
+
+
+class SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)

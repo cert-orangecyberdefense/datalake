@@ -14,6 +14,7 @@ from datalake_scripts.scripts import (
     advanced_search,
     get_atom_values,
     get_filtered_tag_subcategory,
+    search_watch,
 )
 
 
@@ -54,6 +55,7 @@ class Cli:
             "get_filtered_tag_subcategory",
             get_filtered_tag_subcategory.main,
         )
+        self._add_command_subparser(subparsers, "search_watch", search_watch.main)
 
         args = parser.parse_args(sys.argv[1:2])
 

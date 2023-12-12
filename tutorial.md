@@ -53,6 +53,7 @@ Below are some examples to get you started
 * [Advanced Search](#advanced-search)
 * [Sightings](#sightings)
 * [Search Sightings](#search-sightings)
+* [Search Watch](#search-watch)
 
 ### Lookup a threat
 
@@ -525,3 +526,45 @@ See the API documentation below for a list of available options.
 
 For more information on the API used by this library,
 see [the documentation](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)
+
+
+### Search Watch
+
+It is possible to monitor (watch) a search to find new iocs that match your search criteria, through the **search_watch** method.
+
+````python
+from datalake import Datalake
+
+dtl = Datalake(username='username', password='password')
+
+threats_diff = dtl.SearchWatch.search_watch(query_body={<some query body>}, output_folder='<some/folder/path/>', reference_file='<full/file/path/to/compare/with>')
+````
+
+It can take either a **query_body** or a **query_hash** as **required input**. And as optional inputs:
+* **output_folder**: is the folder where all the results json files of the bulk search will be stored. By default it takes the **current folder**.
+* **reference_file**: is the full path of the file which will serve as reference for the comparison with the new bulk search result. That file needs to be in the format `<query_hash>-<timestamp>.json`. By default the most recent generated file in the output folder is taken as reference_file.
+* **save_diff_threats**: when define as True, the results of the search_watch method are stored in a json file `<queryhashkey>-diff_threats-<timestamp>.json` containing added and removed threats, within the output_folder that was define. By default it is define as False.
+
+**search_watch** method returns a dict(JSON) as follow 
+
+```
+{
+  'from': '2023-11-01 15:14:00',
+  'to': '2023-11-07 10:22:00',
+  'added':
+  {
+    (
+      'hashkey': '33565c33a858888c78704fea22669707',
+      'atom_value': '8.8.8.8'
+    )
+  },
+  'removed':
+  {
+    (
+      'hashkey': '13565b07b857777d08714ffd22003403',
+      'atom_value': '1.1.1.1'
+    )
+  }
+}
+```
+
