@@ -9,14 +9,12 @@ from tests.common.fixture import datalake  # noqa needed fixture import
 atoms = ["mayoclinic.org", "commentcamarche.net", "gawker.com"]
 
 atom_values_extract_url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/atom-values-extract/"
+lookup_url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/"
 
 
 @responses.activate
 def test_lookup_threat(datalake):
-    lookup_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/"
-        "?atom_value=mayoclinic.org&atom_type=domain&hashkey_only=False"
-    )
+    match_url = "atom_value=mayoclinic.org&atom_type=domain&hashkey_only=False"
     # <editor-fold desc="resp_json">
     resp_json = {
         "atom_type": "domain",
@@ -86,7 +84,11 @@ def test_lookup_threat(datalake):
         responses.POST, atom_values_extract_url, json=extractor_response, status=200
     )
     responses.add(
-        responses.GET, lookup_url, match_querystring=True, json=resp_json, status=200
+        responses.GET,
+        lookup_url,
+        match=[responses.matchers.query_string_matcher(match_url)],
+        json=resp_json,
+        status=200,
     )
 
     lookup_response = datalake.Threats.lookup(atoms[0])
@@ -107,10 +109,7 @@ def test_lookup_threat_invalid_output(datalake: Datalake):
 
 @responses.activate
 def test_lookup_threat_specific_output(datalake: Datalake):
-    lookup_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/"
-        "?atom_value=domain.net&atom_type=domain&hashkey_only=True"
-    )
+    match_url = "atom_value=domain.net&atom_type=domain&hashkey_only=True"
     some_csv = "some csv"
 
     def request_callback(req):
@@ -121,7 +120,7 @@ def test_lookup_threat_specific_output(datalake: Datalake):
         responses.GET,
         lookup_url,
         callback=request_callback,
-        match_querystring=True,
+        match=[responses.matchers.query_string_matcher(match_url)],
     )
     res = datalake.Threats.lookup(
         "domain.net",
@@ -325,7 +324,6 @@ def test_bulk_lookup_threats_on_big_chunk_json(datalake):
         responses.POST,
         bulk_lookup_url,
         callback=request_callback,
-        match_querystring=True,
     )
 
     api_response = datalake.Threats.bulk_lookup(
@@ -364,7 +362,6 @@ def test_bulk_lookup_threats_on_big_chunk_csv(datalake):
         responses.POST,
         bulk_lookup_url,
         callback=request_callback,
-        match_querystring=True,
     )
 
     api_response = datalake.Threats.bulk_lookup(

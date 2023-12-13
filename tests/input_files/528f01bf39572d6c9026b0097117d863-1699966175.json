@@ -1,0 +1,16 @@
+{
+    "_comment": "This file is use for testing purpose of the search_watch feature",
+    "advanced_query_hash": "528f01bf39572d6c9026b0097117d863",
+    "bulk_search_hash": "9b35f62fe46ee8fe361787b0882ceda7",
+    "results": [
+      [
+        "0.0.10.240",
+        "eff1572f48d3118eb4aa23d63aa5f58b"
+      ],
+      [
+        "0.0.10.40",
+        "ca24f9dc63198ecc0572a29f4deaaa54"
+      ]
+    ],
+    "task_uuid": "f3212b05-a22f-470b-8e51-e875adf02d1e"
+  }

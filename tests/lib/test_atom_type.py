@@ -40,7 +40,9 @@ file_atom = FileAtom(
 
 def test_generate_atom_json_remove_unused_keys_for_sightings(datalake):
     expect_output = {"ip_list": [{"ip_address": "8.8.8.8"}]}
-    output = ip_atom.generate_atom_json(for_sightings=True)
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")
+        output = ip_atom.generate_atom_json(for_sightings=True)
 
     assert expect_output == output
 
@@ -87,7 +89,9 @@ def test_generate_atom_json_nested_remove_unused_keys_for_sightings(datalake):
             }
         ]
     }
-    output = file_atom.generate_atom_json(for_sightings=True)
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")
+        output = file_atom.generate_atom_json(for_sightings=True)
 
     assert expected_output == output
 
