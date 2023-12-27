@@ -14,7 +14,7 @@ You can also test it manually (see chapter below)
 To add a new script, simply create a new file in `./src/scripts/{my_script_name.py}`.  
 And add a new function to the [cli file](../datalake_scripts/cli.py).  
 And add your new function in the test file `./tests/scripts/test_cli.py`  
-And do not forget to test this new comand manually (see chapter below)
+And do not forget to test this new command manually (see chapter below)
 
 # Adding new utils functions
 
@@ -25,6 +25,11 @@ Functions to be used by several commands or library functions can be added in :
 
 They can have their own tests in directory `./tests/common`
 
+# Adding dependencies
+
+If a new library is used, you need to add it in the files : 
+- `requirements.txt`
+- `setup.py` as a new element of the list `install_requires`, if this library will also be used by the python package.
 
 # Tests
 
