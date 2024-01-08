@@ -65,7 +65,9 @@ dtl.Threats.lookup(
     atom_value='mayoclinic.org',
     atom_type=AtomType.DOMAIN,
     hashkey_only=False,
-    output=Output.JSON
+    output=Output.JSON,
+    min_age_date = "2022-12-15",
+    minimum_score = 50,
 )
 ```
 

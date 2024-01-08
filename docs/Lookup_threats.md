@@ -46,3 +46,7 @@ Or/And directly from the cli:
 > -td, --threat_details set if you also want to have access to the threat details in output file
 
 > -e  to change the environment {preprod, prod},  default is **prod**  
+
+> --date filter to apply on lookup to set a minimum date [format: DD-MM-YYYY]
+
+> -s filter to apply on lookup to set a minimum score.

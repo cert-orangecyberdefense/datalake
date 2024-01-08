@@ -1,6 +1,7 @@
 import os
 from typing import List, Union, Dict
 from time import time, sleep
+from datetime import datetime
 
 from requests.sessions import PreparedRequest
 
@@ -105,6 +106,8 @@ class Threats(Endpoint):
         atom_type: AtomType = None,
         hashkey_only=False,
         output=Output.JSON,
+        min_age_date=None,
+        minimum_score=None,
     ) -> dict:
         """
         Look up a threat in the API, returning its id (called threat's hashkey) and if it is present in Datalake.
@@ -113,6 +116,8 @@ class Threats(Endpoint):
         If atom_type is not specified, another query to the API will be made to determine it.
         With hashkey_only = False, the full threat details are returned in the requested format.
         """
+        highest_score = None
+        min_age_datetime = None
         atom_type_str = None
         if not atom_type:
             threats = [atom_value]
@@ -139,7 +144,22 @@ class Threats(Endpoint):
         response = self.datalake_requests(
             req.url, "get", self._get_headers(output=output)
         )
-        return parse_response(response)
+        response_copy = response.json()
+        system_last_updated = datetime.fromisoformat(
+            response_copy["system_last_updated"].rstrip("Z")
+        )
+        if min_age_date:
+            min_age_datetime = datetime.strptime(min_age_date, "%Y-%m-%d")
+        if minimum_score:
+            highest_score = max(
+                score["score"]["risk"] for score in response_copy["scores"]
+            )
+        if highest_score and highest_score < minimum_score:
+            return "No threat matching provided filters"
+        elif min_age_datetime and min_age_datetime >= system_last_updated:
+            return "No threat matching provided filters"
+        else:
+            return parse_response(response)
 
     def atom_values_extract(
         self, untyped_atoms: List[str], treat_hashes_like=AtomType.FILE
