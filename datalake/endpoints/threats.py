@@ -119,6 +119,8 @@ class Threats(Endpoint):
         highest_score = None
         min_age_datetime = None
         atom_type_str = None
+        system_last_updated = None
+        response_copy = None
         if not atom_type:
             threats = [atom_value]
             atoms_values_extractor_response = self.atom_values_extract(threats)
@@ -144,10 +146,13 @@ class Threats(Endpoint):
         response = self.datalake_requests(
             req.url, "get", self._get_headers(output=output)
         )
-        response_copy = response.json()
-        system_last_updated = datetime.fromisoformat(
-            response_copy["system_last_updated"].rstrip("Z")
-        )
+        content_type = response.headers.get("Content-Type")
+        if content_type == "application/json":
+            response_copy = response.json()
+        if response_copy and "system_last_updated" in response_copy:
+            system_last_updated = datetime.fromisoformat(
+                response_copy["system_last_updated"].rstrip("Z")
+            )
         if min_age_date:
             min_age_datetime = datetime.strptime(min_age_date, "%Y-%m-%d")
         if minimum_score:
