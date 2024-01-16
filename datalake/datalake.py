@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from datalake import AtomType, SightingType, Visibility, Output
 from datalake.common.config import Config
@@ -30,9 +31,17 @@ class Datalake:
     ):
         configure_logging(log_level)
         endpoint_config = Config().load_config()
-        token_manager = TokenManager(
-            endpoint_config, environment=env, username=username, password=password
-        )
+        try:
+            token_manager = TokenManager(
+                endpoint_config, environment=env, username=username, password=password
+            )
+        except Exception as e:
+            if "Failed to resolve" in str(e) or "Failed to establish" in str(e):
+                raise ConnectionError(
+                    "Unable to access Datalake. Please check your network settings/connection"
+                )
+            else:
+                raise
 
         self.Threats = Threats(endpoint_config, env, token_manager)
         self.BulkSearch = BulkSearch(endpoint_config, env, token_manager)

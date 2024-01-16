@@ -22,7 +22,7 @@ setup(
         "": ".",
     },
     packages=find_packages(),
-    install_requires=["requests", "halo"],
+    install_requires=["requests", "halo", "prettytable"],
     test_suite="nose.collector",
     entry_points={
         "console_scripts": (
