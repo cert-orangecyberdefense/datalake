@@ -17,6 +17,41 @@ from datalake.common.utils import (
 from datalake.endpoints.endpoint import Endpoint
 
 
+def filter_batch_results(
+    batch_result: dict, min_date: datetime, min_score: int
+) -> dict:
+    if isinstance(batch_result, str):  # For CSV output
+        # CSV filtering logic goes here (if applicable)
+        return batch_result  # or the filtered CSV string
+
+    filtered_result = {}
+    for atom_type, atoms in batch_result.items():
+        filtered_atoms = []
+        for atom_data in atoms:
+            threat_details = atom_data.get("threat_details")
+            if threat_details:
+                date = threat_details.get(
+                    "last_updated_by_source"
+                ) or threat_details.get("last_updated")
+                atom_date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
+                atom_scores = threat_details.get("scores", [])
+                max_score = max(
+                    (score.get("score", {}).get("risk", 0) for score in atom_scores),
+                    default=0,
+                )
+
+                # Apply filters
+                if (min_date is None or atom_date >= min_date) and (
+                    min_score is None or max_score >= min_score
+                ):
+                    filtered_atoms.append(atom_data)
+
+        if filtered_atoms:
+            filtered_result[atom_type] = filtered_atoms
+
+    return filtered_result
+
+
 class Threats(Endpoint):
     _NB_ATOMS_PER_BULK_LOOKUP = 100
     OCD_DTL_MAX_BULK_THREATS_TIME = int(os.getenv("OCD_DTL_MAX_BULK_THREATS_TIME", 600))
@@ -66,6 +101,8 @@ class Threats(Endpoint):
         hashkey_only=False,
         output=Output.JSON,
         return_search_hashkey=False,
+        min_date: datetime = None,  # Assuming datetime object for date comparison
+        min_score: int = None,
     ) -> Union[dict, str]:
         """
         Look up multiple threats at once in the API, returning their ids and if they are present in Datalake.
@@ -85,11 +122,15 @@ class Threats(Endpoint):
                 output,
                 return_search_hashkey,
             )
-            if "search_hashkey" in batch_result:
-                search_hashkey_list.append(batch_result.pop("search_hashkey"))
+            # Filter the batch results
+            filtered_batch_result = filter_batch_results(
+                batch_result, min_date, min_score
+            )
+            if "search_hashkey" in filtered_batch_result:
+                search_hashkey_list.append(filtered_batch_result.pop("search_hashkey"))
             aggregated_response = aggregate_csv_or_json_api_response(
                 aggregated_response,
-                batch_result,
+                filtered_batch_result,
             )
         if search_hashkey_list:
             aggregated_response["search_hashkey"] = search_hashkey_list

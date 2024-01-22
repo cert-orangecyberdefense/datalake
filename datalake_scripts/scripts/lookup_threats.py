@@ -75,7 +75,7 @@ def main(override_args=None):
     parser.add_argument(
         "--filter_by_minimum_date",
         "--date",
-        help="filter to apply on lookup, format: DD-MM-YYYY",
+        help="filter to apply on lookup, format: YYYY-MM-DD",
         required=False,
     )
     parser.add_argument(
@@ -126,36 +126,53 @@ def main(override_args=None):
     list_threats = list(
         OrderedDict.fromkeys(list_threats)
     )  # removing duplicates while preserving order
-    highest_score = None
     for threat in list_threats:
         response = dtl.Threats.lookup(
             threat, atom_type=atom_type, hashkey_only=hashkey_only
         )
-        if args.filter_by_minimum_score and response:
-            highest_score = max(score["score"]["risk"] for score in response["scores"])
-        if highest_score and highest_score < int(args.filter_by_minimum_score):
+        scores = response.get("scores")
+        last_updated_by_source = response.get("last_updated_by_source") or response.get(
+            "last_updated"
+        )
+
+        # Process for score filtering
+        if scores and args.filter_by_minimum_score:
+            highest_score = max(score["score"]["risk"] for score in scores)
+            if highest_score and highest_score < int(args.filter_by_minimum_score):
+                logger.info(
+                    "\x1b[31m{} hashkey:{} FILTERED\x1b[0m".format(
+                        threat, response["hashkey"]
+                    )
+                )
+                continue
+
+        # Process for date filtering
+        if last_updated_by_source:
+            last_updated_datetime = datetime.fromisoformat(
+                last_updated_by_source.rstrip("Z")
+            )
+            if min_age_datetime and min_age_datetime >= last_updated_datetime:
+                logger.info(
+                    "\x1b[31m{} hashkey:{} FILTERED\x1b[0m".format(
+                        threat, response["hashkey"]
+                    )
+                )
+                continue
+        elif min_age_datetime:
             logger.info(
-                "\x1b[31m{} hashkey:{} FILTERED\x1b[0m".format(
-                    threat, response["hashkey"]
+                "\x1b[33m{} hashkey:{} SKIPPED - No date in response - (You may try with -td argument)\x1b[0m".format(
+                    threat, response.get("hashkey", "N/A")
                 )
             )
-        elif min_age_datetime and min_age_datetime >= datetime.fromisoformat(
-            response["last_updated_by_source"].rstrip("Z")
-        ):
-            logger.info(
-                "\x1b[31m{} hashkey:{} FILTERED\x1b[0m".format(
-                    threat, response["hashkey"]
-                )
-            )
-        else:
-            found = response.get("threat_found", True)
-            text, color = boolean_to_text_and_color[found]
-            logger.info(
-                "{}{} hashkey:{} {}\x1b[0m".format(
-                    color, threat, response["hashkey"], text
-                )
-            )
-            full_response[threat] = response
+            continue
+
+        # If the threat passes all filters
+        found = response.get("threat_found", True)
+        text, color = boolean_to_text_and_color[found]
+        logger.info(
+            "{}{} hashkey:{} {}\x1b[0m".format(color, threat, response["hashkey"], text)
+        )
+        full_response[threat] = response
 
     if args.output:
         if args.output_type == "text/csv":

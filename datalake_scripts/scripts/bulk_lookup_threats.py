@@ -2,6 +2,7 @@ import json
 import sys
 import logging
 
+from datetime import datetime
 from halo import Halo
 from datalake import Datalake, AtomType, Output
 from datalake.common.logger import logger
@@ -54,12 +55,34 @@ def main(override_args=None):
         "--output-type",
         help="set to the output type desired {json,csv}. Default is json",
     )
+    parser.add_argument(
+        "--filter_by_minimum_date",
+        "--date",
+        help="filter to apply on lookup, format: YYYY-MM-DD",
+        required=False,
+    )
+    parser.add_argument(
+        "--filter_by_minimum_score",
+        "--score",
+        "-s",
+        help="filter to apply on lookup, minimum score",
+        required=False,
+    )
 
     if override_args:
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
     logger.debug(f"START: bulk_lookup_threats.py")
+
+    if args.filter_by_minimum_date:
+        min_age_datetime = datetime.strptime(args.filter_by_minimum_date, "%Y-%m-%d")
+    else:
+        min_age_datetime = None
+
+    min_score = (
+        int(args.filter_by_minimum_score) if args.filter_by_minimum_score else None
+    )
 
     output_type = Output.JSON
     if args.output_type:
@@ -127,6 +150,7 @@ def main(override_args=None):
     full_response = {}
     if spinner:
         spinner.text = f"Executing bulk search..."
+    filtered_atoms = []
     for atom_type, atoms in typed_atoms_to_look_up.items():
         response = dtl.Threats.bulk_lookup(
             atom_values=atoms,
@@ -135,6 +159,33 @@ def main(override_args=None):
             output=output_type,
             return_search_hashkey=True,
         )
+        # Initialize key in full_response if not present
+        if atom_type not in full_response:
+            full_response[atom_type] = []
+
+        for atom in response.get(atom_type, []):
+            threat_details = atom.get("threat_details", {})
+            scores = threat_details.get("scores")
+            last_updated_by_source = threat_details.get(
+                "last_updated_by_source"
+            ) or threat_details.get("last_updated")
+            # Apply score filter
+            if scores and min_score:
+                highest_score = max(score["score"]["risk"] for score in scores)
+                if highest_score < min_score:
+                    filtered_atoms.append(atom.get("atom_value"))
+                    continue
+
+            # Apply date filter
+            if last_updated_by_source:
+                last_updated_datetime = datetime.fromisoformat(
+                    last_updated_by_source.rstrip("Z")
+                )
+                if min_age_datetime and min_age_datetime > last_updated_datetime:
+                    filtered_atoms.append(atom.get("atom_value"))
+                    continue
+
+            # Add to full response if it passes all filters
         full_response = aggregate_csv_or_json_api_response(full_response, response)
     if spinner:
         spinner.succeed("Done.")
@@ -142,7 +193,7 @@ def main(override_args=None):
         save_output(args.output, full_response)
         logger.debug(f"Results saved in {args.output}\n")
     else:
-        pretty_print(full_response, args.output_type, args.env, dtl)
+        pretty_print(full_response, filtered_atoms, args.output_type, args.env, dtl)
     logger.debug(f"END: lookup_threats.py")
 
 
@@ -185,9 +236,9 @@ def get_atom_type_from_filename(filename, input_delimiter=":"):
     exit(1)
 
 
-def pretty_print(raw_response, stdout_format, env, dtl):
+def pretty_print(raw_response, filtered_atoms, stdout_format, env, dtl):
     """
-    takes the API raw response and format it for be printed as stdout
+    Takes the API raw response and formats it for printing as stdout.
     stdout_format possible values {json, csv}
     """
     if stdout_format == "json":
@@ -201,10 +252,14 @@ def pretty_print(raw_response, stdout_format, env, dtl):
     search_hashkeys = raw_response.pop("search_hashkey", None)
     blue_bg = "\033[104m"
     eol = "\x1b[0m"
+
+    # Updated to include the 'filtered' state
     boolean_to_text_and_color = {
         True: ("FOUND", "\x1b[6;30;42m"),
         False: ("NOT_FOUND", "\x1b[6;30;41m"),
+        "filtered": ("FILTERED", "\x1b[6;30;43m"),  # New state with its text and color
     }
+
     parsed_url = urlparse(dtl.Threats.endpoint_config["main"][env])
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}/gui/?query_hash="
     for atom_type in raw_response.keys():
@@ -213,13 +268,22 @@ def pretty_print(raw_response, stdout_format, env, dtl):
         )
 
         for atom in raw_response[atom_type]:
+            # Check if the atom is found
             found = atom.get("threat_found", False)
-            text, color = boolean_to_text_and_color[found]
+
+            # If found, further check if it is filtered
+            if found and atom["atom_value"] in filtered_atoms:
+                status = "filtered"
+            elif found:
+                status = True
+            else:
+                status = False
+
+            text, color = boolean_to_text_and_color[status]
             logger.info(
                 f'{atom_type : <11} {atom["atom_value"][:29] : <30} hashkey: {atom["hashkey"]} {color} {text :^15} {eol}'
             )
 
-        logger.info("")
     if search_hashkeys and len(search_hashkeys) <= 10:
         for search_hashkey in search_hashkeys:
             url = base_url + search_hashkey
