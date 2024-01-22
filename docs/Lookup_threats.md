@@ -47,6 +47,6 @@ Or/And directly from the cli:
 
 > -e  to change the environment {preprod, prod},  default is **prod**  
 
-> --date filter to apply on lookup to set a minimum date [format: DD-MM-YYYY]
+> --date filter to apply on lookup to set a minimum date [format: YYYY-MM-DD]
 
 > -s filter to apply on lookup to set a minimum score.

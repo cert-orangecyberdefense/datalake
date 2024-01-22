@@ -21,8 +21,7 @@ def filter_batch_results(
     batch_result: dict, min_date: datetime, min_score: int
 ) -> dict:
     if isinstance(batch_result, str):  # For CSV output
-        # CSV filtering logic goes here (if applicable)
-        return batch_result  # or the filtered CSV string
+        return batch_result
 
     filtered_result = {}
     for atom_type, atoms in batch_result.items():
@@ -122,16 +121,25 @@ class Threats(Endpoint):
                 output,
                 return_search_hashkey,
             )
-            # Filter the batch results
-            filtered_batch_result = filter_batch_results(
-                batch_result, min_date, min_score
-            )
-            if "search_hashkey" in filtered_batch_result:
-                search_hashkey_list.append(filtered_batch_result.pop("search_hashkey"))
-            aggregated_response = aggregate_csv_or_json_api_response(
-                aggregated_response,
-                filtered_batch_result,
-            )
+            if min_date or min_score:
+                # Filter the batch results
+                filtered_batch_result = filter_batch_results(
+                    batch_result, min_date, min_score
+                )
+                if "search_hashkey" in filtered_batch_result:
+                    search_hashkey_list.append(
+                        filtered_batch_result.pop("search_hashkey")
+                    )
+                aggregated_response = aggregate_csv_or_json_api_response(
+                    aggregated_response,
+                    filtered_batch_result,
+                )
+            else:
+                if "search_hashkey" in batch_result:
+                    search_hashkey_list.append(batch_result.pop("search_hashkey"))
+                aggregated_response = aggregate_csv_or_json_api_response(
+                    aggregated_response, batch_result
+                )
         if search_hashkey_list:
             aggregated_response["search_hashkey"] = search_hashkey_list
         if output is Output.CSV:
