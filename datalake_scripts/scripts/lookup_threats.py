@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 from collections import OrderedDict
 
 from datalake import Datalake
@@ -24,7 +25,7 @@ def main(override_args=None):
     parser = BaseScripts.start("Submit a new threat to Datalake from a file")
     required_named = parser.add_argument_group("required arguments")
     csv_control = parser.add_argument_group("CSV control arguments")
-
+    min_age_datetime = None
     parser.add_argument(
         "threats",
         help="threats to lookup",
@@ -71,6 +72,19 @@ def main(override_args=None):
         type=int,
         default=1,
     )
+    parser.add_argument(
+        "--filter_by_minimum_date",
+        "--date",
+        help="filter to apply on lookup, format: YYYY-MM-DD",
+        required=False,
+    )
+    parser.add_argument(
+        "--filter_by_minimum_score",
+        "--score",
+        "-s",
+        help="filter to apply on lookup, minimum score",
+        required=False,
+    )
     if override_args:
         args = parser.parse_args(override_args)
     else:
@@ -89,6 +103,8 @@ def main(override_args=None):
                 exc_info=False,
             )
             exit(1)
+    if args.filter_by_minimum_date:
+        min_age_datetime = datetime.strptime(args.filter_by_minimum_date, "%Y-%m-%d")
 
     hashkey_only = not args.threat_details
     dtl = Datalake(env=args.env, log_level=args.loglevel)
@@ -114,6 +130,43 @@ def main(override_args=None):
         response = dtl.Threats.lookup(
             threat, atom_type=atom_type, hashkey_only=hashkey_only
         )
+        scores = response.get("scores")
+        last_updated_by_source = response.get("last_updated_by_source") or response.get(
+            "last_updated"
+        )
+
+        # Process for score filtering
+        if scores and args.filter_by_minimum_score:
+            highest_score = max(score["score"]["risk"] for score in scores)
+            if highest_score and highest_score < int(args.filter_by_minimum_score):
+                logger.info(
+                    "\x1b[31m{} hashkey:{} FILTERED\x1b[0m".format(
+                        threat, response["hashkey"]
+                    )
+                )
+                continue
+
+        # Process for date filtering
+        if last_updated_by_source:
+            last_updated_datetime = datetime.fromisoformat(
+                last_updated_by_source.rstrip("Z")
+            )
+            if min_age_datetime and min_age_datetime >= last_updated_datetime:
+                logger.info(
+                    "\x1b[31m{} hashkey:{} FILTERED\x1b[0m".format(
+                        threat, response["hashkey"]
+                    )
+                )
+                continue
+        elif min_age_datetime:
+            logger.info(
+                "\x1b[33m{} hashkey:{} SKIPPED - No date in response - (You may try with -td argument)\x1b[0m".format(
+                    threat, response.get("hashkey", "N/A")
+                )
+            )
+            continue
+
+        # If the threat passes all filters
         found = response.get("threat_found", True)
         text, color = boolean_to_text_and_color[found]
         logger.info(

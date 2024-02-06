@@ -3,6 +3,7 @@ import json
 import pytest
 import responses
 
+from collections import defaultdict
 from datalake import Datalake, Output, AtomType, ThreatType, OverrideType, IpAtom
 from tests.common.fixture import datalake  # noqa needed fixture import
 
@@ -753,3 +754,135 @@ def test_preprod_atom_values():
         )
         == post_resp
     )
+
+
+@responses.activate
+def test_bulk_lookup_threats_json_filtered_by_date(datalake):
+    bulk_lookup_url = (
+        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/"
+    )
+    min_date = "2024-02-05"
+    min_score = 50
+    mock_response = {
+        "ip": [
+            {
+                "atom_value": "139.224.206.244",
+                "hashkey": "b2a2e96431dbb179fc677f41998d308a",
+                "last_updated": "2024-02-04",
+                "scores": [
+                    {"score": {"risk": 55}, "threat_type": "malware"},
+                ],
+                "threat_found": True,
+                "threat_details": {
+                    "atom_type": "ip",
+                    "content": {
+                        "ip_content": {
+                            "atom_value": "139.224.206.244",
+                            "external_analysis_link": [
+                                "https://malpedia.caad.fkie.fraunhofer.de/details/win.cobalt_strike",
+                                "https://rdap.apnic.net/ip/139.224.206.244/32",
+                                "https://abuseipdb.com/check/139.224.206.244",
+                            ],
+                            "ip_address": "139.224.206.244",
+                            "ip_version": 4,
+                            "location": {
+                                "city": "Shanghai",
+                                "continent": "AS",
+                                "country": "CN",
+                                "latitude": 31.2222,
+                                "longitude": 121.4581,
+                                "region": "SH",
+                                "timezone": "Asia/Shanghai",
+                            },
+                            "malware_family": "cobalt strike",
+                            "owner": "ALISOFT",
+                            "services": [{"port": 80, "protocol": "tcp"}],
+                        }
+                    },
+                    "first_seen": "2023-10-28",
+                    "last_updated": "2024-02-04",
+                    "tags": [
+                        {"name": "cobaltstrike", "last_seen": "2024-01-28"},
+                        {"name": "port:80", "last_seen": "2024-01-28"},
+                    ],
+                },
+            }
+        ]
+    }
+    expected_response = defaultdict(list)
+    responses.add(responses.POST, bulk_lookup_url, json=mock_response, status=200)
+    response = datalake.Threats.bulk_lookup(
+        atom_values=["139.224.206.244"],
+        atom_type=AtomType.IP,
+        hashkey_only=False,
+        output=Output.JSON,
+        min_date=min_date,
+        min_score=min_score,
+    )
+    assert response == expected_response
+
+
+@responses.activate
+def test_bulk_lookup_threats_json_filtered_by_score(datalake):
+    bulk_lookup_url = (
+        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/"
+    )
+    min_date = "2020-02-03"
+    min_score = 56
+    mock_response = {
+        "ip": [
+            {
+                "atom_value": "139.224.206.244",
+                "hashkey": "b2a2e96431dbb179fc677f41998d308a",
+                "last_updated": "2024-02-04",
+                "scores": [
+                    {"score": {"risk": 55}, "threat_type": "malware"},
+                ],
+                "threat_found": True,
+                "threat_details": {
+                    "atom_type": "ip",
+                    "content": {
+                        "ip_content": {
+                            "atom_value": "139.224.206.244",
+                            "external_analysis_link": [
+                                "https://malpedia.caad.fkie.fraunhofer.de/details/win.cobalt_strike",
+                                "https://rdap.apnic.net/ip/139.224.206.244/32",
+                                "https://abuseipdb.com/check/139.224.206.244",
+                            ],
+                            "ip_address": "139.224.206.244",
+                            "ip_version": 4,
+                            "location": {
+                                "city": "Shanghai",
+                                "continent": "AS",
+                                "country": "CN",
+                                "latitude": 31.2222,
+                                "longitude": 121.4581,
+                                "region": "SH",
+                                "timezone": "Asia/Shanghai",
+                            },
+                            "malware_family": "cobalt strike",
+                            "owner": "ALISOFT",
+                            "services": [{"port": 80, "protocol": "tcp"}],
+                        }
+                    },
+                    "first_seen": "2023-10-28",
+                    "last_updated": "2024-02-04",
+                    "tags": [
+                        {"name": "cobaltstrike", "last_seen": "2024-01-28"},
+                        {"name": "port:80", "last_seen": "2024-01-28"},
+                    ],
+                },
+            }
+        ]
+    }
+    expected_response = defaultdict(list)
+    responses.add(responses.POST, bulk_lookup_url, json=mock_response, status=200)
+    response = datalake.Threats.bulk_lookup(
+        atom_values=["139.224.206.244"],
+        atom_type=AtomType.IP,
+        hashkey_only=False,
+        output=Output.JSON,
+        min_date=min_date,
+        min_score=min_score,
+    )
+    assert response == expected_response
