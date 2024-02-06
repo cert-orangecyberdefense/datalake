@@ -162,30 +162,31 @@ def main(override_args=None):
         # Initialize key in full_response if not present
         if atom_type not in full_response:
             full_response[atom_type] = []
+        # Only apply filters if output type is JSON
+        if output_type == Output.JSON:
+            for atom in response.get(atom_type, []):
+                threat_details = atom.get("threat_details", {})
+                scores = threat_details.get("scores")
+                last_updated_by_source = threat_details.get(
+                    "last_updated_by_source"
+                ) or threat_details.get("last_updated")
+                # Apply score filter
+                if scores and min_score:
+                    highest_score = max(score["score"]["risk"] for score in scores)
+                    if highest_score < min_score:
+                        filtered_atoms.append(atom.get("atom_value"))
+                        continue
 
-        for atom in response.get(atom_type, []):
-            threat_details = atom.get("threat_details", {})
-            scores = threat_details.get("scores")
-            last_updated_by_source = threat_details.get(
-                "last_updated_by_source"
-            ) or threat_details.get("last_updated")
-            # Apply score filter
-            if scores and min_score:
-                highest_score = max(score["score"]["risk"] for score in scores)
-                if highest_score < min_score:
-                    filtered_atoms.append(atom.get("atom_value"))
-                    continue
+                # Apply date filter
+                if last_updated_by_source:
+                    last_updated_datetime = datetime.fromisoformat(
+                        last_updated_by_source.rstrip("Z")
+                    )
+                    if min_age_datetime and min_age_datetime > last_updated_datetime:
+                        filtered_atoms.append(atom.get("atom_value"))
+                        continue
 
-            # Apply date filter
-            if last_updated_by_source:
-                last_updated_datetime = datetime.fromisoformat(
-                    last_updated_by_source.rstrip("Z")
-                )
-                if min_age_datetime and min_age_datetime > last_updated_datetime:
-                    filtered_atoms.append(atom.get("atom_value"))
-                    continue
-
-            # Add to full response if it passes all filters
+            # Add to full response if output type is JSON and it passes all filters
         full_response = aggregate_csv_or_json_api_response(full_response, response)
     if spinner:
         spinner.succeed("Done.")

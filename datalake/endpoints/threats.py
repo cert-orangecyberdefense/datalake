@@ -32,14 +32,12 @@ def filter_batch_results(
                 date = threat_details.get(
                     "last_updated_by_source"
                 ) or threat_details.get("last_updated")
-                atom_date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
+                atom_date = date
                 atom_scores = threat_details.get("scores", [])
                 max_score = max(
                     (score.get("score", {}).get("risk", 0) for score in atom_scores),
                     default=0,
                 )
-
-                # Apply filters
                 if (min_date is None or atom_date >= min_date) and (
                     min_score is None or max_score >= min_score
                 ):
@@ -100,7 +98,7 @@ class Threats(Endpoint):
         hashkey_only=False,
         output=Output.JSON,
         return_search_hashkey=False,
-        min_date: datetime = None,  # Assuming datetime object for date comparison
+        min_date=None,
         min_score: int = None,
     ) -> Union[dict, str]:
         """
@@ -204,7 +202,7 @@ class Threats(Endpoint):
             )
         if min_age_date:
             min_age_datetime = datetime.strptime(min_age_date, "%Y-%m-%d")
-        if minimum_score:
+        if response_copy and minimum_score:
             highest_score = max(
                 score["score"]["risk"] for score in response_copy["scores"]
             )
