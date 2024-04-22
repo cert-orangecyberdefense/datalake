@@ -26,18 +26,28 @@ $ pip3 install datalake-scripts
 ### step 2: Create a Datalake instance
 
 You will need to create a Datalake instance once and reuse it:
+```python
+from datalake import Datalake
 
+dtl = Datalake(longterm_token='longterm_token')
+```
+or
 ```python
 from datalake import Datalake
 
 dtl = Datalake(username='username', password='password')
 ```
 
-The credentials can be omitted and will then be asked in a prompt.  
-You can also set them in your os environment variables:
+You can also set your credentials in os environment variables (these values will only be used if you do not set the args when creating the instance):
+* `OCD_DTL_LONGTERM_TOKEN` a long term token associated to your Datalake account. If this one is set, the username and password environment variables below will be ignored. Please be aware than not all requests can use long term tokens, some endpoints will require fresh tokens, ie a Datalake instance initiated with username and password.
+The endpoints requiring fresh tokens will mention it in their description available [here](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)
+
+or
 
 * `OCD_DTL_USERNAME` email address used to login on Datalake API/GUI.
 * `OCD_DTL_PASSWORD` password used to login on Datalake API/GUI.
+ 
+Finally, the credentials can be omitted and will then be asked in a prompt.
 
 ## Usage: Code Sample
 

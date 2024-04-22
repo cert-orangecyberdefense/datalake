@@ -12,7 +12,7 @@ jobs:
         with:
           python-version: '3.10'
       - name: Install Black
-        run: pip install black
+        run: pip install black==23.11.0
 
       - name: Check Black Code Style
         run: black --check .

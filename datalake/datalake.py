@@ -19,13 +19,18 @@ class Datalake:
 
     Usage:
     >>> dtl = Datalake(username='some username', password='some password')
+    or
+    >>> dtl = Datalake(longterm_token='some longterm token')
+    then
     >>> dtl.Threats.lookup(atom_value='mayoclinic.org', atom_type=AtomType.DOMAIN, hashkey_only=False)
+
     """
 
     def __init__(
         self,
         username: str = None,
         password: str = None,
+        longterm_token: str = None,
         env="prod",
         log_level=logging.WARNING,
     ):
@@ -33,7 +38,11 @@ class Datalake:
         endpoint_config = Config().load_config()
         try:
             token_manager = TokenManager(
-                endpoint_config, environment=env, username=username, password=password
+                endpoint_config,
+                environment=env,
+                username=username,
+                password=password,
+                longterm_token=longterm_token,
             )
         except Exception as e:
             if "Failed to resolve" in str(e) or "Failed to establish" in str(e):

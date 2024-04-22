@@ -50,7 +50,8 @@ class BaseEngine:
         """
         try:
             response = self.endpoint.datalake_requests(url, method, headers, post_body)
-        except ValueError:
+        except ValueError as ve:
+            logger.error(f"Error while attempting to request datalake : {ve}")
             logger.error("Request failed: Will return nothing for this request")
             return {}
         if (

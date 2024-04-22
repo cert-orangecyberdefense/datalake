@@ -47,7 +47,10 @@ class HandleBulkTaskMixin(BaseEngine):
 
         json_response = None
         while not json_response:
-            headers = {"Authorization": self.token_manager.access_token}
+            headers = {
+                "Authorization": self.token_manager.access_token
+                or self.token_manager.longterm_token
+            }
             response = requests.get(
                 url=retrieve_bulk_result_url,
                 headers=headers,
