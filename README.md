@@ -37,10 +37,20 @@ You can also use a script directly by using the following command: `<script_name
 ## Environment variables
 
 #### Authentication
-In case you don't want to enter credential for each commands and you are on a secured terminal, set those variables:  
+
+There are two methods of authentication:
+- The first one is the use of the username and password. Every request to the API, will then use fresh tokens periodically created with these credentials.
+- The second one is the use of a long term token. You can create long term token through the GUI, it can have more restricted permissions than your account. You can create several long term tokens for one account. 
+
+In case you don't want to enter credentials for each commands and you are on a secured terminal, set those variables:  
+* `OCD_DTL_LONGTERM_TOKEN` a long term token associated to your Datalake account.
+Please note that if this variable is set, then the long term token will be used for every request to the Datalake API, even if you set the username and passsword environment variables below. This is important because some endpoints / requests do not accept long term tokens but need fresh tokens (ie a Datalake instance with username and password). Check for the need of fresh tokens in each endpoint description [here](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)
+
+or
+
 * `OCD_DTL_USERNAME` email address used to login on Datalake API/GUI.   
 * `OCD_DTL_PASSWORD` password used to login on Datalake API/GUI.
-> They are independent and one can be used without the other if you wish.
+> These last two are independent and one can be used without the other if you wish.
 
 #### Throttling
 For throttling the request, those two environment variable can be used:  

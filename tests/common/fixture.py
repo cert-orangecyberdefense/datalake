@@ -49,3 +49,9 @@ def datalake():
 
     responses.add(responses.POST, url, json=auth_response, status=200)
     return Datalake(username="username", password="password")
+
+
+@pytest.fixture
+@responses.activate
+def datalake_longterm_token():
+    return Datalake(longterm_token="longterm_token1234")
