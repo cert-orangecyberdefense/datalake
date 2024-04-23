@@ -65,7 +65,9 @@ class Endpoint:
         tries_left = self.SET_MAX_RETRY
 
         while tries_left > 0:
-            headers["Authorization"] = self.token_manager.access_token
+            headers["Authorization"] = (
+                self.token_manager.access_token or self.token_manager.longterm_token
+            )
             logger.debug(self._pretty_debug_request(url, method, post_body, headers))
 
             response = self._send_request(
@@ -77,7 +79,7 @@ class Endpoint:
                 logger.debug("API response:\n%s", response.text)
             if response.status_code == 401:
                 logger.warning(
-                    "Token expired or Missing authorization header. Updating token"
+                    "Missing authorization header or Token Error. Updating token"
                 )
                 self.token_manager.process_auth_error(response.json())
             elif response.status_code == 422:
@@ -148,6 +150,7 @@ class Endpoint:
             + f" - data: \n{data}\n"
             + f" - token: \n{self.token_manager.access_token}\n"
             + f" - refresh_token: \n{self.token_manager.refresh_token}\n"
+            + f" - longterm_token: \n{self.token_manager.longterm_token}\n"
             + "-" * self.terminal_size
         )
         return debug

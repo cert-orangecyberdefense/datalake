@@ -73,7 +73,18 @@ class FilteredTagSubcategory(Endpoint):
             )
             if limit_match:
                 print("The 'limit' parameter must be >= 0 and <= 5000.")
-            if not tag_category_match and not ordering_match and not limit_match:
+            token_match = re.search(
+                r"token",
+                error_message,
+            )
+            if token_match:
+                raise ve
+            if (
+                not tag_category_match
+                and not ordering_match
+                and not limit_match
+                and not token_match
+            ):
                 print(
                     "An error occurred, but no specific pattern was matched in the 422 HTTP error message."
                 )
