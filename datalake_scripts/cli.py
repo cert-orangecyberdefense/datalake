@@ -20,7 +20,7 @@ from datalake_scripts.scripts import (
 
 class Cli:
     CLI_NAME = "ocd-dtl"
-    VERSION = "2.7.4"
+    VERSION = "3.0.0rc1"
 
     def __init__(self):
         parser = argparse.ArgumentParser(
