@@ -6,22 +6,15 @@ from typing import Dict, Union
 
 
 class AtomType(Enum):
-    APK = "apk"
     AS = "as"
-    CC = "cc"
     CRYPTO = "crypto"
-    CVE = "cve"
     DOMAIN = "domain"
     EMAIL = "email"
     FILE = "file"
-    FQDN = "fqdn"
-    IBAN = "iban"
     IP = "ip"
     IP_RANGE = "ip_range"
-    PASTE = "paste"
     PHONE_NUMBER = "phone_number"
-    REGKEY = "regkey"
-    SSL = "ssl"
+    CERTIFICATE = "certificate"
     URL = "url"
 
 
@@ -48,7 +41,6 @@ threat_type -> ThreatType
 
 
 class OverrideType(Enum):
-    PERMANENT = "permanent"
     TEMPORARY = "temporary"
     LOCK = "lock"
 

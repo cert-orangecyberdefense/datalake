@@ -6,7 +6,11 @@ from tests.common.fixture import token_manager, TestData  # noqa needed fixture 
 
 
 def test_auth(token_manager):
-    assert token_manager.url_token == "https://datalake.com/api/v42/auth/token/"
+    assert token_manager.url_token == (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["token"]
+    )
     assert token_manager.access_token == "Token access_token"
     assert token_manager.refresh_token == "Token refresh_token"
 
@@ -14,9 +18,30 @@ def test_auth(token_manager):
 @pytest.mark.parametrize(
     "engine,expected_url",
     [
-        (ThreatsSearch, "https://datalake.com/api/v42/mrti/threats/"),
-        (BulkSearch, "https://datalake.com/api/v42/mrti/bulk-search/"),
-        (CommentsPost, "https://datalake.com/api/v42/mrti/threats/{hashkey}/comments/"),
+        (
+            ThreatsSearch,
+            (
+                TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+                + TestData.TEST_CONFIG["api_version"]
+                + TestData.TEST_CONFIG["endpoints"]["threats"]
+            ),
+        ),
+        (
+            BulkSearch,
+            (
+                TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+                + TestData.TEST_CONFIG["api_version"]
+                + TestData.TEST_CONFIG["endpoints"]["bulk-search"]
+            ),
+        ),
+        (
+            CommentsPost,
+            (
+                TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+                + TestData.TEST_CONFIG["api_version"]
+                + TestData.TEST_CONFIG["endpoints"]["comment"]
+            ),
+        ),
     ],
 )
 def test_engine(token_manager, engine, expected_url):

@@ -79,20 +79,14 @@ $ ocd-dtl bulk_lookup_threats reverso.net 113.223.40.103 --domain paiza.com --ip
     read threats to add from FILE.
   
 * Typed atom flags
-    > --apk APK             
-    --asn ASN             
-    --cc CC               
-    --crypto CRYPTO       
-    --cve CVE             
+    >            
+    --as AS                         
+    --crypto CRYPTO                  
     --domain DOMAIN       
     --email EMAIL         
-    --file FILE           
-    --fqdn FQDN           
-    --iban IBAN           
+    --file FILE                              
     --ip IP               
-    --ip_range IP_RANGE   
-    --paste PASTE         
+    --ip_range IP_RANGE           
     --phone_number PHONE_NUMBER  
-    --regkey REGKEY
-    --ssl SSL
+    --certificate CERTIFICATE
     --url URL

@@ -42,17 +42,11 @@ def main(override_args=None):
         action="store_true",
     )
     parser.add_argument(
-        "--permanent",
-        help="""Permanent: all values will override any values provided by both newer and
-            older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
-            temporary: all values should override any values provided by older IOCs,
-            but not newer ones.""",
-        action="store_true",
-    )
-    parser.add_argument(
         "--lock",
-        help="sets override_type to lock. Scores won't be updated by the algorithm for three months. Default is "
-        "temporary",
+        help="""sets override_type to lock. Scores won't be updated by the algorithm for three months. Newer IOCs with override_type lock can still override old lock changes.
+            temporary: all values should override any values provided by older IOCs,
+            but not newer ones.
+            Default is "temporary" (all values should override any values provided by older IOCs)""",
         action="store_true",
     )
     if override_args:
@@ -64,12 +58,7 @@ def main(override_args=None):
     if not args.hashkeys and not args.input_file:
         parser.error("either a hashkey or an input_file is required")
 
-    if args.permanent and args.lock:
-        parser.error("Only one override type is authorized")
-
-    if args.permanent:
-        override_type = OverrideType.PERMANENT
-    elif args.lock:
+    if args.lock:
         override_type = OverrideType.LOCK
     else:
         override_type = OverrideType.TEMPORARY
