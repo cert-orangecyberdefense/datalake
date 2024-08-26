@@ -15,7 +15,7 @@ class Comments(Endpoint):
             "content": comment,
             "visibility": visibility,
         }
-        url = self._build_url_for_endpoint("comments").format(hashkey=hashkey)
+        url = self._build_url_for_endpoint("threats-comments").format(hashkey=hashkey)
         response = self.datalake_requests(url, "post", self._post_headers(), payload)
         return parse_response(response)
 

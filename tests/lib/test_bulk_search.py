@@ -76,7 +76,7 @@ def bulk_search_task(datalake: Datalake):
         bs_status_url = (
             TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
             + TestData.TEST_CONFIG["api_version"]
-            + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+            + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
         )
         response_context.add(
             responses.POST, bs_status_url, json=bs_status_json, status=200
@@ -111,7 +111,7 @@ def test_bulk_search_query_hash(datalake: Datalake):
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
 
@@ -162,7 +162,7 @@ def test_bulk_search_query_body(datalake: Datalake):
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
 
@@ -181,7 +181,7 @@ def test_bulk_search_task_update(bulk_search_task: BulkSearchTask):
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     bs_update_json = copy.deepcopy(bs_status_json)
     bs_update_json["results"][0]["queue_position"] = 42
@@ -198,7 +198,7 @@ def test_bulk_search_task_not_found(datalake: Datalake):
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json={"results": []}, status=200)
 
@@ -212,7 +212,7 @@ def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
     bs_download_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["retrieve-bulk-search"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
             "{task_uuid}", task_uuid
         )
     )
@@ -230,7 +230,7 @@ def test_bulk_search_task_download_not_ready(bulk_search_task: BulkSearchTask):
     bs_download_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["retrieve-bulk-search"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
             "{task_uuid}", task_uuid
         )
     )
@@ -260,7 +260,7 @@ def test_bulk_search_task_download_zip_json_output(bulk_search_task: BulkSearchT
     bs_download_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["retrieve-bulk-search"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
             "{task_uuid}", task_uuid
         )
     )
@@ -289,7 +289,7 @@ def test_bulk_search_task_download_async(bulk_search_task: BulkSearchTask):
     bs_download_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["retrieve-bulk-search"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
             "{task_uuid}", task_uuid
         )
     )
@@ -306,7 +306,7 @@ def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask):
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
     bulk_search_task.state = (
@@ -316,7 +316,7 @@ def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask):
     bs_download_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["retrieve-bulk-search"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
             "{task_uuid}", task_uuid
         )
     )
@@ -335,7 +335,7 @@ def test_bulk_search_task_download_sync_stream_to_file(
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
     bulk_search_task.state = (
@@ -345,7 +345,7 @@ def test_bulk_search_task_download_sync_stream_to_file(
     bs_download_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["retrieve-bulk-search"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
             "{task_uuid}", task_uuid
         )
     )
@@ -368,7 +368,7 @@ def test_bulk_search_task_download_sync_stream_to_file_zip(
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
     bulk_search_task.state = (
@@ -378,7 +378,7 @@ def test_bulk_search_task_download_sync_stream_to_file_zip(
     bs_download_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["retrieve-bulk-search"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
             "{task_uuid}", task_uuid
         )
     )
@@ -413,7 +413,7 @@ async def test_bulk_search_task_download_async_timeout(
         bs_status_url = (
             TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
             + TestData.TEST_CONFIG["api_version"]
-            + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+            + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
         )
         response_context.add(
             responses.POST, bs_status_url, json=bs_update_json, status=200
@@ -434,7 +434,7 @@ def test_bulk_search_task_download_sync_timeout(bulk_search_task: BulkSearchTask
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
 
@@ -450,7 +450,7 @@ def test_bulk_search_task_download_sync_failed(bulk_search_task: BulkSearchTask)
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
 

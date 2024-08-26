@@ -11,7 +11,9 @@ def mock_api_resp():
         responses.POST,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["tag"].replace("{hashkey}", "123456abcd"),
+        + TestData.TEST_CONFIG["endpoints"]["threats-tags"].replace(
+            "{hashkey}", "123456abcd"
+        ),
         status=200,
         json=[
             {
@@ -32,7 +34,7 @@ def mock_api_resp_404():
         responses.POST,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["tag"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["threats-tags"].replace(
             "{hashkey}", "789101112efghij"
         ),
         status=404,
