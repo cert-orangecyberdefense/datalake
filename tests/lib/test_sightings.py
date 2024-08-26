@@ -251,7 +251,7 @@ def test_submit_sightings(datalake):
     url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["submit-sightings"]
+        + TestData.TEST_CONFIG["endpoints"]["threats-sighting"]
     )
 
     expected_request = {
@@ -480,7 +480,7 @@ def test_sightings_filtered(datalake):
     url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["sighting-filtered"]
+        + TestData.TEST_CONFIG["endpoints"]["threats-sighting-filtered"]
     )
     expected_payload = {"threat_hashkey": "f39cbce3c4d30d61ccdc99c5fcb3bf6f"}
     expected = {

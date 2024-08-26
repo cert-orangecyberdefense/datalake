@@ -73,7 +73,7 @@ def mock_api_response():
         responses.POST,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["filtered-tag-subcategory"],
+        + TestData.TEST_CONFIG["endpoints"]["tag-subcategory-filtered"],
         json={"results": mock_results_data},  # Only return the "results" part
         status=200,
     )
@@ -97,7 +97,7 @@ def test_get_filtered_and_sorted_list(datalake: Datalake):
     assert responses.calls[0].request.url, (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["filtered-tag-subcategory"]
+        + TestData.TEST_CONFIG["endpoints"]["tag-subcategory-filtered"]
     )
     assert responses.calls[0].request.method, "POST"
     request_body = json.loads(responses.calls[0].request.body)

@@ -41,7 +41,6 @@ dtl.Threats.lookup(
 
 
 
-
 ### Using as a CLI 
 
 The cli can be used with:
@@ -97,9 +96,10 @@ See its documenation for other possible kinds of proxy to set up.
 
 
 #### Throttling
-For throttling the request, those two environment variable can be used:  
-* `OCD_DTL_QUOTA_TIME` define, in seconds, the time before resetting the requests limit, *default is 1 second*.   
-* `OCD_DTL_REQUESTS_PER_QUOTA_TIME` define the number of request to do at maximum for the given time,  *default is 5 queries*.
+For throttling the requests, those two environment variables can be used:  
+* `OCD_DTL_QUOTA_TIME` defines, in seconds, the time before resetting the requests limit, *default is 1 second*.   
+* `OCD_DTL_REQUESTS_PER_QUOTA_TIME` defines the number of request to do at maximum for the given time,  *default is 5 queries*.
+We recommend to lower the `OCD_DTL_REQUESTS_PER_QUOTA_TIME` value, if you encounter too many 429 errors.
 
 > Please don't exceed the quota marked [here](https://datalake.cert.orangecyberdefense.com/api/v3/docs/) for each endpoint
 
