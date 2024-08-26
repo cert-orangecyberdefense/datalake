@@ -29,13 +29,13 @@ You will need to create a Datalake instance once and reuse it:
 ```python
 from datalake import Datalake
 
-dtl = Datalake(longterm_token='longterm_token')
+dtl = Datalake(longterm_token='longterm_token', env='prod')
 ```
 or
 ```python
 from datalake import Datalake
 
-dtl = Datalake(username='username', password='password')
+dtl = Datalake(username='username', password='password', env='preprod')
 ```
 
 You can also set your credentials in os environment variables (these values will only be used if you do not set the args when creating the instance):
@@ -49,6 +49,7 @@ or
  
 Finally, the credentials can be omitted and will then be asked in a prompt.
 
+The default value of the `env` parameter is prod.
 
 ### step 2bis : using a proxy & SSL verification
 You can provide and/or explicitly disable ssl verification 
@@ -69,6 +70,7 @@ You can otherwise set up following environment variables (for proxy):
 
 We use the format accepted by the requests python library. 
 See its documenation for other possible kinds of proxy to set up.
+
 
 ## Usage: Code Sample
 
@@ -281,12 +283,11 @@ The following keyword arguments are available:
   named `score` with an integer value between **0** and **100**. Available ThreatType options are: **DDOS, FRAUD, HACK,
   LEAK, MALWARE, PHISHING, SCAM, SCAN, SPAM**. Defaults to `None`.
 * `override_type`: an OverrideType. Available options are:
-  * `PERMANENT`: All values will override any values provided by both newer and
-      older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
   * `TEMPORARY`: All values should override any values provided by older IOCs,
       but not newer ones.
-  * `LOCK`: Will act like a permanent for three months,
-      then like a temporary.
+  * `LOCK`: All values will override any values provided by both newer and
+      older IOCs for three months. Newer IOCs with override_type lock can still override old lock changes.
+      Will act like a temporary after three months.
 * `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will
   then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error.
   Defaults to `False`.
@@ -319,12 +320,11 @@ The following keyword arguments are available:
   named `score` with an integer value between **0** and **100**. Available ThreatType options are: **DDOS, FRAUD, HACK,
   LEAK, MALWARE, PHISHING, SCAM, SCAN, SPAM**. Defaults to `None`.
 * `override_type`: an OverrideType. Available options are:
-  * `PERMANENT`: All values will override any values provided by both newer and
-      older IOCs. Newer IOCs with override_type permanent can still override old permanent changes.
   * `TEMPORARY`: All values should override any values provided by older IOCs,
       but not newer ones.
-  * `LOCK`: Will act like a permanent for three months,
-      then like a temporary.
+  * `LOCK`: All values will override any values provided by both newer and
+      older IOCs for three months. Newer IOCs with override_type lock can still override old lock changes.
+      Will act like a temporary after three months.
 * `whitelist`: A boolean, if no `threat_types` are provided, this argument should be set to true. All score values will
   then be set to 0. If `threat_types` are provided along with `whitelist` set as `True`, will result in an error.
   Defaults to `False`.
@@ -491,7 +491,7 @@ end = datetime.datetime.utcnow()
 
 # submit sighting
 dtl.Sightings.submit_sighting(start_timestamp=start, end_timestamp=end, sighting_type=SightingType.POSITIVE,
-                              visibility=Visibility.PUBLIC, count=1, threat_types=threat_types,
+                              description_visibility=Visibility.PUBLIC, count=1, threat_types=threat_types,
                               atoms=[ip1, f1, em1, url1], tags=['some_tag'], description='some_description', editable=True)
 ```
 
@@ -530,7 +530,7 @@ resp = dtl.Sightings.sightings_filtered(
     limit=100, 
     offset=0,
     sighting_type=SightingType.POSITIVE, 
-    visibility=Visibility.PUBLIC
+    description_visibility=Visibility.PUBLIC
 )
 ```
 
@@ -547,7 +547,7 @@ resp = dtl.sightings_filtered_from_atom_value(
     limit=100, 
     offset=0, 
     sighting_type=SightingType.POSITIVE, 
-    visibility=Visibility.PUBLIC
+    description_visibility=Visibility.PUBLIC
 )
 ```
 

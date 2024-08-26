@@ -7,9 +7,6 @@
                                                               |_|
 
 
-# datalake
-Datalake scripts
-
 ## How to use
 
 ### Installation
@@ -20,6 +17,9 @@ $ pip install datalake-scripts
 $ pip3 install datalake-scripts
 ```
 ### Using as a library
+The library requires to first create a Datalake instance and then to use the defined Classes' methods
+
+Example : 
 ```python
 from datalake import Datalake, AtomType, Output
 
@@ -32,7 +32,9 @@ dtl.Threats.lookup(
 )
 ```
 
-see [the following link](https://github.com/cert-orangecyberdefense/datalake/blob/master/tutorial.md)
+The library tutorial is available in [the following link](https://github.com/cert-orangecyberdefense/datalake/blob/master/tutorial.md)
+
+
 
 ### Using as a CLI 
 
@@ -46,7 +48,18 @@ You can also use a script directly by using the following command: `<script_name
 
 > /!\ Make sure to use utf-8 **without BOM** when providing a file (-i option)
 
-## Environment variables
+#### Cli parameters  
+
+Parameters common and optional for all commands:
+> --debug  display more information for debugging purposes   
+> -e to change the environment {preprod, prod},  default is **prod**  
+> -o will set the output file as the API gives it.  
+> -q will quiet the verbosity of the program (but still show errors / warnings)  
+
+For information about each command and more, please check [the documentation directory](https://github.com/cert-orangecyberdefense/datalake/tree/master/docs)
+
+
+### Environment variables
 
 #### Authentication
 
@@ -81,16 +94,6 @@ For throttling the request, those two environment variable can be used:
 * `OCD_DTL_REQUESTS_PER_QUOTA_TIME` define the number of request to do at maximum for the given time,  *default is 5 queries*.
 
 > Please don't exceed the quota marked [here](https://datalake.cert.orangecyberdefense.com/api/v2/docs/) for each endpoint
-
-## Cli parameters  
-
-Parameters common and optional for all commands:
-> --debug  display more information for debugging purposes   
-> -e to change the environment {preprod, prod},  default is **prod**  
-> -o will set the output file as the API gives it.  
-> -q will quiet the verbosity of the program (but still show errors / warnings)  
-
-For information about each command and more, please check [the documentation directory](https://github.com/cert-orangecyberdefense/datalake/tree/master/docs)
 
 
 ### Contributing
