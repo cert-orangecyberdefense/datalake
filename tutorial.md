@@ -29,13 +29,13 @@ You will need to create a Datalake instance once and reuse it:
 ```python
 from datalake import Datalake
 
-dtl = Datalake(longterm_token='longterm_token')
+dtl = Datalake(longterm_token='longterm_token', env='prod')
 ```
 or
 ```python
 from datalake import Datalake
 
-dtl = Datalake(username='username', password='password')
+dtl = Datalake(username='username', password='password', env='preprod')
 ```
 
 You can also set your credentials in os environment variables (these values will only be used if you do not set the args when creating the instance):
@@ -48,6 +48,8 @@ or
 * `OCD_DTL_PASSWORD` password used to login on Datalake API/GUI.
  
 Finally, the credentials can be omitted and will then be asked in a prompt.
+
+The default value of the `env` parameter is prod.
 
 ## Usage: Code Sample
 

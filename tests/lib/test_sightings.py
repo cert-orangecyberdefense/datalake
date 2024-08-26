@@ -7,7 +7,7 @@ from responses import matchers
 import os
 
 
-from tests.common.fixture import datalake  # noqa needed fixture import
+from tests.common.fixture import TestData, datalake  # noqa needed fixture import
 from datalake import (
     IpAtom,
     FileAtom,
@@ -57,7 +57,7 @@ end = datetime.strptime("2021-05-11T16:20:23Z", "%Y-%m-%dT%H:%M:%SZ")
 def test_prepare_sightings_payload(datalake):
     atoms = [file_atom, ip_atom, ip_atom1]
     sighting_type = SightingType.POSITIVE
-    visibility = Visibility.PUBLIC
+    description_visibility = Visibility.PUBLIC
     count = 1
     payload_threat_types = [ThreatType.SCAM]
 
@@ -75,7 +75,7 @@ def test_prepare_sightings_payload(datalake):
         ],
         "start_timestamp": "2021-05-10T16:20:23Z",
         "end_timestamp": "2021-05-11T16:20:23Z",
-        "visibility": "PUBLIC",
+        "description_visibility": "PUBLIC",
         "type": "positive",
         "count": 1,
         "threat_types": ["scam"],
@@ -95,7 +95,7 @@ def test_prepare_sightings_payload(datalake):
             start,
             end,
             sighting_type,
-            visibility,
+            description_visibility,
             count,
             payload_threat_types,
             editable=False,
@@ -107,7 +107,7 @@ def test_prepare_sightings_payload(datalake):
 def test_submit_sightings_without_editable(datalake):
     atoms = [file_atom, ip_atom, ip_atom1]
     sighting_type = SightingType.POSITIVE
-    visibility = Visibility.PUBLIC
+    description_visibility = Visibility.PUBLIC
     count = 1
     payload_threat_types = [ThreatType.SCAM]
 
@@ -125,7 +125,7 @@ def test_submit_sightings_without_editable(datalake):
         ],
         "start_timestamp": "2021-05-10T16:20:23Z",
         "end_timestamp": "2021-05-11T16:20:23Z",
-        "visibility": "PUBLIC",
+        "description_visibility": "PUBLIC",
         "type": "positive",
         "count": 1,
         "threat_types": ["scam"],
@@ -144,7 +144,7 @@ def test_submit_sightings_without_editable(datalake):
             start,
             end,
             sighting_type,
-            visibility,
+            description_visibility,
             count,
             payload_threat_types,
         )
@@ -155,7 +155,7 @@ def test_submit_sightings_without_editable(datalake):
 def test_prepare_sightings_payload_with_empty_tags(datalake):
     atoms = [file_atom]
     sighting_type = SightingType.NEUTRAL
-    visibility = Visibility.ORGANIZATION
+    description_visibility = Visibility.ORGANIZATION
     count = 1
 
     expected_payload = {
@@ -172,7 +172,7 @@ def test_prepare_sightings_payload_with_empty_tags(datalake):
         ],
         "start_timestamp": "2021-05-10T16:20:23Z",
         "end_timestamp": "2021-05-11T16:20:23Z",
-        "visibility": "ORGANIZATION",
+        "description_visibility": "ORGANIZATION",
         "type": "neutral",
         "count": 1,
     }
@@ -185,7 +185,14 @@ def test_prepare_sightings_payload_with_empty_tags(datalake):
         clear=True,
     ):
         payload = datalake.Sightings._prepare_sightings_payload(
-            atoms, None, start, end, sighting_type, visibility, count, tags=[]
+            atoms,
+            None,
+            start,
+            end,
+            sighting_type,
+            description_visibility,
+            count,
+            tags=[],
         )
 
     assert expected_payload == payload
@@ -194,7 +201,7 @@ def test_prepare_sightings_payload_with_empty_tags(datalake):
 def test_prepare_sightings_payload_with_impersonate_id(datalake):
     atoms = [file_atom]
     sighting_type = SightingType.NEUTRAL
-    visibility = Visibility.ORGANIZATION
+    description_visibility = Visibility.ORGANIZATION
     count = 1
     impersonate_id = "1234567890"
 
@@ -212,7 +219,7 @@ def test_prepare_sightings_payload_with_impersonate_id(datalake):
         ],
         "start_timestamp": "2021-05-10T16:20:23Z",
         "end_timestamp": "2021-05-11T16:20:23Z",
-        "visibility": "ORGANIZATION",
+        "description_visibility": "ORGANIZATION",
         "type": "neutral",
         "count": 1,
         "impersonate_id": "1234567890",
@@ -231,7 +238,7 @@ def test_prepare_sightings_payload_with_impersonate_id(datalake):
             start,
             end,
             sighting_type,
-            visibility,
+            description_visibility,
             count,
             impersonate_id=impersonate_id,
         )
@@ -241,7 +248,11 @@ def test_prepare_sightings_payload_with_impersonate_id(datalake):
 
 @responses.activate
 def test_submit_sightings(datalake):
-    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/sighting/"
+    url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["submit-sightings"]
+    )
 
     expected_request = {
         "file_list": [
@@ -258,7 +269,7 @@ def test_submit_sightings(datalake):
         "ip_list": [{"ip_address": "8.8.8.8"}, {"ip_address": "9.9.9.9"}],
         "start_timestamp": "2021-05-10T16:20:23Z",
         "end_timestamp": "2021-05-11T16:20:23Z",
-        "visibility": "PUBLIC",
+        "description_visibility": "PUBLIC",
         "type": "positive",
         "count": 1,
         "threat_types": ["phishing", "scam"],
@@ -454,13 +465,17 @@ def test_sightings_filtered_bad_type(datalake):
 
 def test_sightings_filtered_bad_visibility(datalake):
     with pytest.raises(ValueError) as err:
-        datalake.Sightings.sightings_filtered(visibility="bad_visibility")
+        datalake.Sightings.sightings_filtered(description_visibility="bad_visibility")
     assert str(err.value) == "visibility has to be an instance of the Visibility class."
 
 
 @responses.activate
 def test_sightings_filtered(datalake):
-    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/sighting/filtered/"
+    url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["sighting-filtered"]
+    )
     expected_payload = {"threat_hashkey": "f39cbce3c4d30d61ccdc99c5fcb3bf6f"}
     expected = {
         "count": 1,

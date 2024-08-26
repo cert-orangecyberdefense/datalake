@@ -31,7 +31,7 @@ class Datalake:
         username: str = None,
         password: str = None,
         longterm_token: str = None,
-        env="prod",
+        env: str = "prod",
         log_level=logging.WARNING,
     ):
         configure_logging(log_level)

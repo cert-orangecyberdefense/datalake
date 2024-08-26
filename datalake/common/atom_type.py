@@ -67,6 +67,15 @@ class Hashes:
 
 
 @dataclass
+class AndroidApp:
+    package_name: str
+    app_name: str = None
+    developer: str = None
+    version_name: str = None
+    permissions: str = None
+
+
+@dataclass
 class FileAtom(Atom):
     """
     Allowed sighting key: ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
@@ -80,6 +89,7 @@ class FileAtom(Atom):
     mimetype: str = None
     filename: str = None
     filepath: str = None
+    android: AndroidApp = None
 
     def _get_sightings_allowed_keys(self):
         return ["hashes", "md5", "sha1", "sha256", "sha512"]
@@ -89,49 +99,8 @@ class FileAtom(Atom):
 
 
 @dataclass
-class AndroidApp:
-    package_name: str
-    app_name: str = None
-    developer: str = None
-    version_name: str = None
-    permissions: str = None
-
-
-@dataclass
-class ApkAtom(Atom):
-    """
-    Allowed sighting key: ['android', 'package_name', 'version_name', 'hashes', 'md5', 'sha1', 'sha256', 'sha512']
-    """
-
-    android: AndroidApp
-    hashes: Hashes
-    external_analysis_link: List[str] = None
-    filesize: int = None
-    filetype: str = None
-    file_url: str = None
-    mimetype: str = None
-    filename: str = None
-    filepath: str = None
-
-    def _get_sightings_allowed_keys(self):
-        return [
-            "android",
-            "package_name",
-            "version_name",
-            "hashes",
-            "md5",
-            "sha1",
-            "sha256",
-            "sha512",
-        ]
-
-    def _get_sightings_prefix(self):
-        return "apk"
-
-
-@dataclass
 class AsAtom(Atom):
-    """
+    """k
     Allowed sighting key: ['asn']
     """
 
@@ -148,28 +117,6 @@ class AsAtom(Atom):
 
     def _get_sightings_prefix(self):
         return "as"
-
-
-@dataclass
-class CcAtom(Atom):
-    """
-    Allowed sighting key: ['number']
-    number: minLength = 8  maxLength = 19
-    """
-
-    number: str
-    external_analysis_link: List[str] = None
-    bin: int = None
-    brand: str = None
-    cvx: int = None
-    description: str = None
-    expiry_date: str = None
-
-    def _get_sightings_allowed_keys(self):
-        return ["number"]
-
-    def _get_sightings_prefix(self):
-        return "cc"
 
 
 @dataclass
@@ -198,28 +145,6 @@ class CryptoAtom(Atom):
 
 
 @dataclass
-class CveAtom(Atom):
-    """
-    Allowed sighting key: ['cve_id']
-    """
-
-    """
-    published_at expect the following datetime format: '%Y-%m-%dT%H:%M:%SZ'
-    """
-    cve_id: str
-    cvss: int = None
-    cwe: str = None
-    external_analysis_link: List[str] = None
-    published_at: str = None
-
-    def _get_sightings_allowed_keys(self):
-        return ["cve_id"]
-
-    def _get_sightings_prefix(self):
-        return "cve"
-
-
-@dataclass
 class Jarm:
     calculated_at: str = None
     fingerprint: str = None
@@ -237,6 +162,8 @@ class DomainAtom(Atom):
     external_analysis_link: List[str] = None
     malware_family: str = None
     jarm: Jarm = None
+    port: List[int] = None
+    ns: List[str] = None
 
     def _get_sightings_allowed_keys(self):
         return ["domain"]
@@ -265,47 +192,6 @@ class EmailAtom(Atom):
 
     def _get_sightings_prefix(self):
         return "email"
-
-
-@dataclass
-class FqdnAtom(Atom):
-    """
-    Allowed sighting key: ['fqdn']
-    """
-
-    fqdn: str
-    jarm: Jarm = None
-    malware_family: str = None
-    port: List[int] = None
-    ns: List[str] = None
-    external_analysis_link: List[str] = None
-
-    def _get_sightings_allowed_keys(self):
-        return ["fqdn"]
-
-    def _get_sightings_prefix(self):
-        return "fqdn"
-
-
-@dataclass
-class IbanAtom(Atom):
-    """
-    Allowed sighting key: ['iban']
-    """
-
-    iban: str
-    holder_name: str = None
-    holder_address: str = None
-    external_analysis_link: List[str] = None
-    bic: str = None
-    bank_name: str = None
-    bank_address: str = None
-
-    def _get_sightings_allowed_keys(self):
-        return ["iban"]
-
-    def _get_sightings_prefix(self):
-        return "iban"
 
 
 @dataclass
@@ -361,66 +247,28 @@ class IpRangeAtom(Atom):
 
 
 @dataclass
-class PasteAtom(Atom):
-    """
-    Allowed sighting key: ['url']
-    """
-
-    url: str
-    author: str = None
-    title: str = None
-    content: str = None
-    external_analysis_link: List[str] = None
-
-    def _get_sightings_allowed_keys(self):
-        return ["url"]
-
-    def _get_sightings_prefix(self):
-        return "paste"
-
-
-@dataclass
 class PhoneNumberAtom(Atom):
     """
-    Allowed sighting key: ['international_phone_number', 'national_phone_number']
+    Allowed sighting key: 'international_phone_number'
     """
 
     """
     country: minLength = 2  maxLength = 2
     """
+    international_phone_number: str
     company: str = None
     country: str = None
     external_analysis_link: List[str] = None
-    international_phone_number: str = None
-    national_phone_number: str = None
 
     def _get_sightings_allowed_keys(self):
-        return ["international_phone_number", "national_phone_number"]
+        return ["international_phone_number"]
 
     def _get_sightings_prefix(self):
         return "phone_number"
 
 
 @dataclass
-class RegKeyAtom(Atom):
-    """
-    Allowed sighting key: ['path']
-    """
-
-    path: str
-    regkey_value: str = None
-    hive: str = None
-    external_analysis_link: List[str] = None
-
-    def _get_sightings_allowed_keys(self):
-        return ["path"]
-
-    def _get_sightings_prefix(self):
-        return "regkey"
-
-
-@dataclass
-class SslAtom(Atom):
+class CertificateAtom(Atom):
     """
     Allowed sighting key: ['hashes', 'md5', 'sha1', 'sha256', 'sha512']
     """
@@ -440,7 +288,7 @@ class SslAtom(Atom):
         return ["hashes", "md5", "sha1", "sha256", "sha512"]
 
     def _get_sightings_prefix(self):
-        return "ssl"
+        return "certificate"
 
 
 @dataclass

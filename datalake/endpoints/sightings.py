@@ -11,7 +11,7 @@ class Sightings(Endpoint):
         start_timestamp: datetime,
         end_timestamp: datetime,
         sighting_type: SightingType,
-        visibility: Visibility,
+        description_visibility: Visibility,
         count: int,
         threat_types: List[ThreatType] = None,
         tags: List[str] = None,
@@ -35,7 +35,7 @@ class Sightings(Endpoint):
             start_timestamp,
             end_timestamp,
             sighting_type,
-            visibility,
+            description_visibility,
             count,
             threat_types,
             tags,
@@ -50,7 +50,13 @@ class Sightings(Endpoint):
 
     @staticmethod
     def _check_sightings_payload_parameters(
-        atoms, hashkeys, sighting_type, visibility, count, threat_types, relation
+        atoms,
+        hashkeys,
+        sighting_type,
+        description_visibility,
+        count,
+        threat_types,
+        relation,
     ):
         if not atoms and not hashkeys:
             raise ValueError(
@@ -72,7 +78,7 @@ class Sightings(Endpoint):
                 )
         elif threat_types:
             raise ValueError("For NEUTRAL sightings, threat_types can't be passed.")
-        if not isinstance(visibility, Visibility):
+        if not isinstance(description_visibility, Visibility):
             raise ValueError(
                 "visibility has to be an instance of the Visibility class."
             )
@@ -88,7 +94,7 @@ class Sightings(Endpoint):
         start_timestamp,
         end_timestamp,
         sighting_type: SightingType,
-        visibility,
+        description_visibility,
         count,
         threat_types=None,
         tags=None,
@@ -101,7 +107,13 @@ class Sightings(Endpoint):
         Internal function to prepare a list of Atoms for sighting submission to the format the API expects.
         """
         self._check_sightings_payload_parameters(
-            atoms, hashkeys, sighting_type, visibility, count, threat_types, relation
+            atoms,
+            hashkeys,
+            sighting_type,
+            description_visibility,
+            count,
+            threat_types,
+            relation,
         )
         payload = {}
         # atoms and hashkeys can both be None
@@ -123,7 +135,7 @@ class Sightings(Endpoint):
 
         payload["start_timestamp"] = start_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
         payload["end_timestamp"] = end_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
-        payload["visibility"] = visibility.value
+        payload["description_visibility"] = description_visibility.value
         payload["type"] = sighting_type.value
         payload["count"] = count
 
@@ -155,7 +167,7 @@ class Sightings(Endpoint):
         end_timestamp_date: str = None,
         tags: list = None,
         sighting_type: SightingType = None,
-        visibility: Visibility = None,
+        description_visibility: Visibility = None,
     ):
         """
         Retrieve a list of filtered sightings.
@@ -183,9 +195,9 @@ class Sightings(Endpoint):
                 "sighting_type has to be an instance of the SightingType class."
             )
         if (
-            visibility is not None
-            and visibility
-            and not isinstance(visibility, Visibility)
+            description_visibility is not None
+            and description_visibility
+            and not isinstance(description_visibility, Visibility)
         ):
             raise ValueError(
                 "visibility has to be an instance of the Visibility class."
@@ -202,7 +214,9 @@ class Sightings(Endpoint):
             "end_timestamp_date": end_timestamp_date,
             "tags": tags,
             "type": sighting_type.value if sighting_type is not None else None,
-            "visibility": visibility.value if visibility is not None else None,
+            "description_visibility": description_visibility.value
+            if description_visibility is not None
+            else None,
         }
         payload = {k: v for k, v in payload.items() if v is not None}
         url = self._build_url_for_endpoint("sighting-filtered")

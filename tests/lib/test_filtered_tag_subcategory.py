@@ -2,7 +2,7 @@ import pytest
 import responses
 import json
 from datalake import Datalake
-from tests.common.fixture import datalake
+from tests.common.fixture import TestData, datalake
 
 mock_results_data = [
     {
@@ -71,7 +71,9 @@ mock_results_data = [
 def mock_api_response():
     responses.add(
         responses.POST,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/tag-subcategory/filtered/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["filtered-tag-subcategory"],
         json={"results": mock_results_data},  # Only return the "results" part
         status=200,
     )
@@ -92,9 +94,11 @@ def test_get_filtered_and_sorted_list(datalake: Datalake):
     assert response["results"] == mock_results_data
     # Verify the structure and content of the "results" part
     assert isinstance(response["results"], list), "Results should be a list"
-    assert responses.calls[
-        0
-    ].request.url, "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/tag-subcategory/filtered/"
+    assert responses.calls[0].request.url, (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["filtered-tag-subcategory"]
+    )
     assert responses.calls[0].request.method, "POST"
     request_body = json.loads(responses.calls[0].request.body)
     assert request_body["category_name"], params["category_name"]
