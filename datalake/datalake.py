@@ -31,7 +31,7 @@ class Datalake:
         username: str = None,
         password: str = None,
         longterm_token: str = None,
-        env="prod",
+        env: str = "prod",
         log_level=logging.WARNING,
         proxies: dict = None,
         verify: bool = True,
@@ -88,7 +88,7 @@ class Datalake:
         end_timestamp_date: str = None,
         tags: list = None,
         sighting_type: SightingType = None,
-        visibility: Visibility = None,
+        description_visibility: Visibility = None,
     ):
         atom_extract = self.Threats.atom_values_extract([atom_value])
 
@@ -123,5 +123,5 @@ class Datalake:
             end_timestamp_date,
             tags,
             sighting_type,
-            visibility,
+            description_visibility,
         )

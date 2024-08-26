@@ -129,8 +129,3 @@ to assert that the code is linted, if not, you'll have to run :
 ```shell script
 make lint
 ```
-
-setup-prepush-hook:
-  sh setup-prepush-hook.sh
-lint:
-  black .

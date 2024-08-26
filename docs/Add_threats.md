@@ -26,7 +26,7 @@ From CSV file:
 To create threats:
 
     ocd-dtl add_threats -o output_file.json -t ddos 50 scam 15 -i ip_list.txt -a IP --tag test0 test32 test320 
-    ocd-dtl add_threats -o output_file.json -t ddos 50 scam 15 -i ip_list.csv -a IP --tag test0 test32 test320 --is_csv -d , -c 1
+    ocd-dtl add_threats -o output_file.json -t ddos 50 scam 15 -i ip_list.csv -a IP --tag test0 test32 test320 --is_csv -d , -c 2
 
 #### Parameters
 Required:
@@ -46,7 +46,7 @@ Optional flags:
 * `-d` to specify a custom delimiter  
 * `-c` to select the starting column (starting at **1**)  
 * `--link` to provide a link i.e. a URL that will be filled in "external_analysis_link"  
-* `--permanent` to set override_type to permanent. For scores that should not be updated by the algorithm  
+* `--lock` to set override_type to lock. For scores that should not be updated by the algorithm during three months 
 * `-o` will set the output file as the API gives it*.  
 * `-e` to change the environment {preprod, prod},  default is **prod**   
 
