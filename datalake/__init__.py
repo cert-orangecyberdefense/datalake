@@ -4,6 +4,7 @@ from .api_objects.bulk_search_task import (
     BulkSearchFailedError,
     BulkSearchNotFound,
 )
+
 from .common.atom import (
     AtomType,
     ThreatType,
@@ -12,29 +13,23 @@ from .common.atom import (
     Visibility,
     SightingRelation,
 )
+
 from .common.atom_type import (
     Atom,
     Hashes,
     FileAtom,
     AndroidApp,
-    ApkAtom,
     AsAtom,
-    CcAtom,
     CryptoAtom,
-    CveAtom,
     Jarm,
     DomainAtom,
     EmailFlow,
     EmailAtom,
-    FqdnAtom,
-    IbanAtom,
     IpService,
     IpAtom,
     IpRangeAtom,
-    PasteAtom,
     PhoneNumberAtom,
-    RegKeyAtom,
-    SslAtom,
+    CertificateAtom,
     UrlAtom,
 )
 from .common.output import Output

@@ -4,12 +4,29 @@ import pytest
 import responses
 
 from datalake import Datalake, Output, AtomType, ThreatType, OverrideType, IpAtom
-from tests.common.fixture import datalake  # noqa needed fixture import
+from tests.common.fixture import (
+    TestData,
+    datalake,
+    datalake_preprod,
+)  # noqa needed fixture import
 
 atoms = ["mayoclinic.org", "commentcamarche.net", "gawker.com"]
 
-atom_values_extract_url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/atom-values-extract/"
-lookup_url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/"
+atom_values_extract_url = (
+    TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+    + TestData.TEST_CONFIG["api_version"]
+    + TestData.TEST_CONFIG["endpoints"]["atom-values-extract"]
+)
+lookup_url = (
+    TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+    + TestData.TEST_CONFIG["api_version"]
+    + TestData.TEST_CONFIG["endpoints"]["lookup"]
+)
+bulk_lookup_url = (
+    TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+    + TestData.TEST_CONFIG["api_version"]
+    + TestData.TEST_CONFIG["endpoints"]["threats-bulk-lookup"]
+)
 
 
 @responses.activate
@@ -60,13 +77,7 @@ def test_lookup_threat(datalake):
                 "max_depth": 1,
                 "min_depth": 1,
                 "source_id": "virustotal_url_feed (notify)",
-                "source_policy": {
-                    "source_categories": ["threatintell", "reputation", "antivirus"],
-                    "source_conditions": "yes",
-                    "source_name_display": ["restricted_internal"],
-                    "source_references_conditions": "no resell",
-                    "source_uses": ["notify"],
-                },
+                "source_uses": ["notify"],
                 "tlp": "amber",
             }
         ],
@@ -138,9 +149,6 @@ def test_bulk_lookup_threats(datalake):
         "not_found": 0,
         "results": {"domain": ["mayoclinic.org"]},
     }
-    bulk_lookup_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/"
-    )
     responses.add(
         responses.POST, atom_values_extract_url, json=extractor_response, status=200
     )
@@ -243,9 +251,6 @@ def test_bulk_lookup_return_search_hashkey(datalake):
         "not_found": 0,
         "results": {"domain": ["mayoclinic.org"]},
     }
-    bulk_lookup_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/"
-    )
     responses.add(
         responses.POST, atom_values_extract_url, json=extractor_response, status=200
     )
@@ -281,10 +286,6 @@ def test_bulk_lookup_return_search_hashkey(datalake):
 
 @responses.activate
 def test_bulk_lookup_threats_on_typed_atoms(datalake):
-    bulk_lookup_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/"
-    )
-
     bulk_resp = {
         "file": [{"uid": "123"}]
     }  # Only check the API response is returned as is
@@ -299,9 +300,6 @@ def test_bulk_lookup_threats_on_typed_atoms(datalake):
 @responses.activate
 def test_bulk_lookup_threats_on_big_chunk_json(datalake):
     atom_values = [f"domain{i}.com" for i in range(10_000)]
-    bulk_lookup_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/"
-    )
 
     def request_callback(req):
         assert req.headers["Accept"] == "application/json"
@@ -339,9 +337,6 @@ def test_bulk_lookup_threats_on_big_chunk_json(datalake):
 @responses.activate
 def test_bulk_lookup_threats_on_big_chunk_csv(datalake):
     atom_values = [f"domain{i}.com" for i in range(5_000)]
-    bulk_lookup_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/bulk-lookup/"
-    )
     header = "hashkey,atom_type,atom_value,atom_value_best_matching,threat_found,events_number,first_seen,last_updated,threat_types,ddos.score.risk,fraud.score.risk,hack.score.risk,leak.score.risk,malware.score.risk,phishing.score.risk,scam.score.risk,scan.score.risk,spam.score.risk,sources,tags,href_graph,href_history,href_threat,href_threat_webGUI"
 
     def request_callback(req):
@@ -478,7 +473,11 @@ def test_add_threats_bad_atom(datalake: Datalake):
 
 @responses.activate
 def test_add_threats_no_bulk(datalake: Datalake):
-    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats-manual/"
+    url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["threats-manual"]
+    )
     ip = IpAtom(
         ip_address="11.11.111.1",
         external_analysis_link=["https://somelink.co"],
@@ -525,7 +524,9 @@ def test_add_threats_no_bulk(datalake: Datalake):
 @responses.activate
 def test_add_threats_bulk(datalake: Datalake):
     url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-manual-threats/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["threats-manual-bulk"]
     )
     atom_list = ["1.1.1.1", "1.1.1.2"]
     task_uid = "5b127e18-b471-44ae-ae34-e616d74d63a9"
@@ -533,7 +534,13 @@ def test_add_threats_bulk(datalake: Datalake):
     post_resp = {"hashkeys": hashkeys, "task_uuid": task_uid}
     responses.add(responses.POST, url, json=post_resp, status=202)
 
-    url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-manual-threats/task/{task_uid}/"
+    url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["retrieve-threats-manual-bulk"].replace(
+            "{task_uuid}", task_uid
+        )
+    )
     get_resp = {  # Returns the DONE response right away
         "atom_type": "ip",
         "atom_values": atom_list,
@@ -649,14 +656,22 @@ def test_atom_values_bad_output(datalake: Datalake):
 
 @responses.activate
 def test_atom_values_bad_source(datalake: Datalake):
-    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/sources/"
+    url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["sources"]
+    )
     get_resp = {
         "count": 1,
         "results": [{"description": "source_a description", "id": "source_a"}],
     }
     responses.add(responses.GET, url, json=get_resp, status=200)
 
-    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/atom-values/"
+    url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["threats-atom-values"]
+    )
     post_resp = [
         {
             "atom_value": "atom_value_1",
@@ -684,14 +699,22 @@ def test_atom_values_bad_source(datalake: Datalake):
 
 @responses.activate
 def test_atom_values(datalake: Datalake):
-    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/sources/"
+    url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["sources"]
+    )
     get_resp = {
         "count": 1,
         "results": [{"description": "source_a description", "id": "source_a"}],
     }
     responses.add(responses.GET, url, json=get_resp, status=200)
 
-    url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/atom-values/"
+    url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["threats-atom-values"]
+    )
     post_resp = [
         {
             "atom_value": "atom_value_1",
@@ -717,19 +740,31 @@ def test_atom_values(datalake: Datalake):
 
 
 @responses.activate
-def test_preprod_atom_values():
-    url = "https://ti.extranet.mrti-center.com/api/v2/mrti/sources/"
+def test_preprod_atom_values(datalake_preprod):
+    url = (
+        TestData.TEST_CONFIG["main"]["preprod"]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["sources"]
+    )
     get_resp = {
         "count": 1,
         "results": [{"description": "source_a description", "id": "source_a"}],
     }
     responses.add(responses.GET, url, json=get_resp, status=200)
 
-    url = "https://ti.extranet.mrti-center.com/api/v2/auth/token/"
+    url = (
+        TestData.TEST_CONFIG["main"]["preprod"]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["token"]
+    )
     auth_response = {"access_token": "access_token", "refresh_token": "refresh_token"}
     responses.add(responses.POST, url, json=auth_response, status=200)
 
-    url = "https://ti.extranet.mrti-center.com/api/v2/mrti/atom-values/"
+    url = (
+        TestData.TEST_CONFIG["main"]["preprod"]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["threats-atom-values"]
+    )
     post_resp = [
         {
             "atom_value": "atom_value_1",
@@ -746,9 +781,8 @@ def test_preprod_atom_values():
     ]
     responses.add(responses.POST, url, json=post_resp, status=200)
 
-    datalake = Datalake(env="preprod", username="username", password="password")
     assert (
-        datalake.Threats.atom_values(
+        datalake_preprod.Threats.atom_values(
             ["source_a"], "2023-09-17T07:16:26.345Z", "2023-09-17T08:08:23.345Z"
         )
         == post_resp
