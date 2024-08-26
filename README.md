@@ -41,7 +41,6 @@ dtl.Threats.lookup(
 
 
 
-
 ### Using as a CLI 
 
 The cli can be used with:
