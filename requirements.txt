@@ -1,4 +1,4 @@
-requests==2.26.0
+requests==2.31.0
 halo==0.0.31
 pytest==6.2.5
 responses==0.21.0
