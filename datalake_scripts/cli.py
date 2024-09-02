@@ -3,7 +3,7 @@ import argparse
 import sys
 from datalake_scripts.scripts import (
     add_threats,
-    get_threats_by_hashkey,
+    get_threats,
     edit_score,
     get_threats_from_query_hash,
     add_comments,
@@ -34,9 +34,7 @@ class Cli:
 
         # Add a subparser for each command
         self._add_command_subparser(subparsers, "add_threats", add_threats.main)
-        self._add_command_subparser(
-            subparsers, "get_threats", get_threats_by_hashkey.main
-        )
+        self._add_command_subparser(subparsers, "get_threats", get_threats.main)
         self._add_command_subparser(subparsers, "get_atom_values", get_atom_values.main)
         self._add_command_subparser(
             subparsers, "get_threats_from_query_hash", get_threats_from_query_hash.main

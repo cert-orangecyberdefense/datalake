@@ -87,7 +87,7 @@ class FileAtom(Atom):
     filetype: str = None
     file_url: str = None
     mimetype: str = None
-    filename: str = None
+    filename: List[str] = None
     filepath: str = None
     android: AndroidApp = None
 
