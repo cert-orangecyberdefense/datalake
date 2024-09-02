@@ -6,11 +6,6 @@ from datalake import Datalake
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.helper_scripts.utils import load_json
 
-# Configure logging to show only INFO level messages
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("OCD_DTL")
-logger.setLevel(logging.INFO)
-
 
 def pretty_output_tabular(data: dict):
     table = PrettyTable()
@@ -24,8 +19,8 @@ def pretty_output_tabular(data: dict):
     RESET = "\033[0m"
 
     for add, remove in zip_longest(
-        sorted(data["added"], key=lambda x: x[0]),
-        sorted(data["removed"], key=lambda x: x[0]),
+        sorted(data.get("added", []), key=lambda x: x[0]),
+        sorted(data.get("removed", []), key=lambda x: x[0]),
         fillvalue=["", ""],
     ):
         add_str = f"{GREEN}{add[0]} - {add[1]}{RESET}" if add else ""
@@ -45,7 +40,9 @@ def main(override_args=None):
         "Watch or monitor a search from given query body or query hash."
     )
     parser.add_argument("-i", "--input", help="read query body from a json file")
-    parser.add_argument("--query-hash", help="sets the query hash for the search watch")
+    parser.add_argument(
+        "-qh", "--query-hash", help="sets the query hash for the search watch"
+    )
     parser.add_argument(
         "-of",
         "--output-folder",
@@ -68,15 +65,17 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-    logger.debug(f"START: search_watch.py")
 
     dtl = Datalake(env=args.env, log_level=args.loglevel)
+
+    dtl.logger.debug(f"START: search_watch.py")
+
     query_body = {}
     if args.input:
         try:
             query_body = load_json(args.input)
         except ValueError as e:
-            logger.error(e)
+            dtl.logger.error(e)
             exit(1)
 
     try:
@@ -89,19 +88,19 @@ def main(override_args=None):
         )
     except FileNotFoundError as e:
         if "Reference file not found" in str(e):
-            logger.error(
+            dtl.logger.error(
                 f"\x1b[0;37;41m File to compare with {args.filename} does not exist check for its correct path \x1b[0m"
             )
         elif "Error with the output folder" in str(e):
-            logger.error(
+            dtl.logger.error(
                 f"\x1b[0;37;41m Error with the input {args.output_folder} : {e} \x1b[0m"
             )
         else:
-            logger.error(f"\x1b[0;37;41m An error occured : {e} \x1b[0m")
+            dtl.logger.error(f"\x1b[0;37;41m An error occured : {e} \x1b[0m")
         exit(1)
 
     pretty_output_tabular(diff_threats)
-    logger.debug(f"END: search_watch.py")
+    dtl.logger.debug(f"END: search_watch.py")
 
 
 if __name__ == "__main__":
