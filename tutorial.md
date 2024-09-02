@@ -40,7 +40,7 @@ dtl = Datalake(username='username', password='password', env='preprod')
 
 You can also set your credentials in os environment variables (these values will only be used if you do not set the args when creating the instance):
 * `OCD_DTL_LONGTERM_TOKEN` a long term token associated to your Datalake account. If this one is set, the username and password environment variables below will be ignored. Please be aware than not all requests can use long term tokens, some endpoints will require fresh tokens, ie a Datalake instance initiated with username and password.
-The endpoints requiring fresh tokens will mention it in their description available [here](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)
+The endpoints requiring fresh tokens will mention it in their description available [here](https://datalake.cert.orangecyberdefense.com/api/v3/docs/)
 
 or
 
@@ -56,16 +56,24 @@ The default value of the `env` parameter is prod.
 Below are some examples to get you started
 
 * [Lookup a threat](#lookup-a-threat)
+* [Get threats](#get-threats)
+* [Atom values](#atom-values)
 * [Bulk look up](#bulk-look-up)
 * [Bulk search](#bulk-search)
 * [Add a threat (with all details)](#add-a-threat-with-all-details)
 * [Bulk add threats at once (atom values only)](#bulk-add-threats-at-once-atom-values-only)
 * [Add tags](#add-tags)
+* [Add comments](#add-comments)
 * [Edit score](#edit-score)
 * [Advanced Search](#advanced-search)
+* [Sources](#sources)
 * [Sightings](#sightings)
 * [Search Sightings](#search-sightings)
 * [Search Watch](#search-watch)
+
+For more information on the API endpoints
+see [the API documentation](https://datalake.cert.orangecyberdefense.com/api/v3/docs/)
+
 
 ### Lookup a threat
 
@@ -84,6 +92,19 @@ dtl.Threats.lookup(
 Note that only the atom_value is required:
 
     dtl.Threats.lookup('mayoclinic.org')
+
+### Get threats
+
+You can retrieve threats with a list of hashkeys
+
+```python
+from datalake import Datalake
+
+dtl = Datalake(username='username', password='password')
+dtl.Threats.get_threats_with_comments(
+    hashkeys=['00000001655688982ec8ba4058f02dd1'],
+)
+```
 
 ### Atom values
 
@@ -228,14 +249,14 @@ dtl = Datalake(username='username', password='password')
 # Adding empty file
 hashes = Hashes(md5='d41d8cd98f00b204e9800998ecf8427e', sha1='da39a3ee5e6b4b0d3255bfef95601890afd80709',
                 sha256='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
-empty_file = FileAtom(hashes=hashes, filesize=0, filetype='txt', filename='empty.txt',
+empty_file = FileAtom(hashes=hashes, filesize=0, filetype='txt', filename=['empty.txt'],
                       external_analysis_link=['https://www.computerhope.com/issues/ch001314.htm'])
 
 dtl.Threats.add_threat(atom=empty_file, threat_types=[{'threat_type': ThreatType.MALWARE, 'score': 0}],
                        override_type=OverrideType.TEMPORARY,
                        public=True, tags=['empty_file'])
 # Adding Google DNS IP
-dns_service = IpService(port=53, service_name='dns', application='dns', protocol='UDP')
+dns_service = IpService(port=53, service_name='dns', application='dns', protocol='udp')
 google_dns_ip = IpAtom(ip_address='52.48.79.33',
                        external_analysis_link=['https://www.virustotal.com/gui/ip-address/8.8.8.8'], ip_version=4,
                        services=[dns_service], owner='Google')
@@ -327,38 +348,33 @@ public = False
 dtl.Tags.add_to_threat(hashkey, tags, public)
 ```
 
+### Add comments
+
+A quick and easy way to add same comment to a list of threats
+
+```python
+from datalake import Datalake
+
+dtl = Datalake(username='username', password='password')
+hashkey = '00000001655688982ec8ba4058f02dd1'
+comment = "some comment"
+public = False
+
+dtl.Comments.post_comments(hashkey, comment, public)
+```
+
+It will return two lists, hashkeys of threats correctly updated and a list for the other ones not updated with the comment
+
 ### Get filtered tag subcategory
 
 Filtered & Sorted Tags/Subcategory List Retrieval Tutorial
 
-#### Implementation
-
-#### Step 1: Import Dependency
-
-Ensure you have the required module imported into your script:
-
-```python
-from datalake import Datalake
-```
-
-#### Step 2: Instantiate `FilteredTagSubcategory`
-
-Create an object of the `FilteredTagSubcategory` with the necessary configuration:
-
-```python
-dtl = Datalake(username='<username>', password='<password>')
-tag_subcategory_list = dtl.FilteredTagSubcategory.get_filtered_and_sorted_list()
-```
-####  Step 3: Data Retrieval
-
-Invoke the `get_filtered_and_sorted_list` method with the desired parameters:
-
-#### Step 4: Output Handling
-
-Choose the output method that best suits your needs:
-
 ```python
 import json
+from datalake import Datalake
+
+dtl = Datalake(username='<username>', password='<password>')
+tag_subcategory_list = dtl.FilteredTagSubcategory.get_filtered_and_sorted_list()
 
 # To print to console
 print(json.dumps(tag_subcategory_list, indent=4))
@@ -367,6 +383,7 @@ print(json.dumps(tag_subcategory_list, indent=4))
 with open('output.json', 'w') as f:
     json.dump(subcategories, f, indent=4)
 ```
+You can use functions parameters to filter and/or sort the results.
 
 ### Edit score
 
@@ -445,6 +462,21 @@ adv_search_body_resp = dtl.AdvancedSearch.advanced_search_from_query_body(query_
                                                                           ordering=['-first_seen'], output=Output.JSON)
 ````
 
+### Sources
+
+You can check if a provided list of sources (their ids) exist in Datalake.
+Return two elements:
+- a boolean set to True if all sources exists in Datalake, False otherwise
+- a list containing the non-existing sources ids
+
+```python
+from datalake import Datalake
+
+dtl = Datalake(username='username', password='password')
+bool_all_sources_exists, invalid_sources = dtl.Sources.check_sources(["source_a","source_b"])
+
+```
+
 ### Sightings
 
 Sightings can be submitted using the library using a list of atoms:
@@ -460,13 +492,13 @@ hashes = Hashes(md5='d41d8cd98f00b204e9800998ecf8427e', sha1='da39a3ee5e6b4b0d32
                 sha256='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
 f1 = FileAtom(hashes=hashes)
 ip1 = IpAtom('52.48.79.33')
-em1 = EmailAtom('hacker@hacker.ha')
+em1 = EmailAtom('hacker@hacker.fr')
 url1 = UrlAtom('http://notfishing.com')
 
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
 # building sighting timestamps 
-start = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
-end = datetime.datetime.utcnow()
+start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)
+end = datetime.datetime.now(datetime.timezone.utc)
 
 # submit sighting
 dtl.Sightings.submit_sighting(start_timestamp=start, end_timestamp=end, sighting_type=SightingType.POSITIVE,
@@ -481,8 +513,8 @@ from datalake import Datalake, SightingType, Visibility, ThreatType
 import datetime
 
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
-start = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
-end = datetime.datetime.utcnow()
+start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)
+end = datetime.datetime.now(datetime.timezone.utc)
 
 dtl = Datalake(username='username', password='password')
 resp = dtl.Sightings.submit_sighting(start, end, SightingType.POSITIVE, Visibility.PUBLIC, 1, threat_types,
@@ -521,7 +553,7 @@ From an atom value:
 from datalake import Datalake, SightingType, Visibility
 
 dtl = Datalake(username='username', password='password')
-resp = dtl.sightings_filtered_from_atom_value(
+resp = dtl.Sightings.sightings_filtered_from_atom_value(
     "8.8.8.8", 
     limit=100, 
     offset=0, 
@@ -531,12 +563,6 @@ resp = dtl.sightings_filtered_from_atom_value(
 ```
 
 See the API documentation below for a list of available options.
-
-### API documentation
-
-For more information on the API used by this library,
-see [the documentation](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)
-
 
 ### Search Watch
 
@@ -577,4 +603,9 @@ It can take either a **query_body** or a **query_hash** as **required input**. A
   }
 }
 ```
+
+### API documentation
+
+For more information on the API used by this library,
+see [the documentation](https://datalake.cert.orangecyberdefense.com/api/v3/docs/)
 

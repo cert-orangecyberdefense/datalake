@@ -1,19 +1,21 @@
 """
 This is all common functions for basics scripts
 """
+
 import argparse
 import logging
 import os
-from typing import Tuple
-
-from datalake.common.config import Config
-from datalake.common.logger import configure_logging, logger
-from datalake.common.token_manager import TokenManager
 
 FOLDER_ABSOLUTE_PATH = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
 
 
+class InvalidHeader(Exception):
+    pass
+
+
 class BaseScripts:
+    ACCEPTED_HEADERS = {"json": "application/json", "csv": "text/csv"}
+
     @staticmethod
     def start(
         description: str, output_file_required: bool = False
@@ -21,10 +23,10 @@ class BaseScripts:
         """
         Create a common parser for all the scripts.
             Parser will contain:
-                --output,  name of the output file
-                --env,     name of the environment of scripting
-                --debug, if set, will show debug text
-                --verbose, if set, will show information text
+                -o/--output,  name of the output file
+                -e/--env,     name of the environment of scripting
+                -D/--debug, if set, will show debug messages
+                -q/--quiet, if set, will only show warning and error messages
         """
 
         parser = argparse.ArgumentParser(
@@ -33,19 +35,20 @@ class BaseScripts:
         parser.add_argument(
             "-o",
             "--output",
-            help="Output FILE path from script",
+            help="output file path from script",
             required=output_file_required,
         )
         parser.add_argument(
             "-e",
             "--env",
-            help="Execute on specified environment (Default: prod)",
+            help="execute on specified environment, default value is prod.",
             choices=["prod", "preprod"],
             default="prod",
         )
         parser.add_argument(
+            "-D",
             "--debug",
-            help="Enable ",
+            help="enable debug logs, default log level is info",
             action="store_const",
             dest="loglevel",
             const=logging.DEBUG,
@@ -54,30 +57,23 @@ class BaseScripts:
         parser.add_argument(
             "-q",
             "--quiet",
-            help="Silence the output to only show warnings/errors",
+            help="silence the output to only show warnings/errors, default log level is info",
             action="store_const",
             dest="loglevel",
             const=logging.WARNING,
+            default=logging.INFO,
         )
         return parser
 
-    def load_config(
-        self, args, username=None, password=None
-    ) -> Tuple[dict, TokenManager]:
-        """Load correct config and generate first tokens"""
-        configure_logging(args.loglevel)
-        endpoint_config = Config().load_config()
-        token_manager = TokenManager(
-            endpoint_config,
-            username=username,
-            password=password,
-            environment=args.env,
+    @staticmethod
+    def output_type2header(value):
+        """
+        this method gets the CLI input arg value and generate the header content-type
+        :param value: value to header
+        :return: returns content-type header or raise an exception if there isn't an associated content-type value
+        """
+        if value.lower() in BaseScripts.ACCEPTED_HEADERS:
+            return BaseScripts.ACCEPTED_HEADERS[value.lower()]
+        raise InvalidHeader(
+            f"{value.lower()} is not a valid. Use some of {BaseScripts.ACCEPTED_HEADERS.keys()}"
         )
-        try:
-            token_manager.get_token()
-        except ValueError:
-            logger.error(
-                "Couldn't generate Tokens, please check the login/password provided"
-            )
-            exit()
-        return endpoint_config, token_manager
