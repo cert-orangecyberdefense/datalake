@@ -1,6 +1,7 @@
 """
 Enums for atom properties
 """
+
 from enum import Enum
 from typing import Dict, Union
 

@@ -1,20 +1,15 @@
-import logging
 import os
 from typing import Optional
 from datalake import Output
 from datalake.common.utils import load_json, datetime, save_output, SetEncoder
 
-# Configure logging to show only INFO level messages
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("OCD_DTL")
-logger.setLevel(logging.INFO)
-
 
 class SearchWatch:
-    def __init__(self, BulkSearch):
+    def __init__(self, logger, BulkSearch):
         self.BulkSearch = BulkSearch
+        self.logger = logger
 
-    def find_latest_json_file(self, directory_path: str) -> Optional[str]:
+    def _find_latest_json_file(self, directory_path: str) -> Optional[str]:
         """
         Find the latest json file in the directory given as argument.
         json files must have this format: `<query_hash>-<timestamp>.json`, because
@@ -39,7 +34,7 @@ class SearchWatch:
 
         return None
 
-    def extract_timestamp(self, filename: str) -> datetime.datetime:
+    def _extract_timestamp(self, filename: str) -> datetime.datetime:
         """
         The filename must be in this format: `<query_hash>-<timestamp>.json`.
         Return the datetime object of the the extracted `<timestamp>` part.
@@ -96,6 +91,9 @@ class SearchWatch:
         reference_file: str = None,
         save_diff_threats: bool = False,
     ) -> dict:
+        """
+        Monitor (watch) a search to find new iocs (ones not present in your latest reference file) that match your search criteria.
+        """
         if bool(query_body) == bool(query_hash):
             raise ValueError("Either a query_body or query_hash is required")
 
@@ -130,8 +128,10 @@ class SearchWatch:
                     f"Reference file not found: {reference_file}"
                 ) from e
 
-            logger.info(f"\x1b[0;30;47m File to compare with {reference_file} \x1b[0m")
-            previous_datetime = self.extract_timestamp(reference_file)
+            self.logger.info(
+                f"\x1b[0;30;47m File to compare with {reference_file} \x1b[0m"
+            )
+            previous_datetime = self._extract_timestamp(reference_file)
             diff_threats = self.threats_diff(
                 file_to_compare_with_data,
                 bulk_search_result_json,
@@ -140,7 +140,7 @@ class SearchWatch:
             )
         else:
             try:
-                file_to_compare_with_json = self.find_latest_json_file(output_folder)
+                file_to_compare_with_json = self._find_latest_json_file(output_folder)
             except FileNotFoundError as e:
                 raise FileNotFoundError(
                     f"Error with the output folder: {output_folder}"
@@ -151,10 +151,10 @@ class SearchWatch:
                     output_folder + "/" + file_to_compare_with_json
                 )
                 file_to_compare_with_data = load_json(file_to_compare_with_json_path)
-                logger.info(
+                self.logger.info(
                     f"\x1b[0;30;47m File to compare with {file_to_compare_with_json_path} \x1b[0m"
                 )
-                previous_datetime = self.extract_timestamp(file_to_compare_with_json)
+                previous_datetime = self._extract_timestamp(file_to_compare_with_json)
                 diff_threats = self.threats_diff(
                     file_to_compare_with_data,
                     bulk_search_result_json,
@@ -162,7 +162,9 @@ class SearchWatch:
                     actual_datetime,
                 )
             else:
-                logger.info(f"\x1b[0;30;43m No file to compare with {filepath} \x1b[0m")
+                self.logger.info(
+                    f"\x1b[0;30;43m No file to compare with {filepath} \x1b[0m"
+                )
 
         if save_diff_threats:
             diff_threats_path = (
@@ -176,11 +178,13 @@ class SearchWatch:
                 + ".json"
             )
             save_output(diff_threats_path, diff_threats, cls=SetEncoder)
-            logger.info(
+            self.logger.info(
                 f"\x1b[0;37;42m OK: DIFF THREATS SAVED IN {diff_threats_path} \x1b[0m"
             )
 
         save_output(filepath, bulk_search_result_json)
-        logger.info(f"\x1b[0;37;42m OK: MATCHING THREATS SAVED IN {filepath} \x1b[0m")
+        self.logger.info(
+            f"\x1b[0;37;42m OK: MATCHING THREATS SAVED IN {filepath} \x1b[0m"
+        )
 
         return diff_threats

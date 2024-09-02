@@ -1,13 +1,13 @@
 # Make commands for development tests :
 test_dev_env:
-	( \
-		python3 -m venv .venv; \
-		. .venv/bin/activate; \
-		pip install -r requirements.txt; \
-		pip install .; \
+	@( \
+		python3 -m venv .venv > /dev/null 2>&1; \
+		. .venv/bin/activate > /dev/null 2>&1; \
+		pip install -r requirements.txt > /dev/null 2>&1; \
+		pip install . > /dev/null 2>&1; \
 		black .; \
 		pytest $$path; \
-		deactivate \
+		deactivate > /dev/null 2>&1 \
 	)
 
 test: lint
@@ -17,16 +17,17 @@ setup-prepush-hook:
 	sh setup-prepush-hook.sh
 
 lint:
-	( \
-		python3 -m venv .venv; \
-		. .venv/bin/activate; \
-		pip install -r requirements.txt; \
-		pip install .; \
-		black .; \
-		deactivate \
+	@( \
+		python3 -m venv .venv > /dev/null 2>&1; \
+		. .venv/bin/activate > /dev/null 2>&1; \
+		pip install -r requirements.txt > /dev/null 2>&1; \
+		pip install . > /dev/null 2>&1; \
+		black . $(flag); \
+		deactivate > /dev/null 2>&1 \
 	)
 
-lint_check: lint
+lint_check: 
+	$(MAKE) --no-print-directory lint flag='--check'
 
 
 # Make commands that are not supposed to be run manually but through GitHub pipelines :

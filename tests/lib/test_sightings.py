@@ -373,7 +373,7 @@ def test_submit_sightings_bad_sighting_type(datalake):
         )
     assert (
         str(err.value)
-        == "sighting_type has to be an instance of the SightingType class."
+        == '"sighting_type" has to be an instance of the SightingType class.'
     )
 
 
@@ -405,7 +405,9 @@ def test_submit_sightings_neutral_with_threat_types(datalake):
             threat_types,
             atoms=[ip_atom, ip_atom1, file_atom],
         )
-    assert str(err.value) == "For NEUTRAL sightings, threat_types can't be passed."
+    assert (
+        str(err.value) == """For NEUTRAL sightings, "threat_types" can't be passed."""
+    )
 
 
 def test_submit_sightings_bad_visibility(datalake):
@@ -419,7 +421,10 @@ def test_submit_sightings_bad_visibility(datalake):
             threat_types,
             atoms=[ip_atom, ip_atom1, file_atom],
         )
-    assert str(err.value) == "visibility has to be an instance of the Visibility class."
+    assert (
+        str(err.value)
+        == '"description_visibility" has to be an instance of the Visibility class.'
+    )
 
 
 def test_submit_sightings_bad_atom(datalake):
@@ -440,7 +445,7 @@ def test_submit_sightings_bad_atom(datalake):
                 threat_types,
                 atoms=[ip_atom, ip_atom1, file_atom, "not_an_atom"],
             )
-    assert str(err.value) == "atoms needs to be a list of Atom subclasses."
+    assert str(err.value) == '"atoms" needs to be a list of Atom subclasses.'
 
 
 def test_sightings_filtered_bad_ordering(datalake):
@@ -448,7 +453,7 @@ def test_sightings_filtered_bad_ordering(datalake):
         datalake.Sightings.sightings_filtered(ordering="bad_ordering")
     assert (
         str(err.value)
-        == 'ordering has to be one of the following: "start_timestamp", "-start_timestamp", "end_timestamp", "-end_timestamp", "timestamp_created", "-timestamp_created", "count", "-count"'
+        == '"ordering" has to be one of the following: "start_timestamp", "-start_timestamp", "end_timestamp", "-end_timestamp", "timestamp_created", "-timestamp_created", "count", "-count"'
     )
 
 
@@ -457,14 +462,17 @@ def test_sightings_filtered_bad_type(datalake):
         datalake.Sightings.sightings_filtered(sighting_type="bad_sighting_type")
     assert (
         str(err.value)
-        == "sighting_type has to be an instance of the SightingType class."
+        == '"sighting_type" has to be an instance of the SightingType class.'
     )
 
 
 def test_sightings_filtered_bad_visibility(datalake):
     with pytest.raises(ValueError) as err:
         datalake.Sightings.sightings_filtered(description_visibility="bad_visibility")
-    assert str(err.value) == "visibility has to be an instance of the Visibility class."
+    assert (
+        str(err.value)
+        == '"description_visibility" has to be an instance of the Visibility class.'
+    )
 
 
 @responses.activate

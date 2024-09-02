@@ -1,4 +1,4 @@
-from .api_objects.bulk_search_task import (
+from .common.bulk_search_task import (
     BulkSearchTask,
     BulkSearchTaskState,
     BulkSearchFailedError,
