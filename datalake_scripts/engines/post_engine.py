@@ -18,22 +18,15 @@ class PostEngine(BaseEngine):
     """
 
     authorized_atom_value = [
-        "apk",
         "as",
-        "cc",
         "crypto",
-        "cve",
         "domain",
         "email",
         "file",
-        "fqdn",
-        "iban",
         "ip",
         "ip_range",
-        "paste",
         "phone_number",
-        "regkey",
-        "ssl",
+        "certificate",
         "url",
     ]
 

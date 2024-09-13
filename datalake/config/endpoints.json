@@ -1,6 +1,6 @@
 {
   "main": {
-    "preprod": "https://ti.extranet.mrti-center.com/api/",
+    "preprod": "https://ti2.extranet.mrti-center.com/api/",
     "prod": "https://datalake.cert.orangecyberdefense.com/api/"
   },
   "endpoints": {
@@ -29,5 +29,5 @@
     "filtered-tag-subcategory":"mrti/tag-subcategory/filtered/"
   },
   "threats-manual-bulk-size": 100,
-  "api_version": "v2/"
+  "api_version": "v3/"
 }

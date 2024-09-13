@@ -5,10 +5,14 @@ from functools import partial
 import pytest
 import responses
 
+from unittest.mock import patch
+from datalake.common.config import Config
+
 from datalake import Datalake, AtomType
 from tests.common.fixture import (
     datalake,
     datalake_longterm_token,
+    TestData,
 )  # noqa needed fixture import
 
 
@@ -28,20 +32,29 @@ def test_token_auth(datalake):
 
 
 @responses.activate
-def test_invalid_credentials(caplog):
-    url = "https://datalake.cert.orangecyberdefense.com/api/v2/auth/token/"
+def test_invalid_credentials(datalake, caplog):
+    # Path to the test-specific config file
+    test_config_path = "tests/common/tests_endpoints.json"
 
-    api_error_msg = "Wrong credentials provided"
-    api_response = {"message": api_error_msg}
-    responses.add(responses.POST, url, json=api_response, status=401)
-    with caplog.at_level(logging.ERROR):
-        with pytest.raises(ValueError) as ve:
-            Datalake(username="username@wow.com", password="password")
-    assert str(ve.value) == f'Could not login: {{"message": "{api_error_msg}"}}'
-    assert caplog.messages == [
-        f"An error occurred while retrieving an access token, for URL: {url}\n"
-        f'response of the API: {{"message": "{api_error_msg}"}}'
-    ]
+    # Patch the _CONFIG_ENDPOINTS attribute of the Config class
+    with patch.object(Config, "_CONFIG_ENDPOINTS", test_config_path):
+        url = (
+            TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+            + TestData.TEST_CONFIG["api_version"]
+            + TestData.TEST_CONFIG["endpoints"]["token"]
+        )
+
+        api_error_msg = "Wrong credentials provided"
+        api_response = {"message": api_error_msg}
+        responses.add(responses.POST, url, json=api_response, status=401)
+        with caplog.at_level(logging.ERROR):
+            with pytest.raises(ValueError) as ve:
+                Datalake(username="username@wow.com", password="password")
+        assert str(ve.value) == f'Could not login: {{"message": "{api_error_msg}"}}'
+        assert caplog.messages == [
+            f"An error occurred while retrieving an access token, for URL: {url}\n"
+            f'response of the API: {{"message": "{api_error_msg}"}}'
+        ]
 
 
 def lookup_callback(
@@ -69,7 +82,9 @@ def test_access_token_expired(datalake, caplog):
 
     responses.add_callback(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["lookup"],
         callback=partial(
             lookup_callback,
             expired_token="12345",
@@ -88,7 +103,9 @@ def test_access_token_expired(datalake, caplog):
 
     responses.add_callback(
         responses.POST,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/auth/refresh-token/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["refresh_token"],
         callback=refresh_token_callback,
         content_type="application/json",
     )
@@ -109,7 +126,9 @@ def test_refresh_token_expired(datalake, caplog):
 
     responses.add_callback(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["lookup"],
         callback=partial(
             lookup_callback,
             expired_token="12345",
@@ -128,12 +147,16 @@ def test_refresh_token_expired(datalake, caplog):
 
     responses.add_callback(
         responses.POST,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/auth/refresh-token/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["refresh_token"],
         callback=refresh_token_callback,
         content_type="application/json",
     )
     responses.post(
-        url="https://datalake.cert.orangecyberdefense.com/api/v2/auth/token/",
+        url=TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["token"],
         json={"access_token": "new_token", "refresh_token": ""},
         status=200,
     )
@@ -156,7 +179,9 @@ def test_invalid_token(datalake, caplog):
 
     responses.add_callback(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["lookup"],
         callback=partial(
             lookup_callback,
             expired_token=invalid_access_token,
@@ -170,7 +195,9 @@ def test_invalid_token(datalake, caplog):
     )
 
     responses.post(
-        "https://datalake.cert.orangecyberdefense.com/api/v2/auth/token/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["token"],
         json={"access_token": valid_access_token, "refresh_token": ""},
         content_type="application/json",
     )
@@ -226,7 +253,9 @@ def test_disabled_longterm_token(datalake_longterm_token, caplog):
 
     responses.add_callback(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["lookup"],
         callback=partial(
             lookup_callback_longterm_token,
             expired_longterm_token="expired_longterm_token_1234",
@@ -253,7 +282,9 @@ def test_expired_longterm_token(datalake_longterm_token, caplog):
 
     responses.add_callback(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["lookup"],
         callback=partial(
             lookup_callback_longterm_token,
             expired_longterm_token="longterm_token1234",
@@ -281,7 +312,9 @@ def test_requires_fresh_token(datalake_longterm_token, caplog):
 
     responses.add_callback(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["lookup"],
         callback=partial(
             lookup_callback_longterm_token,
             expired_longterm_token="expired_longterm_token_1234",
@@ -311,7 +344,9 @@ def test_invalid_longterm_token(datalake_longterm_token, caplog):
 
     responses.add_callback(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/threats/lookup/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["lookup"],
         callback=partial(
             lookup_callback_longterm_token,
             expired_longterm_token="expired_longterm_token_1234",

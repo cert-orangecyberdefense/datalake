@@ -20,24 +20,14 @@ from datalake import (
     Hashes,
     FileAtom,
     AndroidApp,
-    ApkAtom,
     AsAtom,
-    CcAtom,
     CryptoAtom,
-    CveAtom,
-    Jarm,
     DomainAtom,
-    EmailFlow,
     EmailAtom,
-    FqdnAtom,
-    IbanAtom,
-    IpService,
     IpAtom,
     IpRangeAtom,
-    PasteAtom,
     PhoneNumberAtom,
-    RegKeyAtom,
-    SslAtom,
+    CertificateAtom,
     UrlAtom,
 )
 
@@ -110,14 +100,11 @@ def main(override_args=None):
         nargs="+",
     )
     parser.add_argument(
-        "--permanent",
-        help="sets override_type to permanent. Scores won't be updated by the algorithm. Default is temporary",
-        action="store_true",
-    )
-    parser.add_argument(
         "--lock",
-        help="sets override_type to lock. Scores won't be updated by the algorithm for three months. Default is "
-        "temporary",
+        help="""sets override_type to lock. Scores won't be updated by the algorithm for three months. Newer IOCs with override_type lock can still override old lock changes.
+            temporary: all values should override any values provided by older IOCs,
+            but not newer ones.
+            Default is "temporary" (all values should override any values provided by older IOCs)""",
         action="store_true",
     )
     parser.add_argument(
@@ -134,12 +121,7 @@ def main(override_args=None):
     if not args.threat_types and not args.whitelist:
         parser.error("threat types is required if the atom is not for whitelisting")
 
-    if args.permanent and args.lock:
-        parser.error("Only one override type is authorized")
-
-    if args.permanent:
-        override_type = OverrideType.PERMANENT
-    elif args.lock:
+    if args.lock:
         override_type = OverrideType.LOCK
     else:
         override_type = OverrideType.TEMPORARY
@@ -280,52 +262,44 @@ def hash_to_name(hash_):
 
 
 def _build_threat_from_atom_type(value, atom_type, link=None):
-    if atom_type == AtomType.APK:
-        package_name, apk_hash = value.split(",")
-        hashes = Hashes(**{hash_to_name(apk_hash): apk_hash})
-        atom = ApkAtom(
-            external_analysis_link=link, android=AndroidApp(package_name), hashes=hashes
-        )
-    elif atom_type == AtomType.AS:
+    if atom_type == AtomType.AS:
         atom = AsAtom(external_analysis_link=link, asn=value)
-    elif atom_type == AtomType.CC:
-        atom = CcAtom(external_analysis_link=link, number=value)
     elif atom_type == AtomType.CRYPTO:
         address, network = value.split()
         atom = CryptoAtom(
             external_analysis_link=link, crypto_address=address, crypto_network=network
         )
-    elif atom_type == AtomType.CVE:
-        atom = CveAtom(external_analysis_link=link, cve_id=value)
     elif atom_type == AtomType.DOMAIN:
         atom = DomainAtom(external_analysis_link=link, domain=value)
     elif atom_type == AtomType.EMAIL:
         atom = EmailAtom(external_analysis_link=link, email=value)
     elif atom_type == AtomType.FILE:
-        hashes = Hashes(**{hash_to_name(value): value})
-        atom = FileAtom(external_analysis_link=link, hashes=hashes)
-    elif atom_type == AtomType.FQDN:
-        atom = FqdnAtom(external_analysis_link=link, fqdn=value)
-    elif atom_type == AtomType.IBAN:
-        atom = IbanAtom(external_analysis_link=link, iban=value)
+        split_value = value.split(",")
+        hash = split_value[0]
+        package_name = (
+            split_value[1] if len(split_value) > 1 else None
+        )  # optional value for APK files
+        hashes = Hashes(**{hash_to_name(hash): hash})
+        if package_name:
+            atom = FileAtom(
+                external_analysis_link=link,
+                hashes=hashes,
+                android=AndroidApp(package_name),
+            )
+        else:
+            atom = FileAtom(external_analysis_link=link, hashes=hashes)
     elif atom_type == AtomType.IP:
         atom = IpAtom(external_analysis_link=link, ip_address=value)
     elif atom_type == AtomType.IP_RANGE:
         atom = IpRangeAtom(external_analysis_link=link, cidr=value)
-    elif atom_type == AtomType.PASTE:
-        atom = PasteAtom(external_analysis_link=link, url=value)
     elif atom_type == AtomType.PHONE_NUMBER:
-        key = (
-            "international_phone_number"
-            if value.startswith("+")
-            else "national_phone_number"
+        key = "international_phone_number"
+        atom = PhoneNumberAtom(
+            external_analysis_link=link, international_phone_number=value
         )
-        atom = PhoneNumberAtom(external_analysis_link=link, **{key: value})
-    elif atom_type == AtomType.REGKEY:
-        atom = RegKeyAtom(external_analysis_link=link, path=value)
-    elif atom_type == AtomType.SSL:
+    elif atom_type == AtomType.CERTIFICATE:
         hashes = Hashes(**{hash_to_name(value): value})
-        atom = SslAtom(external_analysis_link=link, hashes=hashes)
+        atom = CertificateAtom(external_analysis_link=link, hashes=hashes)
     elif atom_type == AtomType.URL:
         atom = UrlAtom(external_analysis_link=link, url=value)
     return atom
