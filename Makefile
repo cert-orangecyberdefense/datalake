@@ -17,7 +17,14 @@ setup-prepush-hook:
 	sh setup-prepush-hook.sh
 
 lint:
-	black .
+	( \
+		python3 -m venv .venv; \
+		. .venv/bin/activate; \
+		pip install -r requirements.txt; \
+		pip install .; \
+		black .; \
+		deactivate \
+	)
 
 lint_check: lint
 
