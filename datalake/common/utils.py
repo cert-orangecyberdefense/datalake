@@ -19,13 +19,18 @@ def join_dicts(*dicts: dict) -> Dict[str, list]:
 
 
 def aggregate_csv_or_json_api_response(aggregated_response, response):
-    if isinstance(response, dict):  # json response
+    # Check if we're dealing with a JSON response
+    if isinstance(response, dict):
+        if not isinstance(aggregated_response, dict):
+            aggregated_response = {}
         aggregated_response = join_dicts(aggregated_response, response)
-    else:  # csv response
+    else:  # Handling CSV response
+        if not isinstance(aggregated_response, list):
+            aggregated_response = []
         csv_lines = response.strip().split("\n")
         if not aggregated_response:
-            aggregated_response = [csv_lines[0]]
-        aggregated_response += csv_lines[1:]
+            aggregated_response.append(csv_lines[0])  # Append header line
+        aggregated_response += csv_lines[1:]  # Append data lines
     return aggregated_response
 
 

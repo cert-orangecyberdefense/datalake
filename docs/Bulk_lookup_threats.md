@@ -77,7 +77,11 @@ $ ocd-dtl bulk_lookup_threats reverso.net 113.223.40.103 --domain paiza.com --ip
    
     > -i INPUT, --input INPUT  
     read threats to add from FILE.
-  
+
+    > -s, --score : Specify the minimum score for an atom to be considered.
+
+    > --date : Specify the earliest date from which atoms should be included. [format: YYYY-MM-DD]
+   
 * Typed atom flags
     > --apk APK             
     --asn ASN             

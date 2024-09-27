@@ -37,8 +37,6 @@ Or/And directly from the cli:
 
 > -c to select the column (starting at **1**)
 
-> -ho set it to False to get the complete result
-
 > -o will set the output file as a csv per default.  
 
 > -ot set it to json or csv, to choose the output type. Default is json
@@ -46,3 +44,7 @@ Or/And directly from the cli:
 > -td, --threat_details set if you also want to have access to the threat details in output file
 
 > -e  to change the environment {preprod, prod},  default is **prod**  
+
+> --date filter to apply on lookup to set a minimum date [format: YYYY-MM-DD]
+
+> -s filter to apply on lookup to set a minimum score.
