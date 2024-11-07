@@ -4,7 +4,7 @@ from unittest.mock import patch
 from datalake_scripts.cli import Cli
 from datalake_scripts.scripts import (
     add_threats,
-    get_threats_by_hashkey,
+    get_threats,
     edit_score,
     get_threats_from_query_hash,
     add_comments,
@@ -24,7 +24,7 @@ from datalake_scripts.scripts import (
     "function_script",
     [
         add_threats,
-        get_threats_by_hashkey,
+        get_threats,
         edit_score,
         get_threats_from_query_hash,
         add_comments,
@@ -40,9 +40,6 @@ from datalake_scripts.scripts import (
 )
 def test_name_function(function_script):
     command_name = function_script.__name__.split(".")[-1]
-
-    if command_name == "get_threats_by_hashkey":
-        command_name = "get_threats"
 
     with patch.object(
         function_script, "main", return_value="mocked response"

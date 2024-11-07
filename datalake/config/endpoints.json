@@ -7,7 +7,7 @@
     "bulk-search": "mrti/bulk-search/",
     "bulk-search-task": "mrti/bulk-search/tasks/",
     "retrieve-bulk-search": "mrti/bulk-search/task/{task_uuid}/",
-    "threats": "mrti/threats/",
+    "threats": "mrti/threats/{hashkey}/",
     "advanced-search": "mrti/advanced-queries/threats/",
     "advanced-search-hash": "mrti/advanced-queries/threats/{query_hash}/",
     "threats-manual": "mrti/threats-manual/",
@@ -18,7 +18,7 @@
     "token": "auth/token/",
     "refresh_token": "auth/refresh-token/",
     "lookup": "mrti/threats/lookup/",
-    "comment": "mrti/threats/{hashkey}/comments/",
+    "comments": "mrti/threats/{hashkey}/comments/",
     "tag": "mrti/threats/{hashkey}/tags/",
     "atom-values-extract": "mrti/threats/atom-values-extract/",
     "bulk-scoring-edits": "mrti/threats/bulk-scoring-edits/",
@@ -29,5 +29,5 @@
     "filtered-tag-subcategory":"mrti/tag-subcategory/filtered/"
   },
   "threats-manual-bulk-size": 100,
-  "api_version": "v3/"
+  "api_version": "v3/" 
 }

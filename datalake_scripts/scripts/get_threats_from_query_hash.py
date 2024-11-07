@@ -6,18 +6,27 @@ import sys
 from halo import Halo
 
 from datalake import Datalake
-from datalake.common.logger import logger, configure_logging
 from datalake_scripts.common.base_script import BaseScripts
+
+
+def format_output(response: dict, one_threat_per_line=False) -> str:
+    if one_threat_per_line:
+        threat_list = []
+        for result in response.get("results", []):
+            if result:
+                threat_list += result
+        return "\n".join(threat_list)
+    else:
+        return json.dumps(response, sort_keys=True, indent=4)
 
 
 def main(override_args=None):
     """Method to start the script"""
-    logger.debug(f"START: get_threats_from_query_hash.py")
 
     # Load initial args
     parser = BaseScripts.start("Retrieve a list of response from a given query hash.")
     parser.add_argument(
-        "--query_fields",
+        "--query-fields",
         help="fields to be retrieved from the threat (default: only the hashkey)\n"
         "If an atom detail isn't present in a particular atom, empty string is returned.",
         nargs="+",
@@ -37,7 +46,9 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-    configure_logging(args.loglevel)
+
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
+    dtl.logger.debug(f"START: get_threats_from_query_hash.py")
 
     if len(args.query_fields) > 1 and args.list:
         parser.error(
@@ -51,16 +62,14 @@ def main(override_args=None):
             with open(query_hash, "r") as query_body_file:
                 query_body = json.load(query_body_file)
         except FileNotFoundError:
-            logger.error(
+            dtl.logger.error(
                 f"Couldn't understand the given value as a query hash or path to query body: {query_hash}"
             )
             exit(1)
 
-    # Load api_endpoints and tokens
-    dtl = Datalake(env=args.env, log_level=args.loglevel)
-    logger.debug(f"Start to search for threat from the query hash:{query_hash}")
+    dtl.logger.debug(f"Start to search for threat from the query hash:{query_hash}")
     spinner = None
-    if logger.isEnabledFor(logging.INFO):
+    if dtl.logger.isEnabledFor(logging.INFO):
         spinner = Halo(text=f"Creating bulk task", spinner="dots")
         spinner.start()
 
@@ -79,24 +88,10 @@ def main(override_args=None):
     if args.output:
         with open(args.output, "w") as output:
             output.write(formatted_output)
+        dtl.logger.info(f"Threats saved in {args.output}")
     else:
-        logger.info(formatted_output)
-
-    if args.output:
-        logger.info(f"Threats saved in {args.output}")
-    else:
-        logger.info("Done")
-
-
-def format_output(response: dict, one_threat_per_line=False) -> str:
-    if one_threat_per_line:
-        threat_list = []
-        for result in response.get("results", []):
-            if result:
-                threat_list += result
-        return "\n".join(threat_list)
-    else:
-        return json.dumps(response, sort_keys=True, indent=4)
+        dtl.logger.info(formatted_output)
+        dtl.logger.info("Done")
 
 
 if __name__ == "__main__":

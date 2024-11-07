@@ -58,14 +58,23 @@ Number of removed items: 1
 +----------------------------------------------------+---------------------------------------------------+
 ```
 
-#### Parameters
+### Parameters
+
+#### Specific command's parameters
 Required:
 
 Use either:
-* `-i` : indicates the path of the file containing the query body
-* `--query-hash` : the query hash for your search watch
+* `-i, --input <INPUT_PATH>` : path of the json file containing the query body
+* `-qh, --query-hash <QUERY_HASH>` : query hash for your search watch
 
-Optional flags:
-* `-of` : indicates the output folder where the results json files will be stored. It is also uses as the folder to lookup in when filename (-f) for comparison is not provided. The default value for this parameter is the local directory.
-* `--filename` : defines the reference file which will be used as base of comparison. By default it is the latest file in the directory (given by `-of` or the default local directory) that is taken.  
-* `--save-diff-threats` : If sets, will create a file `<queryhashkey>-diff_threats-<timestamp>.json` containing added and removed threats.
+Optional:
+* `-of, --output-folder <OUTPUT_FOLDER_PATH>` : output folder where the results json files will be stored. It is also uses as the folder to lookup in when filename (`-f, --filename`) for comparison is not provided. Default value for this parameter is the local directory.
+* `-f, --filename <FILENAME>` : reference file which will be used as base of comparison. Default is the latest file in the output folder (`--ouput-folder, -of`) that is taken.  
+* `-sdt, --save-diff-threats` : will create a file `<queryhashkey>-diff_threats-<timestamp>.json` containing added and removed threats. 
+
+#### Common parameters
+Common parameters for all commands:  
+* `-e, --env <preprod|prod>` :   Datalake environment. Default is **prod**  
+* `-o, --output <OUTPUT_PATH>` : will set the output file as the API gives it.  No default
+* `-D, --debug`  : will raise the verbosity of the program (by displaying additional DEBUG messages). Default log level is INFO
+* `-q, --quiet` : will quiet the verbosity of the program (but will still show ERROR / WARNING messages). Default log level is INFO

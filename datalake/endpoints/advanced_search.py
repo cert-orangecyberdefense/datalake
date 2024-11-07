@@ -25,6 +25,9 @@ class AdvancedSearch(Endpoint):
         ordering: List[str] = None,
         output=Output.JSON,
     ):
+        """
+        Given a query_body, performs an advanced search of threats in Datalake.
+        """
         if not query_body:
             raise ValueError("query_body is required")
         if ordering and not set(ordering).issubset(self.ordering_list):

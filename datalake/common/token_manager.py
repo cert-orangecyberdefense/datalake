@@ -1,6 +1,7 @@
 """
 Token manager will manage tokens for the scripts.
 """
+
 import json
 import os
 from getpass import getpass
@@ -8,7 +9,6 @@ from urllib.parse import urljoin
 
 import requests
 
-from datalake.common.logger import logger
 from datalake.common.utils import get_error_message
 
 
@@ -21,6 +21,7 @@ class TokenManager:
         self,
         endpoint_config: dict,
         *,
+        logger,
         environment: str,
         username=None,
         password=None,
@@ -36,7 +37,7 @@ class TokenManager:
         self.url_refresh = urljoin(
             base_url, endpoints["refresh_token"], allow_fragments=True
         )
-
+        self.logger = logger
         self.username = username
         self.password = password
         self.longterm_token = longterm_token
@@ -57,6 +58,7 @@ class TokenManager:
             self.longterm_token = self.longterm_token or os.getenv(
                 "OCD_DTL_LONGTERM_TOKEN"
             )
+            self.logger.debug("Using Long Term Token")
 
         self.username = self.username or os.getenv("OCD_DTL_USERNAME")
         self.password = self.password or os.getenv("OCD_DTL_PASSWORD")
@@ -75,7 +77,7 @@ class TokenManager:
         if self.longterm_token:
             self.longterm_token = f"Token {self.longterm_token}"
             if self.username or self.password:
-                logger.warning(
+                self.logger.warning(
                     f"Using provided Long Term Token for Authentication to the Datalake API. Ignoring username and/or password."
                 )
         else:
@@ -87,14 +89,14 @@ class TokenManager:
                 self.access_token = f'Token {json_response["access_token"]}'
                 self.refresh_token = f'Token {json_response["refresh_token"]}'
             except KeyError:
-                logger.error(
+                self.logger.error(
                     f"An error occurred while retrieving an access token, for URL: {self.url_token}\n"
                     f"response of the API: {response.text}"
                 )
                 raise ValueError(f"Could not login: {response.text}")
 
     def fetch_new_token(self):
-        logger.debug("Token will be refreshed")
+        self.logger.debug("Token will be refreshed")
         headers = {"Authorization": self.refresh_token}
         response = requests.post(url=self.url_refresh, headers=headers)
 
@@ -103,13 +105,13 @@ class TokenManager:
             response.status_code == 401
             and json_response.get("msg") == "Token has expired"
         ):
-            logger.info("Refreshing the refresh token")
+            self.logger.info("Refreshing the refresh token")
             # Refresh token is also expired, we need to restart the authentication from scratch
             self.get_token()
         elif "access_token" in json_response:
             self.access_token = f'Token {json_response["access_token"]}'
         else:  # an error occurred
-            logger.error(
+            self.logger.error(
                 f"An error occurred while refreshing the refresh token, for URL: {self.url_refresh}\n"
                 f"response of the API: {response.text}"
             )

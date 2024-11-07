@@ -9,6 +9,10 @@
 
 ## How to use
 
+Datalake scripts is developed by Datalake developers to help use the Datalake [API](https://datalake.cert.orangecyberdefense.com/api/v3/docs/)
+
+You can use this repository either as a library or as a CLI
+
 ### Installation
 
 With Python 3.6+:  
@@ -18,6 +22,8 @@ $ pip3 install datalake-scripts
 ```
 ### Using as a library
 The library requires to first create a Datalake instance and then to use the defined Classes' methods
+
+The library tutorial is available in [the following link](https://github.com/cert-orangecyberdefense/datalake/blob/master/tutorial.md)
 
 Example : 
 ```python
@@ -32,7 +38,7 @@ dtl.Threats.lookup(
 )
 ```
 
-The library tutorial is available in [the following link](https://github.com/cert-orangecyberdefense/datalake/blob/master/tutorial.md)
+
 
 
 
@@ -46,15 +52,17 @@ Check `ocd-dtl -h` for help, including the list of commands available.
 
 You can also use a script directly by using the following command: `<script_name> <script_options>`.
 
-> /!\ Make sure to use utf-8 **without BOM** when providing a file (-i option)
+> /!\ Make sure to use utf-8 **without BOM** when providing a file as input (`-i, --input` parameter)
 
 #### Cli parameters  
 
-Parameters common and optional for all commands:
-> --debug  display more information for debugging purposes   
-> -e to change the environment {preprod, prod},  default is **prod**  
-> -o will set the output file as the API gives it.  
-> -q will quiet the verbosity of the program (but still show errors / warnings)  
+Common parameters for all commands:  
+* `-e, --env <preprod|prod>` :   Datalake environment. Default is **prod**  
+* `-o, --output <OUTPUT_PATH>` : will set the output file as the API gives it.  No default
+* `-D, --debug`  : will raise the verbosity of the program (by displaying additional DEBUG messages). Default log level is INFO
+* `-q, --quiet` : will quiet the verbosity of the program (but will still show ERROR / WARNING messages). Default log level is INFO
+
+Commands can also have additionary mandatory or optional parameters
 
 For information about each command and more, please check [the documentation directory](https://github.com/cert-orangecyberdefense/datalake/tree/master/docs)
 
@@ -69,7 +77,7 @@ There are two methods of authentication:
 
 In case you don't want to enter credentials for each commands and you are on a secured terminal, set those variables:  
 * `OCD_DTL_LONGTERM_TOKEN` a long term token associated to your Datalake account.
-Please note that if this variable is set, then the long term token will be used for every request to the Datalake API, even if you set the username and passsword environment variables below. This is important because some endpoints / requests do not accept long term tokens but need fresh tokens (ie a Datalake instance with username and password). Check for the need of fresh tokens in each endpoint description [here](https://datalake.cert.orangecyberdefense.com/api/v2/docs/)
+Please note that if this variable is set, then the long term token will be used for every request to the Datalake API, even if you set the username and passsword environment variables below. This is important because some endpoints / requests do not accept long term tokens but need fresh tokens (ie a Datalake instance with username and password). Check for the need of fresh tokens in each endpoint description [here](https://datalake.cert.orangecyberdefense.com/api/v3/docs/)
 
 or
 
@@ -82,7 +90,7 @@ For throttling the request, those two environment variable can be used:
 * `OCD_DTL_QUOTA_TIME` define, in seconds, the time before resetting the requests limit, *default is 1 second*.   
 * `OCD_DTL_REQUESTS_PER_QUOTA_TIME` define the number of request to do at maximum for the given time,  *default is 5 queries*.
 
-> Please don't exceed the quota marked [here](https://datalake.cert.orangecyberdefense.com/api/v2/docs/) for each endpoint
+> Please don't exceed the quota marked [here](https://datalake.cert.orangecyberdefense.com/api/v3/docs/) for each endpoint
 
 
 ### Contributing

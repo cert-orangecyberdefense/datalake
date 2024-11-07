@@ -25,7 +25,11 @@ def test_token_auth(datalake):
     }
 
     token_manager = datalake.Threats.token_manager
-
+    assert token_manager.url_token == (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["token"]
+    )
     assert token_manager.longterm_token == None
     assert token_manager.access_token == f"Token {expected_tokens['access_token']}"
     assert token_manager.refresh_token == f"Token {expected_tokens['refresh_token']}"

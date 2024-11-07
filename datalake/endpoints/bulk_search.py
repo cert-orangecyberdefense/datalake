@@ -3,7 +3,7 @@ from http.client import ResponseNotReady
 from requests import Response
 
 from datalake import BulkSearchNotFound
-from datalake.api_objects.bulk_search_task import BulkSearchTask
+from datalake.common.bulk_search_task import BulkSearchTask
 from datalake.common.output import parse_response, Output, output_supported
 from datalake.endpoints import Endpoint
 
@@ -16,6 +16,7 @@ class BulkSearch(Endpoint):
         query_hash: str = None,
         query_fields: list = None,
     ) -> BulkSearchTask:
+        """Creates a bulk search task"""
         if not query_body and not query_hash:
             raise ValueError("Either a query_body or query_hash is required")
 

@@ -1,12 +1,7 @@
 from datalake.endpoints.endpoint import Endpoint
 from datalake.common.output import parse_response
-import logging
 import re
 import sys
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 
 class FilteredTagSubcategory(Endpoint):
@@ -23,6 +18,9 @@ class FilteredTagSubcategory(Endpoint):
         stix_uuid=None,
         tag=None,
     ):
+        """
+        Retrieve tag subcatgeories, with filtering options available as input parameters
+        """
         url = self._build_url_for_endpoint("filtered-tag-subcategory")
         body = {}
 

@@ -25,15 +25,7 @@ setup(
     install_requires=["requests", "halo", "prettytable"],
     test_suite="nose.collector",
     entry_points={
-        "console_scripts": (
-            "get_users = datalake_scripts.scripts.get_users:main",
-            "get_threats_by_hashkey = datalake_scripts.scripts.get_threats_by_hashkey:main",
-            "add_new_threats = datalake_scripts.scripts.add_new_threats:main",
-            "add_new_comment_or_tags = datalake_scripts.scripts.add_new_comment_or_tags:main",
-            "edit_score = datalake_scripts.scripts.edit_score:main",
-            "get_threats_from_query_hash = datalake_scripts.scripts.get_threats_from_query_hash:main",
-            f"{Cli.CLI_NAME} = datalake_scripts.cli:main",
-        ),
+        "console_scripts": (f"{Cli.CLI_NAME} = datalake_scripts.cli:main",),
     },
     classifiers=[
         "Programming Language :: Python :: 3.7",

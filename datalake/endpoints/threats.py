@@ -5,6 +5,7 @@ from time import time, sleep
 from requests.sessions import PreparedRequest
 
 from datalake import AtomType, ThreatType, OverrideType, Atom
+from datalake.common.token_manager import TokenManager
 from datalake.common.atom import ScoreMap
 from datalake.common.output import Output, output_supported, parse_response
 from datalake.common.utils import (
@@ -27,6 +28,17 @@ class Threats(Endpoint):
         os.getenv("OCD_DTL_MAX_EDIT_SCORE_HASHKEYS", 100)
     )
 
+    def __init__(
+        self,
+        logger,
+        endpoint_config: dict,
+        environment: str,
+        token_manager: TokenManager,
+        sources_instance,  # Sources class
+    ):
+        super().__init__(logger, endpoint_config, environment, token_manager)
+        self.sources_instance = sources_instance  # Store the Sources instance
+
     def _bulk_lookup_batch(
         self,
         atom_values: list,
@@ -38,7 +50,7 @@ class Threats(Endpoint):
         """Bulk lookup done on maximum _NB_ATOMS_PER_BULK_LOOKUP atoms"""
         typed_atoms = {}
         if not atom_type:
-            atoms_values_extractor_response = self.atom_values_extract(atom_values)
+            atoms_values_extractor_response = self._atom_values_extract(atom_values)
             if atoms_values_extractor_response["found"] > 0:
                 typed_atoms = atoms_values_extractor_response["results"]
             else:
@@ -67,7 +79,13 @@ class Threats(Endpoint):
         return_search_hashkey=False,
     ) -> Union[dict, str]:
         """
-        Look up multiple threats at once in the API, returning their ids and if they are present in Datalake.
+        Look up multiple threats at once in the API, returning :
+        - their hashkeys
+        - atom_values
+        - the search_phrase used
+        - a boolean indicating if atom_value is present as a threat in Datalake
+        - a boolean indicating if you have access to the threat in Datalake
+        - additionnal fields are also returned if haskey_only is not enabled
 
         Compared to the lookup endpoint, it allow to lookup big batch of values faster as fewer API calls are made.
         However, fewer outputs types are supported as of now.
@@ -90,6 +108,7 @@ class Threats(Endpoint):
                 aggregated_response,
                 batch_result,
             )
+            sleep(0.5)
         if search_hashkey_list:
             aggregated_response["search_hashkey"] = search_hashkey_list
         if output is Output.CSV:
@@ -116,7 +135,7 @@ class Threats(Endpoint):
         atom_type_str = None
         if not atom_type:
             threats = [atom_value]
-            atoms_values_extractor_response = self.atom_values_extract(threats)
+            atoms_values_extractor_response = self._atom_values_extract(threats)
             if atoms_values_extractor_response["found"] > 0:
                 atom_type_str = list(atoms_values_extractor_response["results"].keys())[
                     0
@@ -141,13 +160,13 @@ class Threats(Endpoint):
         )
         return parse_response(response)
 
-    def atom_values_extract(
+    def _atom_values_extract(
         self, untyped_atoms: List[str], treat_hashes_like=AtomType.FILE
     ) -> dict:
         """
-        Determine the types of atoms passed.
+        Determines the types of atoms passed.
 
-        values that are believed to be hashes will be returned as <treat_hashes_like>
+        values that are believed to be hashes will be returned as the AtomType provided in <treat_hashes_like>
         """
         url = self._build_url_for_endpoint("atom-values-extract")
         payload = {
@@ -164,7 +183,7 @@ class Threats(Endpoint):
     ):
         """
         Edit the score of a list of threats using the API. Default is 100. This function will receive a list of
-        hashkey to edit, a list of dictionaries defining the score the set and an override type. Can only process a
+        hashkey to edit, a list of dictionaries defining the scores to set and an override type. Can only process a
         limited number of hashkeys at one time. Can be modified with the environment variable
         OCD_DTL_MAX_EDIT_SCORE_HASHKEYS.
         """
@@ -196,7 +215,7 @@ class Threats(Endpoint):
         """
         Edit the score of a list of threats using the API.
         This function will receive a query body hash,
-        a list of dictonaries defining the score the set and an override type.
+        a list of dictonaries defining the scores to set and an override type.
         """
         if not isinstance(override_type, OverrideType):
             raise ValueError("Invalid OverrideType input")
@@ -248,7 +267,9 @@ class Threats(Endpoint):
         Add a list of threats to datalake using the API.
         The type of atom provided in the list of threats to add need to be the same, for example a list of IPs.
         """
-        self.check_add_threats_params(atom_list, override_type, threat_types, whitelist)
+        self._check_add_threats_params(
+            atom_list, override_type, threat_types, whitelist
+        )
         tags = tags or []  # API requires a tag field, default to an empty list
         payload = {"override_type": override_type.value, "public": public}
         if whitelist:
@@ -260,7 +281,7 @@ class Threats(Endpoint):
         )
 
     @staticmethod
-    def check_add_threats_params(atom_list, override_type, threat_types, whitelist):
+    def _check_add_threats_params(atom_list, override_type, threat_types, whitelist):
         if not threat_types and not whitelist:
             raise ValueError(
                 "threat_types is required if the atom is not for whitelisting"
@@ -291,10 +312,11 @@ class Threats(Endpoint):
                     }
                 }
             }
-        hashkey_created = self.queue_bulk_threats(atom_list, payload, url)
+        hashkey_created = self._queue_bulk_threats(atom_list, payload, url)
         return hashkey_created
 
-    def queue_bulk_threats(self, atom_list, payload, url):
+    def _queue_bulk_threats(self, atom_list, payload, url):
+        """Creates the manual bulk tasks to add threats then checks if those sucessfully created suceeded"""
         bulk_response = []
         bulk_in_flight = []  # bulk task uuid unchecked
         failed_batch = []
@@ -302,14 +324,16 @@ class Threats(Endpoint):
             if len(bulk_in_flight) >= self.OCD_DTL_MAX_BULK_THREATS_IN_FLIGHT:
                 bulk_threat_task_uuid = bulk_in_flight.pop(0)
                 bulk_response.append(
-                    self.check_bulk_threats_added(bulk_threat_task_uuid)
+                    self._check_bulk_threats_added(bulk_threat_task_uuid)
                 )
 
             payload["atom_values"] = "\n".join(batch)  # Raw csv expected
             response = self.datalake_requests(
                 url, "post", self._post_headers(), payload
             )
+            self.logger.debug(f"_queue_bulk_threats, response : {str(response)}")
             response = parse_response(response)
+            self.logger.debug(f"_queue_bulk_threats, response parsed : {str(response)}")
             task_uid = response.get("task_uuid")
             if task_uid:
                 bulk_in_flight.append(response["task_uuid"])
@@ -328,10 +352,10 @@ class Threats(Endpoint):
 
         # Finish to check the other bulk tasks
         for bulk_threat_task_uuid in bulk_in_flight:
-            bulk_response.append(self.check_bulk_threats_added(bulk_threat_task_uuid))
+            bulk_response.append(self._check_bulk_threats_added(bulk_threat_task_uuid))
         return bulk_response
 
-    def check_bulk_threats_added(self, bulk_threat_task_uuid) -> dict:
+    def _check_bulk_threats_added(self, bulk_threat_task_uuid) -> dict:
         """Check if the bulk manual threat submission completed successfully and if so return the hashkeys created"""
         success = []
         failed = []
@@ -396,7 +420,7 @@ class Threats(Endpoint):
         return json_response
 
     @staticmethod
-    def check_add_threat_params(atom, override_type, threat_types, whitelist):
+    def _check_add_threat_params(atom, override_type, threat_types, whitelist):
         if not threat_types and not whitelist:
             raise ValueError(
                 "threat_types is required if the atom is not for whitelisting"
@@ -419,7 +443,7 @@ class Threats(Endpoint):
         Add a single threat to datalake using the API.
         This method is slower than add_threats for submitting a large number of threats but allows to provide greater details
         """
-        self.check_add_threat_params(atom, override_type, threat_types, whitelist)
+        self._check_add_threat_params(atom, override_type, threat_types, whitelist)
         tags = tags or []  # API requires a tag field, default to an empty list
         if whitelist:
             scores = self._build_whitelist_scores()
@@ -439,7 +463,7 @@ class Threats(Endpoint):
         return parse_response(response)
 
     @staticmethod
-    def check_atom_values_params(
+    def _check_atom_values_params(
         source_id,
         normalized_timestamp_since,
         normalized_timestamp_until,
@@ -468,7 +492,7 @@ class Threats(Endpoint):
         """
         Get all atom values based on given source id list and from time range.
         """
-        self.check_atom_values_params(
+        self._check_atom_values_params(
             source_id,
             normalized_timestamp_since,
             normalized_timestamp_until,
@@ -476,22 +500,14 @@ class Threats(Endpoint):
             output_path,
         )
 
-        url = self._build_url_for_endpoint("sources")
-        url = url + "?limit=1000&description_only=true"
-        for source in source_id:
-            url = url + "&source_ids=" + source
-        response = self.datalake_requests(url, "get", self._get_headers())
-        response = parse_response(response)
-        if response["count"] != len(source_id):
-            valid_sources = [
-                response["results"][x]["id"] for x in range(0, len(response["results"]))
-            ]
-            invalid_sources = [
-                source_id[y]
-                for y in range(0, len(source_id))
-                if source_id[y] not in valid_sources
-            ]
-            raise ValueError(f"The following sources are invalid : {invalid_sources}")
+        (
+            all_sources_are_valid,
+            list_invalid_sources,
+        ) = self.sources_instance.check_sources(source_id)
+        if not all_sources_are_valid:
+            raise ValueError(
+                f"The following sources are invalid : {list_invalid_sources}"
+            )
 
         payload = {
             "source_id": source_id,
@@ -508,3 +524,56 @@ class Threats(Endpoint):
             save_output(output_path, parse_response(response))
 
         return parse_response(response)
+
+    def _get_threat_with_comments(self, hashkey: str):
+        """
+        Retrieve a threat and its comments.
+        Return a threat as dict
+        """
+        request_url = self._build_url_for_endpoint("threats").format(hashkey=hashkey)
+        response = self.datalake_requests(
+            request_url,
+            "get",
+            self._get_headers(),
+            None,
+        )
+        threat_dict = parse_response(response)
+        if threat_dict.get("hashkey"):
+            request_url = self._build_url_for_endpoint("comments").format(
+                hashkey=hashkey
+            )
+            comments_dict = self.datalake_requests(
+                request_url, "get", self._get_headers(), None
+            )
+            threat_dict["comments"] = parse_response(comments_dict)
+        return threat_dict
+
+    def get_threats_with_comments(self, hashkeys: list):
+        """
+        Retrieve the JSON file of a list of threats and their comments.
+        Return dict containing threats found and a list of threats' hashkey not found
+        """
+        terminal_size = self._get_terminal_size()
+        dict_threats = {"count": 0, "results": []}
+        list_of_not_found_threats_hashkeys = []
+        for index, hashkey in enumerate(hashkeys):
+            try:
+                threat_dict = self._get_threat_with_comments(hashkey)
+            except Exception as e:
+                self.logger.error(
+                    f"Error occured for hashkey {hashkey}, error : {str(e)}"
+                )
+                list_of_not_found_threats_hashkeys.append(hashkey)
+                continue
+            if not threat_dict.get("hashkey"):
+                list_of_not_found_threats_hashkeys.append(hashkey)
+                self.logger.debug(
+                    f"{str(index).ljust(5)}:{hashkey.ljust(terminal_size - 11)}\x1b[0;30;41mERROR\x1b[0m"
+                )
+            else:
+                self.logger.debug(
+                    f"{str(index).ljust(5)}:{hashkey.ljust(terminal_size - 10)}\x1b[0;30;42m OK \x1b[0m"
+                )
+                dict_threats["count"] += 1
+                dict_threats["results"].append(threat_dict)
+        return dict_threats, list_of_not_found_threats_hashkeys
