@@ -41,7 +41,7 @@ class AdvancedSearch(Endpoint):
         }
         if ordering:
             body["ordering"] = ordering
-        url = self._build_url_for_endpoint("advanced-search")
+        url = self._build_url_for_endpoint("advanced-queries-threats")
         response = self.datalake_requests(
             url, "post", post_body=body, headers=self._post_headers(output=output)
         )
@@ -62,9 +62,9 @@ class AdvancedSearch(Endpoint):
             raise ValueError(
                 f'ordering needs to be a list of at least one of the following str : {", ".join(self.ordering_list)}'
             )
-        url = self._build_url_for_endpoint("advanced-search-hash").format(
-            query_hash=query_hash
-        )
+        url = self._build_url_for_endpoint(
+            "advanced-queries-threats-query-hash"
+        ).format(query_hash=query_hash)
         params = {"limit": limit, "offset": offset}
         if ordering:
             params["ordering"] = ordering
