@@ -37,7 +37,7 @@ class TokenManager:
 
         self.url_token = urljoin(base_url, endpoints["token"], allow_fragments=True)
         self.url_refresh = urljoin(
-            base_url, endpoints["refresh_token"], allow_fragments=True
+            base_url, endpoints["refresh-token"], allow_fragments=True
         )
         self.logger = logger
         self.username = username
@@ -114,7 +114,7 @@ class TokenManager:
         json_response = response.json()
         if (
             response.status_code == 401
-            and json_response.get("msg") == "Token has expired"
+            and get_error_message(json_response) == "Token has expired"
         ):
             self.logger.info("Refreshing the refresh token")
             # Refresh token is also expired, we need to restart the authentication from scratch

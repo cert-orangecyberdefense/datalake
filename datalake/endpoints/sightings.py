@@ -69,7 +69,7 @@ class Sightings(Endpoint):
             editable,
             impersonate_id,
         )
-        url = self._build_url_for_endpoint("submit-sightings")
+        url = self._build_url_for_endpoint("threats-sighting")
         res = self.datalake_requests(url, "post", self._post_headers(), payload).json()
         return res
 
@@ -248,7 +248,7 @@ class Sightings(Endpoint):
             ),
         }
         payload = {k: v for k, v in payload.items() if v is not None}
-        url = self._build_url_for_endpoint("sighting-filtered")
+        url = self._build_url_for_endpoint("threats-sighting-filtered")
         res = self.datalake_requests(url, "post", self._post_headers(), payload).json()
         return res
 

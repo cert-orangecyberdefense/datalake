@@ -70,7 +70,7 @@ def lookup_callback(
 ):
     headers = {}
     if not response_on_expired_token:
-        response_on_expired_token = {"msg": "Token has expired"}  # Default value
+        response_on_expired_token = {"message": "Token has expired"}  # Default value
     if request.headers["Authorization"] == f"Token {expired_token}":
         return 401, headers, json.dumps(response_on_expired_token)
     elif request.headers["Authorization"] == f"Token {valid_token}":
@@ -147,7 +147,7 @@ def test_refresh_token_expired(datalake, caplog):
         assert (
             request.headers["Authorization"] == "Token 123456"
         ), "token passed is not the refresh token"
-        return 401, headers, json.dumps({"msg": "Token has expired"})
+        return 401, headers, json.dumps({"message": "Token has expired"})
 
     responses.add_callback(
         responses.POST,
@@ -192,7 +192,7 @@ def test_invalid_token(datalake, caplog):
             valid_token=valid_access_token,
             response_on_valid_token=expected_json,
             response_on_expired_token={
-                "msg": "Missing 'Token' type in 'Authorization' header. Expected 'Authorization: Token <JWT>'"
+                "message": "Missing 'Token' type in 'Authorization' header. Expected 'Authorization: Token <JWT>'"
             },
         ),
         content_type="application/json",
@@ -235,10 +235,10 @@ def lookup_callback_longterm_token(
     expired_longterm_token,
     disabled_longterm_token,
     not_fresh_token,
-    response_on_expired_longterm_token={"msg": "Token has expired"},
-    response_on_disabled_longterm_token={"msg": "Token has been revoked"},
-    response_on_not_fresh_token={"msg": "Fresh token required"},
-    response_on_invalid_token={"msg": "Invalid token"},
+    response_on_expired_longterm_token={"message": "Token has expired"},
+    response_on_disabled_longterm_token={"message": "Token has been revoked"},
+    response_on_not_fresh_token={"message": "Fresh token required"},
+    response_on_invalid_token={"message": "Invalid token"},
 ):
     headers = {}
     if request.headers["Authorization"] == f"Token {expired_longterm_token}":

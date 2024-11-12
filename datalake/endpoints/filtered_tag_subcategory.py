@@ -21,7 +21,7 @@ class FilteredTagSubcategory(Endpoint):
         """
         Retrieve tag subcatgeories, with filtering options available as input parameters
         """
-        url = self._build_url_for_endpoint("filtered-tag-subcategory")
+        url = self._build_url_for_endpoint("tag-subcategory-filtered")
         body = {}
 
         if category_name:
