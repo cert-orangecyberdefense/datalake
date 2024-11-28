@@ -33,6 +33,8 @@ class Datalake:
         longterm_token: str = None,
         env="prod",
         log_level=logging.WARNING,
+        proxies: dict = None,
+        verify: bool = True,
     ):
         configure_logging(log_level)
         endpoint_config = Config().load_config()
@@ -43,6 +45,8 @@ class Datalake:
                 username=username,
                 password=password,
                 longterm_token=longterm_token,
+                proxies=proxies,
+                verify=verify,
             )
         except Exception as e:
             if "Failed to resolve" in str(e) or "Failed to establish" in str(e):
@@ -52,14 +56,24 @@ class Datalake:
             else:
                 raise
 
-        self.Threats = Threats(endpoint_config, env, token_manager)
-        self.BulkSearch = BulkSearch(endpoint_config, env, token_manager)
-        self.Tags = Tags(endpoint_config, env, token_manager)
-        self.FilteredTagSubcategory = FilteredTagSubcategory(
-            endpoint_config, env, token_manager
+        self.Threats = Threats(
+            endpoint_config, env, token_manager, proxies=proxies, verify=verify
         )
-        self.AdvancedSearch = AdvancedSearch(endpoint_config, env, token_manager)
-        self.Sightings = Sightings(endpoint_config, env, token_manager)
+        self.BulkSearch = BulkSearch(
+            endpoint_config, env, token_manager, proxies=proxies, verify=verify
+        )
+        self.Tags = Tags(
+            endpoint_config, env, token_manager, proxies=proxies, verify=verify
+        )
+        self.FilteredTagSubcategory = FilteredTagSubcategory(
+            endpoint_config, env, token_manager, proxies=proxies, verify=verify
+        )
+        self.AdvancedSearch = AdvancedSearch(
+            endpoint_config, env, token_manager, proxies=proxies, verify=verify
+        )
+        self.Sightings = Sightings(
+            endpoint_config, env, token_manager, proxies=proxies, verify=verify
+        )
         self.SearchWatch = SearchWatch(self.BulkSearch)
 
     def sightings_filtered_from_atom_value(

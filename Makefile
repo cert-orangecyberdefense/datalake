@@ -19,6 +19,8 @@ setup-prepush-hook:
 lint:
 	black .
 
+lint_check: lint
+
 
 # Make commands that are not supposed to be run manually but through GitHub pipelines :
 build_release:

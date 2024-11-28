@@ -49,6 +49,27 @@ or
  
 Finally, the credentials can be omitted and will then be asked in a prompt.
 
+
+### step 2bis : using a proxy & SSL verification
+You can provide and/or explicitly disable ssl verification 
+
+```
+proxies = {
+    'http': 'http://127.0.0.1:8080',
+    'https': 'http://127.0.0.1:8080',
+}
+dtl = Datalake(longterm_token='longterm_token', proxies=proxies, verify=False)
+```
+By default, no proxy is configured and verify is True.
+
+You can otherwise set up following environment variables (for proxy): 
+
+* `HTTP_PROXY`
+* `HTTPS_PROXY`
+
+We use the format accepted by the requests python library. 
+See its documenation for other possible kinds of proxy to set up.
+
 ## Usage: Code Sample
 
 Below are some examples to get you started

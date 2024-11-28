@@ -20,7 +20,19 @@ $ pip install datalake-scripts
 $ pip3 install datalake-scripts
 ```
 ### Using as a library
-see [the following link](tutorial.md)
+```python
+from datalake import Datalake, AtomType, Output
+
+dtl = Datalake(username='username', password='password')
+dtl.Threats.lookup(
+    atom_value='mayoclinic.org',
+    atom_type=AtomType.DOMAIN,
+    hashkey_only=False,
+    output=Output.JSON
+)
+```
+
+see [the following link](https://github.com/cert-orangecyberdefense/datalake/blob/master/tutorial.md)
 
 ### Using as a CLI 
 
@@ -51,6 +63,17 @@ or
 * `OCD_DTL_USERNAME` email address used to login on Datalake API/GUI.   
 * `OCD_DTL_PASSWORD` password used to login on Datalake API/GUI.
 > These last two are independent and one can be used without the other if you wish.
+
+#### Using a Proxy
+
+You can set up following environment variables : 
+
+* `HTTP_PROXY`
+* `HTTPS_PROXY`
+
+We use the format accepted by the requests python library. 
+See its documenation for other possible kinds of proxy to set up.
+
 
 #### Throttling
 For throttling the request, those two environment variable can be used:  
