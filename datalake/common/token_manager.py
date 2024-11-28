@@ -25,6 +25,8 @@ class TokenManager:
         username=None,
         password=None,
         longterm_token=None,
+        proxies: dict = None,
+        verify: bool = True,
     ):
         """environment can be either prod or preprod"""
         base_url = urljoin(
@@ -40,6 +42,8 @@ class TokenManager:
         self.username = username
         self.password = password
         self.longterm_token = longterm_token
+        self.proxies = proxies
+        self.verify = verify
         self.access_token = None
         self.refresh_token = None
         self.get_token()
@@ -81,7 +85,9 @@ class TokenManager:
         else:
             data = {"email": self.username, "password": self.password}
 
-            response = requests.post(url=self.url_token, json=data)
+            response = requests.post(
+                url=self.url_token, json=data, proxies=self.proxies, verify=self.verify
+            )
             json_response = json.loads(response.text)
             try:
                 self.access_token = f'Token {json_response["access_token"]}'
@@ -96,7 +102,12 @@ class TokenManager:
     def fetch_new_token(self):
         logger.debug("Token will be refreshed")
         headers = {"Authorization": self.refresh_token}
-        response = requests.post(url=self.url_refresh, headers=headers)
+        response = requests.post(
+            url=self.url_refresh,
+            headers=headers,
+            proxies=self.proxies,
+            verify=self.verify,
+        )
 
         json_response = response.json()
         if (

@@ -33,14 +33,26 @@ class BaseEngine:
     Json = Union[dict, list]  # json like object that can be a dict or root level array
 
     def __init__(
-        self, endpoint_config: dict, environment: str, token_manager: TokenManager
+        self,
+        endpoint_config: dict,
+        environment: str,
+        token_manager: TokenManager,
+        proxies: dict = None,
+        verify: bool = True,
     ):
         self.endpoint_config = endpoint_config
         self.environment = environment
-        self.requests_ssl_verify = suppress_insecure_request_warns(environment)
+        self.requests_ssl_verify = (
+            verify
+            if suppress_insecure_request_warns(environment)
+            else suppress_insecure_request_warns(environment)
+        )
         self.url = self._build_url(endpoint_config, environment)
         self.token_manager = token_manager
-        self.endpoint = Endpoint(endpoint_config, environment, token_manager)
+        self.proxies = proxies
+        self.endpoint = Endpoint(
+            endpoint_config, environment, token_manager, proxies, verify
+        )
 
     def datalake_requests(
         self, url: str, method: str, headers: dict, post_body: dict = None

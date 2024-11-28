@@ -28,13 +28,20 @@ class Endpoint:
     SET_MAX_RETRY = 3
 
     def __init__(
-        self, endpoint_config: dict, environment: str, token_manager: TokenManager
+        self,
+        endpoint_config: dict,
+        environment: str,
+        token_manager: TokenManager,
+        proxies: dict = None,
+        verify: bool = True,
     ):
         self.endpoint_config = endpoint_config
         self.environment = environment
         self.terminal_size = self._get_terminal_size()
         self.token_manager = token_manager
         self.SET_MAX_RETRY = 3
+        self.proxies = proxies
+        self.verify = verify
 
     @staticmethod
     def _get_terminal_size() -> int:
@@ -71,7 +78,13 @@ class Endpoint:
             logger.debug(self._pretty_debug_request(url, method, post_body, headers))
 
             response = self._send_request(
-                url, method, headers, post_body, stream=stream
+                url,
+                method,
+                headers,
+                post_body,
+                stream=stream,
+                proxies=self.proxies,
+                verify=self.verify,
             )
 
             if logger.isEnabledFor(logging.DEBUG):
@@ -111,7 +124,13 @@ class Endpoint:
 
     @staticmethod
     def _send_request(
-        url: str, method: str, headers: dict, data: dict, stream=False
+        url: str,
+        method: str,
+        headers: dict,
+        data: dict,
+        stream=False,
+        proxies: dict = None,
+        verify: bool = True,
     ) -> Response:
         """
         Send the correct http request to url from method [get, post, delete, patch, put].
@@ -121,7 +140,10 @@ class Endpoint:
             "url": url,
             "headers": headers,
             "stream": stream,
+            "verify": verify,
         }
+        if proxies:
+            common_kwargs["proxies"] = proxies
 
         if method == "get":
             api_response = requests.get(**common_kwargs)

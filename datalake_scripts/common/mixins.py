@@ -55,6 +55,7 @@ class HandleBulkTaskMixin(BaseEngine):
                 url=retrieve_bulk_result_url,
                 headers=headers,
                 verify=self.requests_ssl_verify,
+                proxies=self.proxies,
             )
             if response.status_code == 200:
                 potential_json_response = response.json()
