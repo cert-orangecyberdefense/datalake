@@ -10,7 +10,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="datalake-scripts",
+    name="datalake_scripts",
     version=Cli.VERSION,
     author="OCD",
     author_email="cert-contact.ocd@orange.com",
