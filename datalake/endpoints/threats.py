@@ -112,7 +112,6 @@ class Threats(Endpoint):
                 aggregated_response,
                 batch_result,
             )
-            sleep(0.5)
         if search_hashkey_list:
             aggregated_response["search_hashkey"] = search_hashkey_list
         if output is Output.CSV:
@@ -151,7 +150,7 @@ class Threats(Endpoint):
         else:  # atom_type is a valid enum passed by the user
             atom_type_str = atom_type.value
 
-        url = self._build_url_for_endpoint("lookup")
+        url = self._build_url_for_endpoint("threats-lookup")
         params = {
             "atom_value": atom_value,
             "atom_type": atom_type_str,
@@ -172,7 +171,7 @@ class Threats(Endpoint):
 
         values that are believed to be hashes will be returned as the AtomType provided in <treat_hashes_like>
         """
-        url = self._build_url_for_endpoint("atom-values-extract")
+        url = self._build_url_for_endpoint("threats-atom-values-extract")
         payload = {
             "content": " ".join(untyped_atoms),
             "treat_hashes_like": treat_hashes_like.value,
@@ -206,7 +205,7 @@ class Threats(Endpoint):
             "hashkeys": hashkeys,
             "scores": self._build_scores(scores_list),
         }
-        url = self._build_url_for_endpoint("bulk-scoring-edits")
+        url = self._build_url_for_endpoint("threats-bulk-scoring-edits")
         response = self.datalake_requests(url, "post", self._post_headers(), req_body)
         return parse_response(response)
 
@@ -228,7 +227,7 @@ class Threats(Endpoint):
             "query_body_hash": query_body_hash,
             "scores": self._build_scores(scores_list),
         }
-        url = self._build_url_for_endpoint("bulk-scoring-edits")
+        url = self._build_url_for_endpoint("threats-bulk-scoring-edits")
         response = self.datalake_requests(url, "post", self._post_headers(), req_body)
         return parse_response(response)
 
@@ -304,7 +303,7 @@ class Threats(Endpoint):
         scores: List[Dict],
         external_analysis_link: List = None,
     ):
-        url = self._build_url_for_endpoint("threats-manual-bulk")
+        url = self._build_url_for_endpoint("bulk-manual-threats")
         payload["atom_type"] = atom_type.value
         payload["scores"] = scores
         payload["tags"] = tags
@@ -363,7 +362,7 @@ class Threats(Endpoint):
         """Check if the bulk manual threat submission completed successfully and if so return the hashkeys created"""
         success = []
         failed = []
-        url = self._build_url_for_endpoint("retrieve-threats-manual-bulk")
+        url = self._build_url_for_endpoint("bulk-manual-threats-task")
 
         try:
             response = self._handle_bulk_task(
@@ -519,7 +518,7 @@ class Threats(Endpoint):
             "normalized_timestamp_until": normalized_timestamp_until,
             "ordering": ["atom_type"],
         }
-        url = self._build_url_for_endpoint("threats-atom-values")
+        url = self._build_url_for_endpoint("atom-values")
         response = self.datalake_requests(
             url, "post", self._post_headers(output), payload
         )
@@ -543,7 +542,7 @@ class Threats(Endpoint):
         )
         threat_dict = parse_response(response)
         if threat_dict.get("hashkey"):
-            request_url = self._build_url_for_endpoint("comments").format(
+            request_url = self._build_url_for_endpoint("threats-comments").format(
                 hashkey=hashkey
             )
             comments_dict = self.datalake_requests(

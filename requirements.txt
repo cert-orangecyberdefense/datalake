@@ -1,4 +1,5 @@
-requests==2.32.0
+requests==2.32.3; python_version >= "3.8"
+requests==2.31.0; python_version < "3.8"
 halo==0.0.31
 pytest==6.2.5
 responses==0.21.0
