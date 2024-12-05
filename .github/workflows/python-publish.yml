@@ -22,7 +22,10 @@ jobs:
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.workflow_run.head_branch }} # Dynamically checkout the branch that triggered the upstream workflow
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
