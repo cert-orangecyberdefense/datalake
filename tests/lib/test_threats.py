@@ -15,12 +15,12 @@ atoms = ["mayoclinic.org", "commentcamarche.net", "gawker.com"]
 atom_values_extract_url = (
     TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
     + TestData.TEST_CONFIG["api_version"]
-    + TestData.TEST_CONFIG["endpoints"]["atom-values-extract"]
+    + TestData.TEST_CONFIG["endpoints"]["threats-atom-values-extract"]
 )
 lookup_url = (
     TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
     + TestData.TEST_CONFIG["api_version"]
-    + TestData.TEST_CONFIG["endpoints"]["lookup"]
+    + TestData.TEST_CONFIG["endpoints"]["threats-lookup"]
 )
 bulk_lookup_url = (
     TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
@@ -526,7 +526,7 @@ def test_add_threats_bulk(datalake: Datalake):
     url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["threats-manual-bulk"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-manual-threats"]
     )
     atom_list = ["1.1.1.1", "1.1.1.2"]
     task_uid = "5b127e18-b471-44ae-ae34-e616d74d63a9"
@@ -537,7 +537,7 @@ def test_add_threats_bulk(datalake: Datalake):
     url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["retrieve-threats-manual-bulk"].replace(
+        + TestData.TEST_CONFIG["endpoints"]["bulk-manual-threats-task"].replace(
             "{task_uuid}", task_uid
         )
     )
@@ -670,7 +670,7 @@ def test_atom_values_bad_source(datalake: Datalake):
     url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["threats-atom-values"]
+        + TestData.TEST_CONFIG["endpoints"]["atom-values"]
     )
     post_resp = [
         {
@@ -713,7 +713,7 @@ def test_atom_values(datalake: Datalake):
     url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["threats-atom-values"]
+        + TestData.TEST_CONFIG["endpoints"]["atom-values"]
     )
     post_resp = [
         {
@@ -763,7 +763,7 @@ def test_preprod_atom_values(datalake_preprod):
     url = (
         TestData.TEST_CONFIG["main"]["preprod"]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["threats-atom-values"]
+        + TestData.TEST_CONFIG["endpoints"]["atom-values"]
     )
     post_resp = [
         {

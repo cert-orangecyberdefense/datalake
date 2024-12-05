@@ -80,7 +80,7 @@ bs_status_json = {
 bs_status_url = (
     TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
     + TestData.TEST_CONFIG["api_version"]
-    + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"]
+    + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
 )
 
 bs_creation_url = (

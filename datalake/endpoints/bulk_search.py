@@ -35,7 +35,7 @@ class BulkSearch(Endpoint):
         return self.get_task(response["task_uuid"])
 
     def get_task(self, task_uuid) -> BulkSearchTask:
-        url = self._build_url_for_endpoint("bulk-search-task")
+        url = self._build_url_for_endpoint("bulk-search-tasks")
         body = {"task_uuid": task_uuid}
         response = self.datalake_requests(
             url, "post", post_body=body, headers=self._post_headers()
@@ -60,7 +60,7 @@ class BulkSearch(Endpoint):
         Download the bulk search task with the given uuid.
         Stream parameter enables the raw stream to be returned, allowing it to be processed by chunks.
         """
-        url = self._build_url_for_endpoint("retrieve-bulk-search")
+        url = self._build_url_for_endpoint("bulk-search-task")
         url = url.format(task_uuid=task_uuid)
         response: Response = self.datalake_requests(
             url, "get", headers=self._get_headers(output=output), stream=stream

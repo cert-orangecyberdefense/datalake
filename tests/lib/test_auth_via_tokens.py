@@ -70,7 +70,7 @@ def lookup_callback(
 ):
     headers = {}
     if not response_on_expired_token:
-        response_on_expired_token = {"msg": "Token has expired"}  # Default value
+        response_on_expired_token = {"message": "Token has expired"}  # Default value
     if request.headers["Authorization"] == f"Token {expired_token}":
         return 401, headers, json.dumps(response_on_expired_token)
     elif request.headers["Authorization"] == f"Token {valid_token}":
@@ -88,7 +88,7 @@ def test_access_token_expired(datalake, caplog):
         responses.GET,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["lookup"],
+        + TestData.TEST_CONFIG["endpoints"]["threats-lookup"],
         callback=partial(
             lookup_callback,
             expired_token="12345",
@@ -109,7 +109,7 @@ def test_access_token_expired(datalake, caplog):
         responses.POST,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["refresh_token"],
+        + TestData.TEST_CONFIG["endpoints"]["refresh-token"],
         callback=refresh_token_callback,
         content_type="application/json",
     )
@@ -132,7 +132,7 @@ def test_refresh_token_expired(datalake, caplog):
         responses.GET,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["lookup"],
+        + TestData.TEST_CONFIG["endpoints"]["threats-lookup"],
         callback=partial(
             lookup_callback,
             expired_token="12345",
@@ -147,13 +147,13 @@ def test_refresh_token_expired(datalake, caplog):
         assert (
             request.headers["Authorization"] == "Token 123456"
         ), "token passed is not the refresh token"
-        return 401, headers, json.dumps({"msg": "Token has expired"})
+        return 401, headers, json.dumps({"message": "Token has expired"})
 
     responses.add_callback(
         responses.POST,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["refresh_token"],
+        + TestData.TEST_CONFIG["endpoints"]["refresh-token"],
         callback=refresh_token_callback,
         content_type="application/json",
     )
@@ -185,14 +185,14 @@ def test_invalid_token(datalake, caplog):
         responses.GET,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["lookup"],
+        + TestData.TEST_CONFIG["endpoints"]["threats-lookup"],
         callback=partial(
             lookup_callback,
             expired_token=invalid_access_token,
             valid_token=valid_access_token,
             response_on_valid_token=expected_json,
             response_on_expired_token={
-                "msg": "Missing 'Token' type in 'Authorization' header. Expected 'Authorization: Token <JWT>'"
+                "message": "Missing 'Token' type in 'Authorization' header. Expected 'Authorization: Token <JWT>'"
             },
         ),
         content_type="application/json",
@@ -235,10 +235,10 @@ def lookup_callback_longterm_token(
     expired_longterm_token,
     disabled_longterm_token,
     not_fresh_token,
-    response_on_expired_longterm_token={"msg": "Token has expired"},
-    response_on_disabled_longterm_token={"msg": "Token has been revoked"},
-    response_on_not_fresh_token={"msg": "Fresh token required"},
-    response_on_invalid_token={"msg": "Invalid token"},
+    response_on_expired_longterm_token={"message": "Token has expired"},
+    response_on_disabled_longterm_token={"message": "Token has been revoked"},
+    response_on_not_fresh_token={"message": "Fresh token required"},
+    response_on_invalid_token={"message": "Invalid token"},
 ):
     headers = {}
     if request.headers["Authorization"] == f"Token {expired_longterm_token}":
@@ -259,7 +259,7 @@ def test_disabled_longterm_token(datalake_longterm_token, caplog):
         responses.GET,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["lookup"],
+        + TestData.TEST_CONFIG["endpoints"]["threats-lookup"],
         callback=partial(
             lookup_callback_longterm_token,
             expired_longterm_token="expired_longterm_token_1234",
@@ -288,7 +288,7 @@ def test_expired_longterm_token(datalake_longterm_token, caplog):
         responses.GET,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["lookup"],
+        + TestData.TEST_CONFIG["endpoints"]["threats-lookup"],
         callback=partial(
             lookup_callback_longterm_token,
             expired_longterm_token="longterm_token1234",
@@ -318,7 +318,7 @@ def test_requires_fresh_token(datalake_longterm_token, caplog):
         responses.GET,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["lookup"],
+        + TestData.TEST_CONFIG["endpoints"]["threats-lookup"],
         callback=partial(
             lookup_callback_longterm_token,
             expired_longterm_token="expired_longterm_token_1234",
@@ -350,7 +350,7 @@ def test_invalid_longterm_token(datalake_longterm_token, caplog):
         responses.GET,
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
         + TestData.TEST_CONFIG["api_version"]
-        + TestData.TEST_CONFIG["endpoints"]["lookup"],
+        + TestData.TEST_CONFIG["endpoints"]["threats-lookup"],
         callback=partial(
             lookup_callback_longterm_token,
             expired_longterm_token="expired_longterm_token_1234",
