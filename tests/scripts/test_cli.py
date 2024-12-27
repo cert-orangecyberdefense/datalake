@@ -14,7 +14,7 @@ from datalake_scripts.scripts import (
     bulk_lookup_threats,
     advanced_search,
     get_atom_values,
-    get_filtered_tag_subcategory,
+    get_filtered_threat_entity,
     search_watch,
 )
 
@@ -34,7 +34,7 @@ from datalake_scripts.scripts import (
         bulk_lookup_threats,
         advanced_search,
         get_atom_values,
-        get_filtered_tag_subcategory,
+        get_filtered_threat_entity,
         search_watch,
     ],
 )

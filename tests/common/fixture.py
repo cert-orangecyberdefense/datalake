@@ -1,3 +1,4 @@
+import json
 import pytest
 import responses
 
@@ -7,40 +8,19 @@ from datalake import Datalake
 from datalake.common.config import Config
 from datalake.common.token_manager import TokenManager
 
+with open("tests/common/tests_endpoints.json", "r") as json_file:
+    TEST_CONFIG_FILE = json.load(json_file)
+
 
 class TestData:
     TEST_ENV = "prod"
     TEST_CONFIG = {
         "main": {
-            TEST_ENV: "https://datalake.com/api/",
-            "preprod": "https://ti.datalake.com/api/",
+            TEST_ENV: TEST_CONFIG_FILE["main"][TEST_ENV],
+            "preprod": TEST_CONFIG_FILE["main"]["preprod"],
         },
-        "endpoints": {
-            "token": "auth/token/",
-            "refresh-token": "auth/refresh-token/",
-            "advanced-queries-threats": "mrti/advanced-queries/threats/",
-            "advanced-queries-threats-query-hash": "mrti/advanced-queries/threats/{query_hash}/",
-            "atom-values": "mrti/atom-values/",
-            "bulk-search": "mrti/bulk-search/",
-            "bulk-search-tasks": "mrti/bulk-search/tasks/",
-            "bulk-search-task": "mrti/bulk-search/task/{task_uuid}/",
-            "bulk-manual-threats": "mrti/bulk-manual-threats/",
-            "bulk-manual-threats-task": "mrti/bulk-manual-threats/task/{task_uuid}/",
-            "sources": "mrti/sources/",
-            "tag-subcategory-filtered": "mrti/tag-subcategory/filtered/",
-            "threats-manual": "mrti/threats-manual/",
-            "threats-bulk-lookup": "mrti/threats/bulk-lookup/",
-            "threats": "mrti/threats/{hashkey}/",
-            "threats-lookup": "mrti/threats/lookup/",
-            "threats-comments": "mrti/threats/{hashkey}/comments/",
-            "threats-tags": "mrti/threats/{hashkey}/tags/",
-            "threats-atom-values-extract": "mrti/threats/atom-values-extract/",
-            "threats-bulk-scoring-edits": "mrti/threats/bulk-scoring-edits/",
-            "threats-sighting": "mrti/threats/sighting/",
-            "threats-sighting-file": "mrti/threats/sighting-file/{hashkey}/",
-            "threats-sighting-filtered": "mrti/threats/sighting/filtered/",
-        },
-        "api_version": "v42/",
+        "endpoints": TEST_CONFIG_FILE["endpoints"],
+        "api_version": TEST_CONFIG_FILE["api_version"],
     }
 
 
