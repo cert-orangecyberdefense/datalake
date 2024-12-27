@@ -386,23 +386,23 @@ dtl.Comments.post_comments(hashkey, comment, public)
 
 It will return two lists, hashkeys of threats correctly updated and a list for the other ones not updated with the comment
 
-### Get filtered tag subcategory
+### Get filtered threat entities
 
-Filtered & Sorted Tags/Subcategory List Retrieval Tutorial
+Filtered & Sorted Threat Entities List Retrieval Tutorial
 
 ```python
 import json
 from datalake import Datalake
 
 dtl = Datalake(username='<username>', password='<password>')
-tag_subcategory_list = dtl.FilteredTagSubcategory.get_filtered_and_sorted_list()
+threat_entities_list = dtl.FilteredThreatEntity.get_filtered_and_sorted_list()
 
 # To print to console
-print(json.dumps(tag_subcategory_list, indent=4))
+print(json.dumps(threat_entities_list, indent=4))
 
 # To write to a file
 with open('output.json', 'w') as f:
-    json.dump(subcategories, f, indent=4)
+    json.dump(threat_entities_list, f, indent=4)
 ```
 You can use functions parameters to filter and/or sort the results.
 

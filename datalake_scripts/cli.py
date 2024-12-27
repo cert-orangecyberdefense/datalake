@@ -13,7 +13,7 @@ from datalake_scripts.scripts import (
     bulk_lookup_threats,
     advanced_search,
     get_atom_values,
-    get_filtered_tag_subcategory,
+    get_filtered_threat_entity,
     search_watch,
 )
 
@@ -50,8 +50,8 @@ class Cli:
         self._add_command_subparser(subparsers, "advanced_search", advanced_search.main)
         self._add_command_subparser(
             subparsers,
-            "get_filtered_tag_subcategory",
-            get_filtered_tag_subcategory.main,
+            "get_filtered_threat_entity",
+            get_filtered_threat_entity.main,
         )
         self._add_command_subparser(subparsers, "search_watch", search_watch.main)
 
