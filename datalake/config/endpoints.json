@@ -15,7 +15,7 @@
     "bulk-manual-threats": "mrti/bulk-manual-threats/",
     "bulk-manual-threats-task": "mrti/bulk-manual-threats/task/{task_uuid}/",
     "sources": "mrti/sources/",
-    "tag-subcategory-filtered":"mrti/tag-subcategory/filtered/",
+    "threat-entity-filtered":"mrti/threat-entity/filtered/",
     "threats-manual": "mrti/threats-manual/",
     "threats-bulk-lookup": "mrti/threats/bulk-lookup/",
     "threats": "mrti/threats/{hashkey}/",
