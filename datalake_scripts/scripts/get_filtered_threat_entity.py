@@ -1,6 +1,6 @@
 import sys
 import json
-from datalake import Datalake
+from datalake import Datalake, Output
 from datalake_scripts.common.base_script import BaseScripts
 
 
@@ -24,6 +24,9 @@ def main(args=None):
     parser.add_argument(
         "-t", "--tag", help="Filter Tag associated with threat entity", default=None
     )
+    parser.add_argument(
+        "-ot", "--output-type", help="Desired output type", default=None
+    )
 
     if args is None:
         args = parser.parse_args()
@@ -31,6 +34,15 @@ def main(args=None):
         args = parser.parse_args(args)
 
     dtl = Datalake(env=args.env, log_level=args.loglevel)
+
+    output_type = Output.JSON
+    if args.output_type:
+        try:
+            output_type = Output[args.output_type.upper()]
+        except KeyError:
+            dtl.logger.error("Not supported output, please use either json or stix")
+            exit(1)
+
     threat_entities = dtl.FilteredThreatEntity.get_filtered_and_sorted_list(
         threat_category_name=args.threat_category_name,
         alias=args.alias,
@@ -41,6 +53,7 @@ def main(args=None):
         ordering=args.ordering,
         stix_uuid=args.stix_uuid,
         tag=args.tag,
+        output=output_type,
     )
 
     if args.output and threat_entities is not None:
