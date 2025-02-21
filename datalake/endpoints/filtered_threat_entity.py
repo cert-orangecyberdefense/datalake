@@ -1,10 +1,11 @@
 from datalake.endpoints.endpoint import Endpoint
-from datalake.common.output import parse_response
+from datalake.common.output import parse_response, Output, output_supported
 import re
 import sys
 
 
 class FilteredThreatEntity(Endpoint):
+    @output_supported({Output.JSON, Output.STIX})
     def get_filtered_and_sorted_list(
         self,
         threat_category_name=None,
@@ -17,6 +18,7 @@ class FilteredThreatEntity(Endpoint):
         ordering="threat_category_name",
         stix_uuid=None,
         tag=None,
+        output=Output.JSON,
     ):
         """
         Retrieve threat entities, with available filtering options as input parameters
@@ -46,7 +48,10 @@ class FilteredThreatEntity(Endpoint):
 
         try:
             response = self.datalake_requests(
-                url=url, method="post", headers=self._post_headers(), post_body=body
+                url=url,
+                method="post",
+                headers=self._post_headers(output=output),
+                post_body=body,
             )
             return parse_response(response)
         except ValueError as ve:
