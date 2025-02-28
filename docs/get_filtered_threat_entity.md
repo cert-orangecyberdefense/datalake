@@ -31,6 +31,7 @@ The following parameters are available to refine your query. All parameters are 
 - `--stix_uuid <STRING>`: string to filter by the STIX UUID of the threat entity. Must be at least 1 character long.
 - `-t, --tag <STRING>`: string to filter by the tag associated with the threat entity. Must be at least 1 character long.
 - `--ordering <STRING>`: string specifying the ordering of the results. Accepts one of the predefined values in the array. Default is **threat_category_name**
+* `-ot, --output-type <json|stix>` : desired output type. Default is **json**
 
 Each paraemter is used to refine your search and sort the data returned by the Datalake API. Use these parameters to customize the output based on your requirements.
 
