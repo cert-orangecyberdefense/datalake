@@ -36,7 +36,7 @@ dtl = Datalake(longterm_token='longterm_token', env='prod')
 # or
 
 # Sign in using longterm_token
-dtl = Datalake(username='username', password='password', env='prod')
+dtl = Datalake(username='username', password='password', env='preprod')
 ```
 
 While sign in using longterm tokens is to be preferred for security reasons, some endpoints require fresh tokens, i.e. a Datalake instance initiated with username and password. These endpoints will mention it in their description in [the API documentation](https://datalake.cert.orangecyberdefense.com/api/v3/docs/).
@@ -52,7 +52,7 @@ The table below lists all the available parameters, along with a brief explanati
 
 | Parameter        | Env variable                   | Description                        |
 | ---------------- | ------------------------------ | ---------------------------------- |
-| `longterm_token` | `OCD_DTL_USERNAME`             | Token to use when connecting to Datalake API. See above. |
+| `longterm_token` | `OCD_DTL_LONGTERM_TOKEN`       | Token to use when connecting to Datalake API. See above. |
 | `username`       | `OCD_DTL_USERNAME`             | Username to use when connecting to Datalake API. See above. |
 | `password`       | `OCD_DTL_PASSWORD`             | Password to use when connecting to Datalake API. See above. |
 | `env`            | `-`                            | Datalake environment to use. Allowed values are `prod` and `preprod`. Defaults to `prod`. |
