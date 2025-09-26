@@ -296,7 +296,7 @@ dtl.Threats.add_threat(
     tags=['google_dns']
 )
 
-# Example 2: Adding an "Email" threat corresponding to noreply OCD email
+# Example 3: Adding an "Email" threat corresponding to noreply OCD email
 my_email = EmailAtom(
     email='noreply@orangecyberdefense.com',
     email_flow=EmailFlow.FROM,
