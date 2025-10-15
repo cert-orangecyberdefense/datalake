@@ -11,6 +11,7 @@ from datalake.endpoints.advanced_search import AdvancedSearch
 from datalake.endpoints.sightings import Sightings
 from datalake.endpoints.sources import Sources
 from datalake.endpoints.filtered_threat_entity import FilteredThreatEntity
+from datalake.endpoints.my_account import MyAccount
 from datalake.miscellaneous.search_watch import SearchWatch
 
 
@@ -58,6 +59,14 @@ class Datalake:
                 raise
 
         # Endpoints
+        self.MyAccount = MyAccount(
+            self.logger,
+            endpoint_config,
+            env,
+            token_manager,
+            proxies=proxies,
+            verify=verify,
+        )
         self.AdvancedSearch = AdvancedSearch(
             self.logger,
             endpoint_config,
