@@ -15,12 +15,13 @@ from datalake_scripts.scripts import (
     get_atom_values,
     get_filtered_threat_entity,
     search_watch,
+    get_my_user_info,
 )
 
 
 class Cli:
     CLI_NAME = "ocd-dtl"
-    VERSION = "3.0.0rc3"
+    VERSION = "3.0.0rc4"
 
     def __init__(self):
         parser = argparse.ArgumentParser(
@@ -54,8 +55,15 @@ class Cli:
             get_filtered_threat_entity.main,
         )
         self._add_command_subparser(subparsers, "search_watch", search_watch.main)
+        self._add_command_subparser(
+            subparsers, "get_my_user_info", get_my_user_info.main
+        )
 
-        args = parser.parse_args(sys.argv[1:2])
+        # args = parser.parse_args(sys.argv[1:2])
+        command_called = sys.argv[1:2]
+        command_arguments = sys.argv[2:]
+
+        args = parser.parse_args(command_called)
 
         if args.version:
             print(self.VERSION)
@@ -67,7 +75,7 @@ class Cli:
             exit(1)
 
         # Call the subcommand method
-        args.func(sys.argv[2:])
+        args.func(command_arguments)
 
     def _add_command_subparser(self, subparsers, name, method):
         command_parser = subparsers.add_parser(name)

@@ -93,6 +93,7 @@ Below are some examples to get you started
 * [Sightings](#sightings)
 * [Search Sightings](#search-sightings)
 * [Search Watch](#search-watch)
+* [My Account](#my-account)
 
 For more information on the API endpoints see [the API documentation](https://datalake.cert.orangecyberdefense.com/api/v3/docs/)
 
@@ -651,6 +652,21 @@ It can take either a **query_body** or a **query_hash** as **required input**. A
   }
 }
 ```
+
+### My Account
+
+You can retrieve information to the current user of your instance
+For example it can be useful to check for your user:
+- its status
+- its role and permissions 
+- its organization
+- its request limit
+
+````python
+current_user_info = dtl.MyAccount.me()
+print(current_user_info)
+````
+
 
 ### API documentation
 
