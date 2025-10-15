@@ -16,6 +16,7 @@ from datalake_scripts.scripts import (
     get_atom_values,
     get_filtered_threat_entity,
     search_watch,
+    get_my_user_info,
 )
 
 
@@ -36,6 +37,7 @@ from datalake_scripts.scripts import (
         get_atom_values,
         get_filtered_threat_entity,
         search_watch,
+        get_my_user_info,
     ],
 )
 def test_name_function(function_script):

@@ -26,7 +26,8 @@
       "threats-bulk-scoring-edits": "mrti/threats/bulk-scoring-edits/",
       "threats-sighting": "mrti/threats/sighting/",
       "threats-sighting-file": "mrti/threats/sighting-file/{hashkey}/",
-      "threats-sighting-filtered": "mrti/threats/sighting/filtered/"
+      "threats-sighting-filtered": "mrti/threats/sighting/filtered/",
+      "users-me": "users/me/"
     },
     "threats-manual-bulk-size": 100,
     "api_version": "v42/"
