@@ -135,3 +135,22 @@ to assert that the code is linted, if not, you'll have to run :
 ```shell script
 make lint
 ```
+
+
+## Demisto Image
+
+An image can be built locally for PaloAlto demisto products with the command :
+```shell script
+make build_demisto_image
+```
+Note: 
+- by default it will build the image for the version of datalake_script of your current branch
+(you can change it with option `dtl_tag`) 
+- you can also change the base python version of this image with the option `base_python`
+
+
+OCD Datalake team can publish this image on Docker Hub with the command:
+```shell script
+make push_demisto_image
+```
+--> it can be required after a new release of this repository, but check impact on PaloAlto connector first.
