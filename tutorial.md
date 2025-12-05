@@ -499,7 +499,15 @@ bool_all_sources_exists, invalid_sources = dtl.Sources.check_sources(["source_a"
 
 ### Sightings
 
-Sightings can be submitted using the library using a list of atoms:
+#### Overview
+
+#### A) Submit in bulk several sightings (preferred method)
+
+Sightings can be submitted in bulk using the library using a list of atoms.
+Each sighting can contain several atoms or hashkeys. Within the same sighting, they will share properties.
+
+First, create a list of dict of sightings to submit and then submit this list. 
+This is the preferred method (to avoid being rate-limited)
 
 ```python
 from datalake import Datalake, IpAtom, EmailAtom, UrlAtom, FileAtom, Hashes, SightingType, Visibility, ThreatType
@@ -507,8 +515,12 @@ import datetime
 
 dtl = Datalake(username='username', password='password')
 
+
+# 1) Create the list of sightings
+
+# sighting 1
 # Prepare atoms for which we want to generate a sighting
-f1 = FileAtom(hashes=(
+f1 = FileAtom(hashes=Hashes(
     md5='d41d8cd98f00b204e9800998ecf8427e',
     sha1='da39a3ee5e6b4b0d3255bfef95601890afd80709',
     sha256='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
@@ -517,22 +529,108 @@ ip1 = IpAtom('52.48.79.33')
 em1 = EmailAtom('hacker@hacker.fr')
 url1 = UrlAtom('http://notfishing.com')
 
-# Prepare threat types for this sighting
+# You also need to define additional properties for these atoms, shared by all atoms within the same sighting.
+
+## Prepare threat types for this sighting
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
 
-# Prepare start and end timestamps for this sighting
+## Prepare start and end timestamps for this sighting
 start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)
 end = datetime.datetime.now(datetime.timezone.utc)
 
-# Submit sighting
+sighting_1 = {
+    "atoms":[ip1, f1, em1, url1],
+    "start_timestamp":start,
+    "end_timestamp":end,
+    "sighting_type":SightingType.POSITIVE,
+    "description_visibility":Visibility.PUBLIC,
+    "count":1,
+    "threat_types":threat_types,
+    "tags":['some_tag'],
+    "description":'some_description',
+    "editable":True
+}
+
+# sighting 2
+# Prepare hashkeys for which we want to generate a sighting
+hashkeys = [
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "a7b25b324871a7695aa2cc5d09681dda",
+    "1ed07771327e850255b09b042ad00e3d",
+    "bf1f33c3a56e1dfda6a2f4f3d3e4361a"
+]
+
+# You also need to define additional properties for these hashkeys, shared by all hashkeys within the same sighting.
+
+## Prepare threat types for this sighting
+threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
+
+## Prepare start and end timestamps for this sighting
+start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=4)
+end = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=2)
+
+sighting_2 = {
+    "hashkeys":hashkeys,
+    "start_timestamp":start,
+    "end_timestamp":end,
+    "sighting_type":SightingType.NEUTRAL,
+    "description_visibility":Visibility.PUBLIC,
+    "count":3,
+    "threat_types":threat_types,
+    "tags":['some_tag_bis'],
+    "description":'some_description_bis',
+    "editable":False
+}
+
+# Create the list of sightings
+list_sightings = [sighting_1,sighting_2]
+
+# 2) Submit sightings in bulk
+dtl.Sightings.bulk_submit_sightings(
+    sightings=list_sightings
+)
+```
+
+⚠️ If any sighting in the list is rejected (invalid format or value), the entire submission is rejected. The API error response includes the index of the rejected sighting(s) and the reason.
+
+
+
+#### B) Submit a single sighting (1 sighting with several atoms or hashkeys)
+
+```python
+from datalake import Datalake, IpAtom, EmailAtom, UrlAtom, FileAtom, Hashes, SightingType, Visibility, ThreatType
+import datetime
+
+dtl = Datalake(username='username', password='password')
+
+# Prepare atoms for which we want to generate a sighting
+f1 = FileAtom(hashes=Hashes(
+    md5='d41d8cd98f00b204e9800998ecf8427e',
+    sha1='da39a3ee5e6b4b0d3255bfef95601890afd80709',
+    sha256='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+))
+ip1 = IpAtom('52.48.79.33')
+em1 = EmailAtom('hacker@hacker.fr')
+url1 = UrlAtom('http://notfishing.com')
+
+# You also need to define additional properties for these atoms, shared by all atoms within the same sighting.
+
+## Prepare threat types for this sighting
+threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
+
+## Prepare start and end timestamps for this sighting
+start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)
+end = datetime.datetime.now(datetime.timezone.utc)
+
+# Submit the atoms in a single sighting
 dtl.Sightings.submit_sighting(
+    atoms=[ip1, f1, em1, url1],
     start_timestamp=start,
     end_timestamp=end,
     sighting_type=SightingType.POSITIVE,
     description_visibility=Visibility.PUBLIC,
     count=1,
     threat_types=threat_types,
-    atoms=[ip1, f1, em1, url1],
     tags=['some_tag'],
     description='some_description',
     editable=True
@@ -556,14 +654,16 @@ hashkeys = [
     "bf1f33c3a56e1dfda6a2f4f3d3e4361a"
 ]
 
-# Prepare threat types for this sighting
+# You also need to define additional properties for these hashkeys, shared by all hashkeys within the same sighting.
+
+## Prepare threat types for this sighting
 threat_types = [ThreatType.PHISHING, ThreatType.SCAM]
 
-# Prepare start and end timestamps for this sighting
+## Prepare start and end timestamps for this sighting
 start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)
 end = datetime.datetime.now(datetime.timezone.utc)
 
-# Submit sighting
+# Submit the hashkeys in a single sighting
 dtl.Sightings.submit_sighting(
     hashkeys=hashkeys,
     start_timestamp=start,
@@ -579,7 +679,7 @@ dtl.Sightings.submit_sighting(
 ```
 
 The atom_type file provides multiple classes to build each type of atom type used by the API. The classes will provide you with hints on the value expected for each atom_type, most of which aren't mandatory.
-For sightings, we won't use most of the fields. You can verify the fields that are used for sighting in the docstrings of each class, inside your editor.
+For sightings, we won't use most of the fields. You can verify the fields that are used for sightings in the docstrings of each class, inside your editor.
 
 ### Search Sightings
 

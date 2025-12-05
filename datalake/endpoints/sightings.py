@@ -46,9 +46,9 @@ class Sightings(Endpoint):
         impersonate_id: int = None,
     ):
         """
-        Submit a list of sightings.
+        Submit a list of atoms as 1 sighting.
         Either threat "hashkeys" or list of atom objects in "atoms" is required.
-        Possible sightings type: POSITIVE, NEGATIVE, NEUTRAL.
+        Possible sighting's type: POSITIVE, NEGATIVE, NEUTRAL.
         For POSITIVE and NEGATIVE sightings, "threat_types"
         field is required.
         End date timestamp should always be in the past.
@@ -70,6 +70,39 @@ class Sightings(Endpoint):
             impersonate_id,
         )
         url = self._build_url_for_endpoint("threats-sighting")
+        res = self.datalake_requests(url, "post", self._post_headers(), payload).json()
+        return res
+
+    def bulk_submit_sightings(
+        self,
+        sightings: List[dict] = [],
+    ):
+        """
+        Submit a list of Sightings.
+        Input must be a list of valid dict.
+        Each dict is a sighting.
+        """
+        payload = {}
+        list_sightings_for_url_call = []
+        for sighting in sightings:
+            payload_item = self._prepare_sightings_payload(
+                sighting.get("atoms"),
+                sighting.get("hashkeys"),
+                sighting.get("start_timestamp"),
+                sighting.get("end_timestamp"),
+                sighting.get("sighting_type"),
+                sighting.get("description_visibility"),
+                sighting.get("count"),
+                sighting.get("threat_types"),
+                sighting.get("tags"),
+                sighting.get("description"),
+                sighting.get("relation"),
+                sighting.get("editable"),
+                sighting.get("impersonate_id"),
+            )
+            list_sightings_for_url_call.append(payload_item)
+        payload["data"] = list_sightings_for_url_call
+        url = self._build_url_for_endpoint("threats-bulk-sighting")
         res = self.datalake_requests(url, "post", self._post_headers(), payload).json()
         return res
 
