@@ -32,7 +32,9 @@ lint_check:
 
 # Make commands that are not supposed to be run manually but through GitHub pipelines :
 build_release:
-	python3 setup.py sdist bdist_wheel
+	pip install build twine
+	python3 -m build
+	twine check dist/*.whl
 
 clean:
 	@rm -rf dist/
