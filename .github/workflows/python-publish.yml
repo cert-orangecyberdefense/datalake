@@ -23,22 +23,22 @@ jobs:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.event.workflow_run.head_branch }} # Dynamically checkout the branch that triggered the upstream workflow
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install wheel
+        pip install wheel build
     - name: Clean
       run: make clean
     - name: Build package
       run: make build_release
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@41f3f53c7540cba18712b77660518afd98e0b65a
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
 
