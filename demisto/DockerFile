@@ -1,0 +1,7 @@
+ARG BASE_BUILDER
+
+FROM demisto/python3:${BASE_BUILDER}
+
+ARG DATALAKE_VERSION
+
+RUN pip3 install --no-cache-dir "datalake-scripts==${DATALAKE_VERSION}"

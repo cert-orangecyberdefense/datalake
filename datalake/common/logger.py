@@ -16,3 +16,7 @@ def configure_logging(loglevel: int):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(loglevel)
+
+    logger.debug(f"Logging configured with level {str(loglevel)}")
+
+    return logger

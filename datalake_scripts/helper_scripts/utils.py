@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Generator, List, Optional
 
 from datalake import AtomType, ThreatType
-from datalake.common.logger import logger
 
 
 def split_list(list_to_split: list, slice_size: int) -> Generator[list, None, None]:
@@ -65,7 +64,7 @@ def save_output(file_name: str, data, cls=None):
             file_to_write.write(data)
 
 
-def parse_atom_type_or_exit(atom_type: str) -> AtomType:
+def parse_atom_type_or_exit(atom_type: str, logger) -> AtomType:
     try:
         return AtomType[atom_type.upper()]
     except KeyError:
@@ -102,6 +101,13 @@ def parse_threat_types(threat_types: list) -> list:
 def flatten_list(list_to_flatten):
     flat_list = [item for sublist in list_to_flatten for item in sublist]
     return flat_list
+
+
+def retrieve_hashkeys_from_file(input_file, hashkeys):
+    with open(input_file, "r", encoding="utf-8") as input_file:
+        for line in input_file:
+            if line:
+                hashkeys.append(line.strip())
 
 
 class SetEncoder(json.JSONEncoder):

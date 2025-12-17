@@ -16,7 +16,7 @@ from datalake import (
     BulkSearchFailedError,
     BulkSearchNotFound,
 )
-from tests.common.fixture import datalake  # noqa needed fixture import
+from tests.common.fixture import TestData, datalake  # noqa needed fixture import
 
 bs_user = {
     "email": "123@mail.com",
@@ -59,7 +59,9 @@ bs_status_json = {
 @pytest.fixture
 def bulk_search_task(datalake: Datalake):
     bs_creation_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search"]
     )
     bs_creation_response = {
         "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
@@ -71,7 +73,11 @@ def bulk_search_task(datalake: Datalake):
         response_context.add(
             responses.POST, bs_creation_url, json=bs_creation_response, status=200
         )
-        bs_status_url = "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        bs_status_url = (
+            TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+            + TestData.TEST_CONFIG["api_version"]
+            + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
+        )
         response_context.add(
             responses.POST, bs_status_url, json=bs_status_json, status=200
         )
@@ -89,7 +95,9 @@ def test_bulk_search_no_parameter(datalake: Datalake):
 @responses.activate
 def test_bulk_search_query_hash(datalake: Datalake):
     bs_creation_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search"]
     )
     bs_creation_response = {
         "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
@@ -101,7 +109,9 @@ def test_bulk_search_query_hash(datalake: Datalake):
         responses.POST, bs_creation_url, json=bs_creation_response, status=200
     )
     bs_status_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
 
@@ -119,7 +129,9 @@ def test_bulk_search_query_hash(datalake: Datalake):
 @responses.activate
 def test_bulk_search_query_body(datalake: Datalake):
     bs_creation_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search"]
     )
     bs_creation_response = {
         "bulk_search_hash": "ff2d2dc27f17f115d85647dced7a3106",
@@ -148,7 +160,9 @@ def test_bulk_search_query_body(datalake: Datalake):
         content_type="application/json",
     )
     bs_status_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
 
@@ -165,7 +179,9 @@ def test_bulk_search_task_update(bulk_search_task: BulkSearchTask):
     assert bulk_search_task.queue_position is None
     assert bulk_search_task.state == BulkSearchTaskState.DONE
     bs_status_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     bs_update_json = copy.deepcopy(bs_status_json)
     bs_update_json["results"][0]["queue_position"] = 42
@@ -180,7 +196,9 @@ def test_bulk_search_task_update(bulk_search_task: BulkSearchTask):
 @responses.activate
 def test_bulk_search_task_not_found(datalake: Datalake):
     bs_status_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json={"results": []}, status=200)
 
@@ -191,7 +209,13 @@ def test_bulk_search_task_not_found(datalake: Datalake):
 @responses.activate
 def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
     task_uuid = bulk_search_task.uuid
-    bs_download_url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/"
+    bs_download_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
     expected_result = "bulk search download"
     responses.add(responses.GET, bs_download_url, json=expected_result, status=200)
 
@@ -203,7 +227,13 @@ def test_bulk_search_task_download(bulk_search_task: BulkSearchTask):
 @responses.activate
 def test_bulk_search_task_download_not_ready(bulk_search_task: BulkSearchTask):
     task_uuid = bulk_search_task.uuid
-    bs_download_url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/"
+    bs_download_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
     error_message = "Not ready yet"
     json_returned = {"message": ("%s" % error_message)}
     responses.add(responses.GET, bs_download_url, json=json_returned, status=202)
@@ -227,7 +257,13 @@ def test_bulk_search_task_download_invalid_output(bulk_search_task: BulkSearchTa
 @responses.activate
 def test_bulk_search_task_download_zip_json_output(bulk_search_task: BulkSearchTask):
     task_uuid = bulk_search_task.uuid
-    bs_download_url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/"
+    bs_download_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
     expected_result = "zip json"
 
     def bs_download_callback(request):
@@ -250,7 +286,13 @@ def test_bulk_search_task_download_zip_json_output(bulk_search_task: BulkSearchT
 @responses.activate
 def test_bulk_search_task_download_async(bulk_search_task: BulkSearchTask):
     task_uuid = bulk_search_task.uuid
-    bs_download_url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/"
+    bs_download_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
     expected_result = "bulk search download"
     responses.add(responses.GET, bs_download_url, json=expected_result, status=200)
 
@@ -262,14 +304,22 @@ def test_bulk_search_task_download_async(bulk_search_task: BulkSearchTask):
 @responses.activate
 def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask):
     bs_status_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
     bulk_search_task.state = (
         BulkSearchTaskState.IN_PROGRESS
     )  # download is not ready yet
     task_uuid = bulk_search_task.uuid
-    bs_download_url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/"
+    bs_download_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
     expected_result = "bulk search download"
     responses.add(responses.GET, bs_download_url, json=expected_result, status=200)
 
@@ -283,14 +333,22 @@ def test_bulk_search_task_download_sync_stream_to_file(
     bulk_search_task: BulkSearchTask,
 ):
     bs_status_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
     bulk_search_task.state = (
         BulkSearchTaskState.IN_PROGRESS
     )  # download is not ready yet
     task_uuid = bulk_search_task.uuid
-    bs_download_url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/"
+    bs_download_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
     expected_result = "bulk search download saved in file"
     responses.add(responses.GET, bs_download_url, body=expected_result, status=200)
     temporary_file = tempfile.NamedTemporaryFile()
@@ -308,14 +366,22 @@ def test_bulk_search_task_download_sync_stream_to_file_zip(
     bulk_search_task: BulkSearchTask,
 ):
     bs_status_url = (
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_status_json, status=200)
     bulk_search_task.state = (
         BulkSearchTaskState.IN_PROGRESS
     )  # download is not ready yet
     task_uuid = bulk_search_task.uuid
-    bs_download_url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/task/{task_uuid}/"
+    bs_download_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
     # Gzip content
     expected_result = (
         b"\x1f\x8b\x08\x00\xe3\xaf\x2c\x57\x00\x03\x4b\xcb\xcf\x4f\x4a\x2c"
@@ -344,7 +410,11 @@ async def test_bulk_search_task_download_async_timeout(
         )  # download will never be ready
         bs_update_json = copy.deepcopy(bs_status_json)
         bs_update_json["results"][0]["state"] = "IN_PROGRESS"
-        bs_status_url = f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        bs_status_url = (
+            TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+            + TestData.TEST_CONFIG["api_version"]
+            + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
+        )
         response_context.add(
             responses.POST, bs_status_url, json=bs_update_json, status=200
         )
@@ -362,7 +432,9 @@ def test_bulk_search_task_download_sync_timeout(bulk_search_task: BulkSearchTask
     bs_update_json = copy.deepcopy(bs_status_json)
     bs_update_json["results"][0]["state"] = "IN_PROGRESS"
     bs_status_url = (
-        f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
 
@@ -376,7 +448,9 @@ def test_bulk_search_task_download_sync_failed(bulk_search_task: BulkSearchTask)
     bs_update_json = copy.deepcopy(bs_status_json)
     bs_update_json["results"][0]["state"] = "CANCELLED"
     bs_status_url = (
-        f"https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
 

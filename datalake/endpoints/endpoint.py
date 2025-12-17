@@ -1,6 +1,7 @@
 """
 Base class used by all endpoints to request the API
 """
+
 import json
 import logging
 import os
@@ -10,31 +11,31 @@ import requests
 from requests import Response
 
 from datalake.common.output import Output
-from datalake.common.logger import logger
 from datalake.common.throttler import throttle
 from datalake.common.token_manager import TokenManager
 from datalake.common.utils import get_error_message
 
+OCD_DTL_QUOTA_TIME = int(os.getenv("OCD_DTL_QUOTA_TIME", 1))
+OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(os.getenv("OCD_DTL_REQUESTS_PER_QUOTA_TIME", 5))
+
 
 class Endpoint:
-    OCD_DTL_QUOTA_TIME = int(os.getenv("OCD_DTL_QUOTA_TIME", 1))
-    OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(
-        os.getenv("OCD_DTL_REQUESTS_PER_QUOTA_TIME", 5)
-    )
-    logger.debug(
-        f"Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s"
-    )
 
     SET_MAX_RETRY = 3
 
     def __init__(
         self,
+        logger,
         endpoint_config: dict,
         environment: str,
         token_manager: TokenManager,
         proxies: dict = None,
         verify: bool = True,
     ):
+        self.logger = logger
+        self.logger.debug(
+            f"Throttle selected: {OCD_DTL_REQUESTS_PER_QUOTA_TIME} queries per {OCD_DTL_QUOTA_TIME}s"
+        )
         self.endpoint_config = endpoint_config
         self.environment = environment
         self.terminal_size = self._get_terminal_size()
@@ -43,15 +44,16 @@ class Endpoint:
         self.proxies = proxies
         self.verify = verify
 
-    @staticmethod
-    def _get_terminal_size() -> int:
+    def _get_terminal_size(self) -> int:
         """Return the terminal size for pretty print"""
         try:
             terminal_size = os.get_terminal_size()
             if len(terminal_size) == 2:
                 return int(terminal_size[1])
         except OSError:
-            logger.debug("Couldn't get terminal size, falling back to 80 char wide")
+            self.logger.debug(
+                "Couldn't get terminal size, falling back to 80 char wide"
+            )
         return 80
 
     @throttle(
@@ -75,23 +77,26 @@ class Endpoint:
             headers["Authorization"] = (
                 self.token_manager.access_token or self.token_manager.longterm_token
             )
-            logger.debug(self._pretty_debug_request(url, method, post_body, headers))
+            self.logger.debug(
+                self._pretty_debug_request(url, method, post_body, headers)
+            )
 
             response = self._send_request(
-                url,
-                method,
-                headers,
-                post_body,
+                self,
+                url=url,
+                method=method,
+                headers=headers,
+                data=post_body,
                 stream=stream,
                 proxies=self.proxies,
                 verify=self.verify,
             )
 
-            if logger.isEnabledFor(logging.DEBUG):
+            if self.logger.isEnabledFor(logging.DEBUG):
                 # Don't compute response.text var if not needed, especially for streaming response
-                logger.debug("API response:\n%s", response.text)
+                self.logger.debug("API response:\n%s", response.text)
             if response.status_code == 401:
-                logger.warning(
+                self.logger.warning(
                     "Missing authorization header or Token Error. Updating token"
                 )
                 self.token_manager.process_auth_error(response.json())
@@ -103,13 +108,13 @@ class Endpoint:
                     error_msg = response.text
                 raise ValueError(f"422 HTTP code: {error_msg}")
             elif response.status_code < 200 or response.status_code > 299:
-                logger.error(
+                self.logger.error(
                     f"API returned non 2xx response code : {response.status_code}\n{response.text}\n Retrying"
                 )
             else:
                 return response
             tries_left -= 1
-        logger.error("Request failed")
+        self.logger.error("Request failed")
         raise ValueError(f"{response.status_code}: {response.text.strip()}")
 
     @staticmethod
@@ -124,6 +129,7 @@ class Endpoint:
 
     @staticmethod
     def _send_request(
+        self,
         url: str,
         method: str,
         headers: dict,
@@ -156,7 +162,7 @@ class Endpoint:
         elif method == "put":
             api_response = requests.put(**common_kwargs, data=json.dumps(data))
         else:
-            logger.debug(
+            self.logger.debug(
                 "ERROR : Wrong requests, please only do [get, post, put, patch, delete] method"
             )
             raise TypeError("Unknown method to requests %s", method)
@@ -177,10 +183,10 @@ class Endpoint:
         )
         return debug
 
-    def _build_url_for_endpoint(self, endpoint_name):
+    def _build_url_for_endpoint(self, endpoint_name, **kwargs):
         base_url = urljoin(
             self.endpoint_config["main"][self.environment],
             self.endpoint_config["api_version"],
         )
-        enpoints = self.endpoint_config["endpoints"]
-        return urljoin(base_url, enpoints[endpoint_name], allow_fragments=True)
+        endpoints = self.endpoint_config["endpoints"]
+        return urljoin(base_url, endpoints[endpoint_name], allow_fragments=True)

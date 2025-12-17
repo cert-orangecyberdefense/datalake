@@ -1,7 +1,7 @@
 import pytest
 import responses
 from datalake import Datalake
-from tests.common.fixture import datalake
+from tests.common.fixture import datalake, TestData
 
 query_body = {
     "AND": [
@@ -23,11 +23,16 @@ query_hash = "8697fbe09069e882e2de169ad480c2bf"
 def mock_api_resp():
     responses.add(
         responses.POST,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/advanced-queries/threats/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["advanced-queries-threats"],
         status=200,
         json={
             "count": 1,
-            "href_query": "https://ti.extranet.mrti-center.com/api/v2/mrti/advanced-queries/threats/de70393f1c250ae675'\
+            "href_query": TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+            + TestData.TEST_CONFIG["api_version"]
+            + TestData.TEST_CONFIG["endpoints"]["advanced-queries-threats"]
+            + "de70393f1c250ae675'\
             '66ec37c2032d1b/",
             "query_body": query_body,
             "query_hash": "8697fbe09069e882e2de169ad480c2bf",
@@ -36,13 +41,17 @@ def mock_api_resp():
     )
     responses.add(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/advanced-queries/threats"
-        "/8697fbe09069e882e2de169ad480c2bf/?limit=0&offset=0",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["advanced-queries-threats"]
+        + "8697fbe09069e882e2de169ad480c2bf/?limit=0&offset=0",
         status=200,
         json={
             "count": 1,
-            "href_query": "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/advanced-queries/threats"
-            "/8697fbe09069e882e2de169ad480c2bf/66ec37c2032d1b/",
+            "href_query": TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+            + TestData.TEST_CONFIG["api_version"]
+            + TestData.TEST_CONFIG["endpoints"]["advanced-queries-threats"]
+            + "8697fbe09069e882e2de169ad480c2bf/66ec37c2032d1b/",
             "query_body": query_body,
             "query_hash": "8697fbe09069e882e2de169ad480c2bf",
             "results": [],
@@ -50,13 +59,17 @@ def mock_api_resp():
     )
     responses.add(
         responses.GET,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/advanced-queries/threats"
-        "/8697fbe09069e882e2de169ad480c2bf/?limit=0&offset=0&ordering=first_seen",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["advanced-queries-threats"]
+        + "8697fbe09069e882e2de169ad480c2bf/?limit=0&offset=0&ordering=first_seen",
         status=200,
         json={
             "count": 1,
-            "href_query": "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/advanced-queries/threats"
-            "/8697fbe09069e882e2de169ad480c2bf/66ec37c2032d1b/",
+            "href_query": TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+            + TestData.TEST_CONFIG["api_version"]
+            + TestData.TEST_CONFIG["endpoints"]["advanced-queries-threats"]
+            + "8697fbe09069e882e2de169ad480c2bf/66ec37c2032d1b/",
             "query_body": query_body,
             "query_hash": "8697fbe09069e882e2de169ad480c2bf",
             "results": [],

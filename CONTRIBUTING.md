@@ -11,6 +11,7 @@ You can also test it manually (see chapter below)
 
 # Adding a new script / cli command
 
+Each script must have and use functions defined in the Datalake instance. 
 To add a new script, simply create a new file in `./src/scripts/{my_script_name.py}`.  
 And add a new function to the [cli file](../datalake_scripts/cli.py).  
 And add your new function in the test file `./tests/scripts/test_cli.py`  
@@ -18,12 +19,16 @@ And do not forget to test this new command manually (see chapter below)
 
 # Adding new utils functions
 
-Functions to be used by several commands or library functions can be added in :
+Functions to be used by several library functions can be added in :
 - `./datalake/common` 
 - `./datalake_scripts/common`
-- `./datalake_scripts/helper_scripts`
 
 They can have their own tests in directory `./tests/common`
+
+Functions to be used by several cli commands can be added in :
+- `./datalake_scripts/helper_scripts`
+
+They can have their own tests in directory `./tests/scripts`
 
 # Adding dependencies
 
@@ -65,7 +70,8 @@ make test
 
 But please be aware than the tests on Cli commands only test the calls of the script function. 
 
-So when developing/editing a new command, please test several cases 
+So when developing/editing a new command, please test several cases manually
+And of course, rely on libary tests for the datalake instance methods.
 
 First install and enter in a virtual environment :
 ```shell script
@@ -130,7 +136,21 @@ to assert that the code is linted, if not, you'll have to run :
 make lint
 ```
 
-setup-prepush-hook:
-  sh setup-prepush-hook.sh
-lint:
-  black .
+
+## Demisto Image
+
+An image can be built locally for PaloAlto demisto products with the command :
+```shell script
+make build_demisto_image
+```
+Note: 
+- by default it will build the image for the version of datalake_script of your current branch
+(you can change it with option `dtl_tag`) 
+- you can also change the base python version of this image with the option `base_python`
+
+
+OCD Datalake team can publish this image on Docker Hub with the command:
+```shell script
+make push_demisto_image
+```
+--> it can be required after a new release of this repository, but check impact on PaloAlto connector first.
