@@ -25,6 +25,7 @@
       "threats-atom-values-extract": "mrti/threats/atom-values-extract/",
       "threats-bulk-scoring-edits": "mrti/threats/bulk-scoring-edits/",
       "threats-sighting": "mrti/threats/sighting/",
+      "threats-bulk-sighting": "mrti/threats/bulk-sighting/",
       "threats-sighting-file": "mrti/threats/sighting-file/{hashkey}/",
       "threats-sighting-filtered": "mrti/threats/sighting/filtered/",
       "users-me": "users/me/"
