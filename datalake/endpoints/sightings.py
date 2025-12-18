@@ -132,7 +132,7 @@ class Sightings(Endpoint):
             ):
                 raise ValueError(
                     'For POSITIVE and NEGATIVE sightings "threat_types" field is required and has to be '
-                    'an instance of the ThreatType class.'
+                    "an instance of the ThreatType class."
                 )
         elif threat_types:
             raise ValueError(
