@@ -2,13 +2,13 @@ import pytest
 import responses
 import json
 from datalake import Datalake
-from tests.common.fixture import datalake
+from tests.common.fixture import TestData, datalake
 
 mock_results_data = [
     {
         "aliases": None,
-        "category_id": 6,
-        "category_name": "Vulnerability",
+        "threat_category_id": 6,
+        "threat_category_name": "Vulnerability",
         "created_at": "2023-10-18T00:10:27.957064+00:00",
         "custom_fields": None,
         "description": "CVSS Score: 3.1 -- CVE numbers: CVE-2004-2770, CVE-2011-3389",
@@ -71,7 +71,9 @@ mock_results_data = [
 def mock_api_response():
     responses.add(
         responses.POST,
-        "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/tag-subcategory/filtered/",
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["threat-entity-filtered"],
         json={"results": mock_results_data},  # Only return the "results" part
         status=200,
     )
@@ -81,34 +83,38 @@ def mock_api_response():
 def test_get_filtered_and_sorted_list(datalake: Datalake):
     mock_api_response()
     params = {
-        "category_name": "Vulnerability",
+        "threat_category_name": "Vulnerability",
         "limit": 5,
         "offset": 0,
     }
-    filtered_subcategory = datalake.FilteredTagSubcategory
-    response = filtered_subcategory.get_filtered_and_sorted_list(**params)
+    filtered_threat_entity = datalake.FilteredThreatEntity
+    response = filtered_threat_entity.get_filtered_and_sorted_list(**params)
     # Verify the response contains the "results" part
     assert "results" in response
     assert response["results"] == mock_results_data
     # Verify the structure and content of the "results" part
     assert isinstance(response["results"], list), "Results should be a list"
-    assert responses.calls[
-        0
-    ].request.url, "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/tag-subcategory/filtered/"
+    assert responses.calls[0].request.url, (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["threat-entity-filtered"]
+    )
     assert responses.calls[0].request.method, "POST"
     request_body = json.loads(responses.calls[0].request.body)
-    assert request_body["category_name"], params["category_name"]
+    assert request_body["threat_category_name"], params["threat_category_name"]
     assert request_body["limit"], params["limit"]
 
     for result in response["results"]:
-        assert "category_id" in result, "Result should have a category_id"
+        assert "threat_category_id" in result, "Result should have a threat_category_id"
         assert isinstance(
-            result["category_id"], int
-        ), "category_id should be an integer"
-        assert "category_name" in result, "Result should have a category_name"
+            result["threat_category_id"], int
+        ), "threat_category_id should be an integer"
+        assert (
+            "threat_category_name" in result
+        ), "Result should have a threat_category_name"
         assert isinstance(
-            result["category_name"], str
-        ), "category_name should be a string"
+            result["threat_category_name"], str
+        ), "threat_category_name should be a string"
         assert "created_at" in result, "Result should have a created_at"
         assert isinstance(result["created_at"], str), "created_at should be a string"
         assert "description" in result, "Result should have a description"

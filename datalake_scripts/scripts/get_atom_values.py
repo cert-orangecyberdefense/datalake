@@ -1,35 +1,30 @@
 import sys
 
-from datalake.common.config import Config
-from datalake.common.logger import logger, configure_logging
+from datalake import Datalake
 from datalake.common.output import Output
-from datalake.common.token_manager import TokenManager
 from datalake.common.utils import (
     check_normalized_timestamp,
     convert_date_to_normalized_timestamp,
 )
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.engines.get_engine import Sources
-from datalake_scripts.engines.post_engine import AtomSearch
 from datalake_scripts.helper_scripts.utils import load_list, save_output
 
 
 def main(override_args=None):
     """Method to start the script"""
-    logger.debug(f"START: get_atom_values.py")
 
     # Load initial args
     parser = BaseScripts.start(
         "Retrieve atom values from a list of sources ids and a time range"
     )
     parser.add_argument(
-        "source_id",
+        "sources_id",
         help="sources ids of the atom values to retreive",
         nargs="*",
     )
     parser.add_argument(
         "-i",
-        "--input_file",
+        "--input",
         help="list of sources ids (hashkeys) that need to be retrieved",
     )
     parser.add_argument(
@@ -42,7 +37,7 @@ def main(override_args=None):
     )
     parser.add_argument(
         "-ot",
-        "--output_type",
+        "--output-type",
         default="json",
         help="set to the output type desired {json,csv}. Default is json if not specified",
     )
@@ -50,12 +45,15 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-    configure_logging(args.loglevel)
 
-    if not args.source_id and not args.input_file:
-        parser.error("either a source_id or an input_file is required")
-    sources_list = load_list(args.input_file) if args.input_file else args.source_id
-    logger.debug(f"TOTAL: {len(sources_list)} sources found")
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
+
+    dtl.logger.debug(f"START: get_atom_values.py")
+
+    if not args.sources_id and not args.input:
+        parser.error("either a list of sources_id or an input (file) is required")
+    sources_list = load_list(args.input) if args.input else args.sources_id
+    dtl.logger.debug(f"TOTAL: {len(sources_list)} sources found")
 
     if not args.since or not args.until:
         parser.error("Both timestamps since and until are required")
@@ -84,32 +82,23 @@ def main(override_args=None):
     else:
         until_ts = args.until
 
-    # Load api_endpoints and tokens
-    endpoint_config = Config().load_config()
-    token_manager = TokenManager(endpoint_config, environment=args.env)
-
-    # Check list of sources are valid
-    engine_check_sources = Sources(endpoint_config, args.env, token_manager)
-    all_sources_are_valid, list_invalid_sources = engine_check_sources.check_sources(
-        sources_list
+    output_type = (
+        Output.JSON if (not args.output_type or args.output_type) else Output.CSV
     )
-    if not all_sources_are_valid:
-        parser.error(f"The following sources are invalid : {list_invalid_sources}")
 
-    search_engine_atom_values = AtomSearch(endpoint_config, args.env, token_manager)
-    if not args.output_type or args.output_type == "json":
-        list_atom_values = search_engine_atom_values.get_atoms(
-            sources_list, since_ts, until_ts, Output.JSON
+    try:
+        # Checking if sources are valid is done in atom_values method
+        list_atom_values = dtl.Threats.atom_values(
+            sources_list, since_ts, until_ts, output_type
         )
-    else:
-        list_atom_values = search_engine_atom_values.get_atoms(
-            sources_list, since_ts, until_ts, Output.CSV
-        )
+    except ValueError as e:
+        dtl.logger.error(e)
+        list_atom_values = None
 
-    if args.output:
+    if args.output and list_atom_values:
         save_output(args.output, list_atom_values)
-        logger.debug(f"Atom values saved in {args.output}\n")
-    logger.debug(f"END: get_atom_values.py")
+        dtl.logger.debug(f"Atom values saved in {args.output}\n")
+    dtl.logger.debug(f"END: get_atom_values.py")
 
 
 if __name__ == "__main__":

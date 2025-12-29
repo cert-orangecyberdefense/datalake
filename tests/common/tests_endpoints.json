@@ -1,0 +1,36 @@
+{
+    "main": {
+      "preprod": "https://ti.datalake.com/api/",
+      "prod": "https://datalake.com/api/"
+    },
+    "endpoints": {
+      "token": "auth/token/",
+      "refresh-token": "auth/refresh-token/",
+      "advanced-queries-threats": "mrti/advanced-queries/threats/",
+      "advanced-queries-threats-query-hash": "mrti/advanced-queries/threats/{query_hash}/",
+      "atom-values": "mrti/atom-values/",
+      "bulk-search": "mrti/bulk-search/",
+      "bulk-search-tasks": "mrti/bulk-search/tasks/",
+      "bulk-search-task": "mrti/bulk-search/task/{task_uuid}/",
+      "bulk-manual-threats": "mrti/bulk-manual-threats/",
+      "bulk-manual-threats-task": "mrti/bulk-manual-threats/task/{task_uuid}/",
+      "sources": "mrti/sources/",
+      "threat-entity-filtered":"mrti/threat-entity/filtered/",
+      "threats-manual": "mrti/threats-manual/",
+      "threats-bulk-lookup": "mrti/threats/bulk-lookup/",
+      "threats": "mrti/threats/{hashkey}/",
+      "threats-lookup": "mrti/threats/lookup/",
+      "threats-comments": "mrti/threats/{hashkey}/comments/",
+      "threats-tags": "mrti/threats/{hashkey}/tags/",
+      "threats-atom-values-extract": "mrti/threats/atom-values-extract/",
+      "threats-bulk-scoring-edits": "mrti/threats/bulk-scoring-edits/",
+      "threats-sighting": "mrti/threats/sighting/",
+      "threats-bulk-sighting": "mrti/threats/bulk-sighting/",
+      "threats-sighting-file": "mrti/threats/sighting-file/{hashkey}/",
+      "threats-sighting-filtered": "mrti/threats/sighting/filtered/",
+      "users-me": "users/me/"
+    },
+    "threats-manual-bulk-size": 100,
+    "api_version": "v42/"
+  }
+  
