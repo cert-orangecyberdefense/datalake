@@ -91,8 +91,10 @@ class Endpoint:
         self.logger.debug(self._pretty_debug_request(url, method, post_body, headers))
 
         response = None
-        retry_auth_count = 3
-        while retry_auth_count:
+        retry_auth_count = OCD_DTL_MAX_RETRIES
+        if OCD_DTL_MAX_RETRIES < 1:
+            retry_auth_count = 1
+        while retry_auth_count >= 0:
             headers["Authorization"] = (
                 self.token_manager.access_token or self.token_manager.longterm_token
             )
