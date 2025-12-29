@@ -15,6 +15,8 @@ class BulkSearch(Endpoint):
         query_body: dict = None,
         query_hash: str = None,
         query_fields: list = None,
+        indicators_only: bool = None,
+        indicators_and_threat_entities_only: bool = None,
     ) -> BulkSearchTask:
         """Creates a bulk search task"""
         if not query_body and not query_hash:
@@ -27,6 +29,12 @@ class BulkSearch(Endpoint):
             body["query_hash"] = query_hash
         if for_stix_export:
             body["for_stix_export"] = for_stix_export
+        if indicators_only:
+            body["indicators_only"] = indicators_only
+        if indicators_and_threat_entities_only:
+            body["indicators_and_threat_entities_only"] = (
+                indicators_and_threat_entities_only
+            )
 
         url = self._build_url_for_endpoint("bulk-search")
         response = self.datalake_requests(

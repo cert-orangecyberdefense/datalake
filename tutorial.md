@@ -192,12 +192,15 @@ The following Output format are available:
 * CSV_ZIP
 * STIX_ZIP
 
-The STIX_ZIP format is **only** available if when creating the task it is specified that it is for stix export, using the `for_stix_export` parameter.
+The STIX_ZIP format is **only** available if when creating the task it is specified that it is for stix export, using the `for_stix_export` parameter. When using the STIX_ZIP format, the API will return a zip file containing json files with a maximum of 5000 threats per file.
 
-When using the STIX_ZIP format, the API will return a zip file containing json files with a maximum of 5000 threats per file.
+With STIX exports, you might also use the following options to filter the result:
+- `indicators_only`: Exports only indicators.
+- `indicators_and_threat_entities_only`: Exports only indicators and threat entities.
+- None of these: Exports indicators, threat entities and sightings.
 
 ```python
-task = dtl.BulkSearch.create_task(for_stix_export=True, query_hash='<some query hash>')
+task = dtl.BulkSearch.create_task(for_stix_export=True, indicators_only=True, query_hash='<some query hash>')
 stix = task.download_sync_stream_to_file(output=Output.STIX_ZIP, output_path="stix_export.zip")
 ```
 

@@ -393,7 +393,7 @@ def test_submit_sightings_no_threat_types(datalake):
     assert (
         str(err.value)
         == 'For POSITIVE and NEGATIVE sightings "threat_types" field is required and'
-        " has to be an instance of the Visibility class"
+        " has to be an instance of the ThreatType class."
     )
 
 
