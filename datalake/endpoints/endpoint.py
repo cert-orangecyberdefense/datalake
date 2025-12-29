@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 
 import requests
 from requests import Response
+from requests.adapters import HTTPAdapter, Retry
 
 from datalake.common.output import Output
 from datalake.common.throttler import throttle
@@ -17,11 +18,10 @@ from datalake.common.utils import get_error_message
 
 OCD_DTL_QUOTA_TIME = int(os.getenv("OCD_DTL_QUOTA_TIME", 1))
 OCD_DTL_REQUESTS_PER_QUOTA_TIME = int(os.getenv("OCD_DTL_REQUESTS_PER_QUOTA_TIME", 5))
+OCD_DTL_MAX_RETRIES = int(os.getenv("OCD_DTL_MAX_RETRIES", 3))
 
 
 class Endpoint:
-
-    SET_MAX_RETRY = 3
 
     def __init__(
         self,
@@ -40,9 +40,25 @@ class Endpoint:
         self.environment = environment
         self.terminal_size = self._get_terminal_size()
         self.token_manager = token_manager
-        self.SET_MAX_RETRY = 3
         self.proxies = proxies
         self.verify = verify
+        self.session = requests.Session()
+
+        # Configure HTTP retry policy
+        retry_policy = Retry(
+            total=OCD_DTL_MAX_RETRIES,  # Number of retries
+            backoff_factor=1,  # How much time between retries (exponential)
+            raise_on_status=False,  # Raise an error when the number of retries is exhausted
+            status_forcelist=[
+                429,
+                500,
+                502,
+                503,
+                504,
+            ],  # Retry for those HTTP status codes
+        )
+        self.session.mount("http://", HTTPAdapter(max_retries=retry_policy))
+        self.session.mount("https://", HTTPAdapter(max_retries=retry_policy))
 
     def _get_terminal_size(self) -> int:
         """Return the terminal size for pretty print"""
@@ -71,14 +87,16 @@ class Endpoint:
         """
         Use it to request the API
         """
-        tries_left = self.SET_MAX_RETRY
 
-        while tries_left > 0:
+        self.logger.debug(self._pretty_debug_request(url, method, post_body, headers))
+
+        response = None
+        retry_auth_count = OCD_DTL_MAX_RETRIES
+        if OCD_DTL_MAX_RETRIES < 1:
+            retry_auth_count = 1
+        while retry_auth_count >= 0:
             headers["Authorization"] = (
                 self.token_manager.access_token or self.token_manager.longterm_token
-            )
-            self.logger.debug(
-                self._pretty_debug_request(url, method, post_body, headers)
             )
 
             response = self._send_request(
@@ -100,20 +118,23 @@ class Endpoint:
                     "Missing authorization header or Token Error. Updating token"
                 )
                 self.token_manager.process_auth_error(response.json())
-            elif response.status_code == 422:
-                json_resp = response.json()
-                try:
-                    error_msg = get_error_message(json_resp)
-                except ValueError:
-                    error_msg = response.text
-                raise ValueError(f"422 HTTP code: {error_msg}")
-            elif response.status_code < 200 or response.status_code > 299:
-                self.logger.error(
-                    f"API returned non 2xx response code : {response.status_code}\n{response.text}\n Retrying"
-                )
             else:
-                return response
-            tries_left -= 1
+                break
+            retry_auth_count -= 1
+
+        if response.status_code == 422:
+            json_resp = response.json()
+            try:
+                error_msg = get_error_message(json_resp)
+            except ValueError:
+                error_msg = response.text
+            raise ValueError(f"422 HTTP code: {error_msg}")
+        elif response.status_code < 200 or response.status_code > 299:
+            self.logger.error(
+                f"API returned non 2xx response code : {response.status_code}\n{response.text}"
+            )
+        else:
+            return response
         self.logger.error("Request failed")
         raise ValueError(f"{response.status_code}: {response.text.strip()}")
 
@@ -152,15 +173,15 @@ class Endpoint:
             common_kwargs["proxies"] = proxies
 
         if method == "get":
-            api_response = requests.get(**common_kwargs)
+            api_response = self.session.get(**common_kwargs)
         elif method == "post":
-            api_response = requests.post(**common_kwargs, data=json.dumps(data))
+            api_response = self.session.post(**common_kwargs, data=json.dumps(data))
         elif method == "delete":
-            api_response = requests.delete(**common_kwargs, data=json.dumps(data))
+            api_response = self.session.delete(**common_kwargs, data=json.dumps(data))
         elif method == "patch":
-            api_response = requests.patch(**common_kwargs, data=json.dumps(data))
+            api_response = self.session.patch(**common_kwargs, data=json.dumps(data))
         elif method == "put":
-            api_response = requests.put(**common_kwargs, data=json.dumps(data))
+            api_response = self.session.put(**common_kwargs, data=json.dumps(data))
         else:
             self.logger.debug(
                 "ERROR : Wrong requests, please only do [get, post, put, patch, delete] method"
