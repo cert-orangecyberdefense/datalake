@@ -1,36 +1,48 @@
 import sys
 
-from datalake.common.config import Config
-from datalake.common.logger import logger, configure_logging
-from datalake.common.token_manager import TokenManager
+from datalake import Datalake
 from datalake_scripts.common.base_script import BaseScripts
-from datalake_scripts.engines.post_engine import CommentsPost
-from datalake_scripts.helper_scripts.utils import save_output
+from datalake_scripts.helper_scripts.utils import (
+    save_output,
+    retrieve_hashkeys_from_file,
+)
+
+
+def post_comments(hashkeys, comment, public, dtl):
+    return_value = []
+    (
+        list_haskeys_comment_added,
+        list_haskeys_no_comment_added,
+    ) = dtl.Comments.post_comments(hashkeys, comment, public)
+    for hashkey in list_haskeys_comment_added:
+        return_value.append(hashkey + ": OK")
+    for hashkey in list_haskeys_no_comment_added:
+        return_value.append(hashkey + ": FAILED")
+    return return_value
 
 
 def main(override_args=None):
     """Method to start the script"""
     # Load initial args
-    parser = BaseScripts.start(
-        "Add tags and/or comments to a specified list of hashkeys."
-    )
+    parser = BaseScripts.start("Add comments to a specified list of hashkeys.")
     parser.add_argument(
         "hashkeys",
-        help="hashkeys of the threat to add tags and/or the comment",
+        help="hashkeys of the threat to add the comment",
         nargs="*",
     )
     parser.add_argument(
         "-i",
-        "--input_file",
+        "--input",
         help="hashkey txt file, with one hashkey by line",
     )
     parser.add_argument(
         "-p",
         "--public",
-        help="set the visibility to public",
+        help="set the visibility to public. Default is organization",
         action="store_true",
     )
     parser.add_argument(
+        "-c",
         "--comment",
         help="add the given comment",
         required=True,
@@ -40,37 +52,21 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-    configure_logging(args.loglevel)
 
-    # Load api_endpoints and tokens
-    endpoint_config = Config().load_config()
-    token_manager = TokenManager(endpoint_config, environment=args.env)
-    post_engine_add_comments = CommentsPost(endpoint_config, args.env, token_manager)
+    if not args.hashkeys and not args.input:
+        parser.error("either a hashkey or an input file is required")
 
-    if not args.hashkeys and not args.input_file:
-        parser.error("either a hashkey or an input_file is required")
+    hashkeys = list(args.hashkeys) if args.hashkeys else []
+    if args.input:
+        retrieve_hashkeys_from_file(args.input, hashkeys)
 
-    hashkeys = set(args.hashkeys) if args.hashkeys else set()
-    if args.input_file:
-        retrieve_hashkeys_from_file(args.input_file, hashkeys)
-
-    response_dict = post_engine_add_comments.post_comments(
-        hashkeys,
-        args.comment,
-        public=args.public,
-    )
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
+    response = post_comments(hashkeys, args.comment, args.public, dtl)
 
     if args.output:
-        save_output(args.output, response_dict)
-        logger.debug(f"Results saved in {args.output}\n")
-    logger.debug(f"END: add_comments.py")
-
-
-def retrieve_hashkeys_from_file(input_file, hashkeys):
-    with open(input_file, "r") as input_file:
-        for line in input_file:
-            if line:
-                hashkeys.add(line.strip())
+        save_output(args.output, response)
+        dtl.logger.debug(f"Results saved in {args.output}\n")
+    dtl.logger.debug(f"END: add_comments.py")
 
 
 if __name__ == "__main__":
