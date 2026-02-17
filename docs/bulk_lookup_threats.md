@@ -24,11 +24,9 @@ You can pass files as typed or untyped, it means that you will indicate which ki
   ```
 
   ```shell
-  $ ocd-dtl bulk_lookup_threats -i ip:path/to/file/myiplist.txt -i file:path/to/file/myfilelist.txt
-                                  --------- ip typed ---------    --------- file typed -----------
+  $ ocd-dtl bulk_lookup_threats -i ip:path/to/file/myiplist.txt -i file:path/to/file/myfilelist.txt 
                                   
   $ ocd-dtl bulk_lookup_threats -i path/to/file/myatomlist.txt
-                                  --------- untyped ---------
   ```
 
 ### Passing atoms by CLI
@@ -47,52 +45,41 @@ As input files, you can pass one or multiple **typed** or **untyped** atoms by C
 
 With all that in mind, you can combine them to fit your needs:
 ```shell
-$ ocd-dtl bulk_lookup_threats reverso.net 113.223.40.103 --domain paiza.com --ip 45.96.65.132 -i ip:path/to/file/myiplist.txt -i path/to/file/myfilelist.txt
-                             ----untyped domain ip----- ---typed domain--- ----typed ip----  -------typed file as ip-------- ---------untyped file---------                                                
+$ ocd-dtl bulk_lookup_threats reverso.net 113.223.40.103 --domain paiza.com --ip 45.96.65.132 -i ip:path/to/file/myiplist.txt -i path/to/file/myfilelist.txt                                           
 ```
 
     
 ### Parameters
 
-* Optional arguments
-    > -h, --help   
-    show this help message and exit
+#### Specific command's parameters
 
-    > -o [OUTPUT], --output [OUTPUT]  
-    file path from script
+Required:
 
-    > -ot OUTPUT_TYPE, --output-type OUTPUT_TYPE  
-    set to the output type desired {json,csv}. Default is json
-  
-    > -e {prod,preprod}, --env {prod,preprod}     
-    execute on specified environment (Default: prod)
+Use either:
 
-    > --debug
-  
-    > -q, --quiet  
-    Silence the output to only show warnings/errors
-  
-    > -ad, --atom-details  
-    returns threats full details
-   
-    > -i INPUT, --input INPUT  
-    read threats to add from FILE.
-  
-* Typed atom flags
-    > --apk APK             
-    --asn ASN             
-    --cc CC               
-    --crypto CRYPTO       
-    --cve CVE             
-    --domain DOMAIN       
-    --email EMAIL         
-    --file FILE           
-    --fqdn FQDN           
-    --iban IBAN           
-    --ip IP               
-    --ip_range IP_RANGE   
-    --paste PASTE         
-    --phone_number PHONE_NUMBER  
-    --regkey REGKEY
-    --ssl SSL
-    --url URL
+* `<THREAT1 THREAT2 [...]>` : (positional argument) threats to bulk search   
+* `-i, --input <INPUT_PATH>` : path of the input file containing the threats to bulk search 
+
+
+Optional:
+* `-ot, --output-type <json|csv>` : desired output type. Default is **json**
+* `-ad, --atom-details` :will return threats full details
+* (Un)Typed atom flags :  
+    `--untyped` UNKNOWN  
+    `--as` AS                         
+    `--crypto` CRYPTO                  
+    `--domain` DOMAIN       
+    `--email` EMAIL         
+    `--file` FILE                              
+    `--ip` IP               
+    `--ip_range` IP_RANGE           
+    `--phone_number` PHONE_NUMBER  
+    `--certificate` CERTIFICATE  
+    `--url` URL
+
+#### Common parameters
+Common parameters for all commands:  
+* `-e, --env <preprod|prod>` :   Datalake environment. Default is **prod**  
+* `-o, --output <OUTPUT_PATH>` : will set the output file as the API gives it.  No default
+* `-D, --debug`  : will raise the verbosity of the program (by displaying additional DEBUG messages). Default log level is INFO
+* `-q, --quiet` : will quiet the verbosity of the program (but will still show ERROR / WARNING messages). Default log level is INFO

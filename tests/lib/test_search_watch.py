@@ -3,7 +3,7 @@ import json
 import responses
 from unittest import mock
 from datalake import Datalake
-from tests.common.fixture import datalake
+from tests.common.fixture import TestData, datalake
 
 query_body = {
     "AND": [
@@ -78,11 +78,15 @@ bs_status_json = {
 }
 
 bs_status_url = (
-    "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/tasks/"
+    TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+    + TestData.TEST_CONFIG["api_version"]
+    + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
 )
 
 bs_creation_url = (
-    "https://datalake.cert.orangecyberdefense.com/api/v2/mrti/bulk-search/"
+    TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+    + TestData.TEST_CONFIG["api_version"]
+    + TestData.TEST_CONFIG["endpoints"]["bulk-search"]
 )
 
 bs_creation_response = {

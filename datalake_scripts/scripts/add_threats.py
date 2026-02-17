@@ -6,7 +6,6 @@ from collections import OrderedDict
 from halo import Halo
 from datalake import Datalake
 from datalake import OverrideType, AtomType
-from datalake.common.logger import logger
 from datalake.endpoints import Endpoint
 from datalake_scripts.common.base_script import BaseScripts
 from datalake_scripts.helper_scripts.utils import (
@@ -20,26 +19,105 @@ from datalake import (
     Hashes,
     FileAtom,
     AndroidApp,
-    ApkAtom,
     AsAtom,
-    CcAtom,
     CryptoAtom,
-    CveAtom,
-    Jarm,
     DomainAtom,
-    EmailFlow,
     EmailAtom,
-    FqdnAtom,
-    IbanAtom,
-    IpService,
     IpAtom,
     IpRangeAtom,
-    PasteAtom,
     PhoneNumberAtom,
-    RegKeyAtom,
-    SslAtom,
+    CertificateAtom,
     UrlAtom,
 )
+
+
+def hash_to_name(hash_):
+    hash_list = {32: "md5", 40: "sha1", 64: "sha256", 128: "sha512"}
+    return hash_list.get(len(hash_), "ssdeep")
+
+
+def _build_threat_from_atom_type(value, atom_type, link=None):
+    if atom_type == AtomType.AS:
+        atom = AsAtom(external_analysis_link=link, asn=value)
+    elif atom_type == AtomType.CRYPTO:
+        address, network = value.split()
+        atom = CryptoAtom(
+            external_analysis_link=link, crypto_address=address, crypto_network=network
+        )
+    elif atom_type == AtomType.DOMAIN:
+        atom = DomainAtom(external_analysis_link=link, domain=value)
+    elif atom_type == AtomType.EMAIL:
+        atom = EmailAtom(external_analysis_link=link, email=value)
+    elif atom_type == AtomType.FILE:
+        split_value = value.split(",")
+        hash = split_value[0]
+        package_name = (
+            split_value[1] if len(split_value) > 1 else None
+        )  # optional value for APK files
+        hashes = Hashes(**{hash_to_name(hash): hash})
+        if package_name:
+            atom = FileAtom(
+                external_analysis_link=link,
+                hashes=hashes,
+                android=AndroidApp(package_name),
+            )
+        else:
+            atom = FileAtom(external_analysis_link=link, hashes=hashes)
+    elif atom_type == AtomType.IP:
+        atom = IpAtom(external_analysis_link=link, ip_address=value)
+    elif atom_type == AtomType.IP_RANGE:
+        atom = IpRangeAtom(external_analysis_link=link, cidr=value)
+    elif atom_type == AtomType.PHONE_NUMBER:
+        key = "international_phone_number"
+        atom = PhoneNumberAtom(
+            external_analysis_link=link, international_phone_number=value
+        )
+    elif atom_type == AtomType.CERTIFICATE:
+        hashes = Hashes(**{hash_to_name(value): value})
+        atom = CertificateAtom(external_analysis_link=link, hashes=hashes)
+    elif atom_type == AtomType.URL:
+        atom = UrlAtom(external_analysis_link=link, url=value)
+    return atom
+
+
+def defang_threats(threats, atom_type, logger=None):
+    defanged = []
+    # matches urls like http://www.website.com:444/file.html
+    standard_url_regex = re.compile(
+        r"^(https?://)[a-z0-9]+([\-.][a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(/.*)?$"
+    )
+    # matches urls like http://185.25.5.3:8080/result.php (ipv4 or ipv6)
+    ip_url_regex = re.compile(
+        r"^(https?://)[0-9a-zA-Z]{1,4}([.:][0-9a-zA-Z]{1,4}){3,7}(:[0-9]{1,5})?(/.*)?$"
+    )
+    for threat in threats:
+        unmodified_threat = threat
+        threat = threat.replace("[.]", ".")
+        threat = threat.replace("(.)", ".")
+        if atom_type == "url":
+            if not threat.startswith("http"):
+                if threat.startswith("hxxp"):
+                    threat = threat.replace("hxxp", "http")
+                elif threat.startswith("ftp"):
+                    threat = threat.replace("ftp", "http")
+                elif threat.startswith("sftp"):
+                    threat = threat.replace("sftp", "https")
+                else:
+                    threat = "http://" + threat
+            if not standard_url_regex.match(threat) and not ip_url_regex.match(threat):
+                if logger is not None:
+                    logger.warning(
+                        f"'{unmodified_threat}' has been modified as '{threat}' but is still not recognized"
+                        f" as an url. Skipping this line"
+                    )
+                continue
+            if unmodified_threat != threat:
+                if logger is not None:
+                    logger.info(
+                        f"'{unmodified_threat}' has been modified as '{threat}'"
+                    )
+        defanged.append(threat)
+    return defanged
 
 
 def main(override_args=None):
@@ -55,13 +133,13 @@ def main(override_args=None):
         required=True,
     )
     required_named.add_argument(
-        "-a",
-        "--atom_type",
+        "-at",
+        "--atom-type",
         help="set it to define the atom type",
         required=True,
     )
     csv_controle.add_argument(
-        "--is_csv",
+        "--is-csv",
         help="set if the file input is a CSV",
         action="store_true",
     )
@@ -91,14 +169,15 @@ def main(override_args=None):
         action="store_true",
     )
     parser.add_argument(
-        "-t",
-        "--threat_types",
+        "-tt",
+        "--threat-types",
         nargs="+",
         help="choose specific threat types and their score, like: ddos 50 scam 15",
         default=[],
         action="append",
     )
     parser.add_argument(
+        "-t",
         "--tag",
         nargs="+",
         help="add a list of tags",
@@ -110,14 +189,11 @@ def main(override_args=None):
         nargs="+",
     )
     parser.add_argument(
-        "--permanent",
-        help="sets override_type to permanent. Scores won't be updated by the algorithm. Default is temporary",
-        action="store_true",
-    )
-    parser.add_argument(
         "--lock",
-        help="sets override_type to lock. Scores won't be updated by the algorithm for three months. Default is "
-        "temporary",
+        help="""sets override_type to lock. Scores won't be updated by the algorithm for three months. Newer IOCs with override_type lock can still override old lock changes.
+            temporary: all values should override any values provided by older IOCs,
+            but not newer ones.
+            Default is "temporary" (all values should override any values provided by older IOCs)""",
         action="store_true",
     )
     parser.add_argument(
@@ -129,17 +205,15 @@ def main(override_args=None):
         args = parser.parse_args(override_args)
     else:
         args = parser.parse_args()
-    logger.debug(f"START: add_new_threats.py")
+
+    dtl = Datalake(env=args.env, log_level=args.loglevel)
+
+    dtl.logger.debug(f"START: add_new_threats.py")
 
     if not args.threat_types and not args.whitelist:
         parser.error("threat types is required if the atom is not for whitelisting")
 
-    if args.permanent and args.lock:
-        parser.error("Only one override type is authorized")
-
-    if args.permanent:
-        override_type = OverrideType.PERMANENT
-    elif args.lock:
+    if args.lock:
         override_type = OverrideType.LOCK
     else:
         override_type = OverrideType.TEMPORARY
@@ -148,22 +222,21 @@ def main(override_args=None):
         try:
             list_new_threats = load_csv(args.input, args.delimiter, args.column - 1)
         except ValueError as ve:
-            logger.error(ve)
+            dtl.logger.error(ve)
             exit()
     else:
         list_new_threats = load_list(args.input)
         if not list_new_threats:
             raise parser.error("No atom found in the input file.")
-    list_new_threats = defang_threats(list_new_threats, args.atom_type)
+    list_new_threats = defang_threats(list_new_threats, args.atom_type, dtl.logger)
     list_new_threats = list(
         OrderedDict.fromkeys(list_new_threats)
     )  # removing duplicates while preserving order
     args.threat_types = flatten_list(args.threat_types)
     threat_types = parse_threat_types(args.threat_types)
     atom_type = AtomType[args.atom_type.upper()]
-    dtl = Datalake(env=args.env, log_level=args.loglevel)
 
-    terminal_size = Endpoint._get_terminal_size()
+    terminal_size = dtl.Threats.terminal_size
     if args.no_bulk:
         threat_response = []
         for threat in list_new_threats:
@@ -178,7 +251,7 @@ def main(override_args=None):
                     tags=args.tag,
                 )
                 threat_response.append(res)
-                logger.info(
+                dtl.logger.info(
                     f'{threat.ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m'
                 )
             except ValueError as ve:  # Wrong atom type most likely
@@ -190,25 +263,30 @@ def main(override_args=None):
                         "error_message": error_message,
                     }
                 )
-                logger.info(
+                dtl.logger.info(
                     f'{threat.ljust(terminal_size - 6, " ")} '
                     f"\x1b[0;30;41m  KO  \x1b[0m"
                 )
     else:
-        spinner = Halo(text=f"Creating threats", spinner="dots")
-        spinner.start()
-        threat_response = dtl.Threats.add_threats(
-            atom_list=list_new_threats,
-            atom_type=atom_type,
-            threat_types=threat_types,
-            override_type=override_type,
-            whitelist=args.whitelist,
-            public=args.public,
-            tags=args.tag,
-            external_analysis_link=args.link,
-        )
-        spinner.succeed()
-        failed = []
+        try:
+            spinner = Halo(text=f"Creating threats", spinner="dots")
+            spinner.start()
+            threat_response = dtl.Threats.add_threats(
+                atom_list=list_new_threats,
+                atom_type=atom_type,
+                threat_types=threat_types,
+                override_type=override_type,
+                whitelist=args.whitelist,
+                public=args.public,
+                tags=args.tag,
+                external_analysis_link=args.link,
+            )
+            spinner.succeed()
+            failed = []
+        except ValueError as ve:
+            dtl.logger.error(ve)
+            return
+
         failed_counter = 0
         created_counter = 0
         for batch_res in threat_response:
@@ -216,17 +294,17 @@ def main(override_args=None):
             for success in batch_res["success"]:
                 for val_created in success["created_atom_values"]:
                     created_counter += 1
-                    logger.info(
+                    dtl.logger.info(
                         f'{val_created.ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m'
                     )
         for failed_obj in failed:
             for failed_atom_val in failed_obj["failed_atom_values"]:
                 failed_counter += 1
-                logger.info(
+                dtl.logger.info(
                     f'Creation failed for value {failed_atom_val.ljust(terminal_size - 6, " ")} \x1b[0;30;4\
                 1m  KO  \x1b[0m'
                 )
-        logger.info(
+        dtl.logger.info(
             f"Number of batches: {len(threat_response)}\n"
             f"Created threats: {created_counter}\n"
             f"Failed threat creation: {failed_counter}"
@@ -234,101 +312,8 @@ def main(override_args=None):
 
     if args.output:
         save_output(args.output, json.dumps(threat_response))
-        logger.debug(f"Results saved in {args.output}\n")
-    logger.debug(f"END: add_new_threats.py")
-
-
-def defang_threats(threats, atom_type):
-    defanged = []
-    # matches urls like http://www.website.com:444/file.html
-    standard_url_regex = re.compile(
-        r"^(https?://)[a-z0-9]+([\-.][a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(/.*)?$"
-    )
-    # matches urls like http://185.25.5.3:8080/result.php (ipv4 or ipv6)
-    ip_url_regex = re.compile(
-        r"^(https?://)[0-9a-zA-Z]{1,4}([.:][0-9a-zA-Z]{1,4}){3,7}(:[0-9]{1,5})?(/.*)?$"
-    )
-    for threat in threats:
-        unmodified_threat = threat
-        threat = threat.replace("[.]", ".")
-        threat = threat.replace("(.)", ".")
-        if atom_type == "url":
-            if not threat.startswith("http"):
-                if threat.startswith("hxxp"):
-                    threat = threat.replace("hxxp", "http")
-                elif threat.startswith("ftp"):
-                    threat = threat.replace("ftp", "http")
-                elif threat.startswith("sftp"):
-                    threat = threat.replace("sftp", "https")
-                else:
-                    threat = "http://" + threat
-            if not standard_url_regex.match(threat) and not ip_url_regex.match(threat):
-                logger.warning(
-                    f"'{unmodified_threat}' has been modified as '{threat}' but is still not recognized"
-                    f" as an url. Skipping this line"
-                )
-                continue
-            if unmodified_threat != threat:
-                logger.info(f"'{unmodified_threat}' has been modified as '{threat}'")
-        defanged.append(threat)
-    return defanged
-
-
-def hash_to_name(hash_):
-    hash_list = {32: "md5", 40: "sha1", 64: "sha256", 128: "sha512"}
-    return hash_list.get(len(hash_), "ssdeep")
-
-
-def _build_threat_from_atom_type(value, atom_type, link=None):
-    if atom_type == AtomType.APK:
-        package_name, apk_hash = value.split(",")
-        hashes = Hashes(**{hash_to_name(apk_hash): apk_hash})
-        atom = ApkAtom(
-            external_analysis_link=link, android=AndroidApp(package_name), hashes=hashes
-        )
-    elif atom_type == AtomType.AS:
-        atom = AsAtom(external_analysis_link=link, asn=value)
-    elif atom_type == AtomType.CC:
-        atom = CcAtom(external_analysis_link=link, number=value)
-    elif atom_type == AtomType.CRYPTO:
-        address, network = value.split()
-        atom = CryptoAtom(
-            external_analysis_link=link, crypto_address=address, crypto_network=network
-        )
-    elif atom_type == AtomType.CVE:
-        atom = CveAtom(external_analysis_link=link, cve_id=value)
-    elif atom_type == AtomType.DOMAIN:
-        atom = DomainAtom(external_analysis_link=link, domain=value)
-    elif atom_type == AtomType.EMAIL:
-        atom = EmailAtom(external_analysis_link=link, email=value)
-    elif atom_type == AtomType.FILE:
-        hashes = Hashes(**{hash_to_name(value): value})
-        atom = FileAtom(external_analysis_link=link, hashes=hashes)
-    elif atom_type == AtomType.FQDN:
-        atom = FqdnAtom(external_analysis_link=link, fqdn=value)
-    elif atom_type == AtomType.IBAN:
-        atom = IbanAtom(external_analysis_link=link, iban=value)
-    elif atom_type == AtomType.IP:
-        atom = IpAtom(external_analysis_link=link, ip_address=value)
-    elif atom_type == AtomType.IP_RANGE:
-        atom = IpRangeAtom(external_analysis_link=link, cidr=value)
-    elif atom_type == AtomType.PASTE:
-        atom = PasteAtom(external_analysis_link=link, url=value)
-    elif atom_type == AtomType.PHONE_NUMBER:
-        key = (
-            "international_phone_number"
-            if value.startswith("+")
-            else "national_phone_number"
-        )
-        atom = PhoneNumberAtom(external_analysis_link=link, **{key: value})
-    elif atom_type == AtomType.REGKEY:
-        atom = RegKeyAtom(external_analysis_link=link, path=value)
-    elif atom_type == AtomType.SSL:
-        hashes = Hashes(**{hash_to_name(value): value})
-        atom = SslAtom(external_analysis_link=link, hashes=hashes)
-    elif atom_type == AtomType.URL:
-        atom = UrlAtom(external_analysis_link=link, url=value)
-    return atom
+        dtl.logger.debug(f"Results saved in {args.output}\n")
+    dtl.logger.debug(f"END: add_new_threats.py")
 
 
 if __name__ == "__main__":

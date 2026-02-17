@@ -24,6 +24,6 @@ class Tags(Endpoint):
         payload = {
             "tags": tags_payload,
         }
-        url = self._build_url_for_endpoint("tag").format(hashkey=hashkey)
+        url = self._build_url_for_endpoint("threats-tags").format(hashkey=hashkey)
         response = self.datalake_requests(url, "post", self._post_headers(), payload)
         return parse_response(response)

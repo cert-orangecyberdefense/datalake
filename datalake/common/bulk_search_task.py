@@ -16,12 +16,16 @@ class BulkSearchTaskState(Enum):
     CANCELLED = "CANCELLED"
     FAILED_ERROR = "FAILED_ERROR"
     FAILED_TIMEOUT = "FAILED_TIMEOUT"
+    FAILED_QUOTA_EXCEEDED = "FAILED_QUOTA_EXCEEDED"
+    FAILED_TOO_MANY_RESULTS = "FAILED_TOO_MANY_RESULTS"
 
 
 BULK_SEARCH_FAILED_STATE = {
     BulkSearchTaskState.CANCELLED,
     BulkSearchTaskState.FAILED_TIMEOUT,
     BulkSearchTaskState.FAILED_ERROR,
+    BulkSearchTaskState.FAILED_QUOTA_EXCEEDED,
+    BulkSearchTaskState.FAILED_TOO_MANY_RESULTS,
 }
 
 
@@ -98,11 +102,11 @@ class BulkSearchTask:
         Note that the requests library is used which is blocking.
         timeout parameter is in seconds.
         """
-        start = datetime.datetime.utcnow()
+        start = datetime.datetime.now(datetime.timezone.utc)
         while self.state != BulkSearchTaskState.DONE:
             if self.state in BULK_SEARCH_FAILED_STATE:
                 raise BulkSearchFailedError(self.state)
-            time_passed = datetime.datetime.utcnow() - start
+            time_passed = datetime.datetime.now(datetime.timezone.utc) - start
             if time_passed.total_seconds() > timeout:
                 raise TimeoutError()
 
