@@ -108,8 +108,11 @@ class BulkSearchTask:
                 raise BulkSearchFailedError(self.state)
             time_passed = datetime.datetime.now(datetime.timezone.utc) - start
             if time_passed.total_seconds() > timeout:
+                try:
+                    self.cancel()
+                except Exception:
+                    pass
                 raise TimeoutError()
-
             await asyncio.sleep(self.REQUEST_INTERVAL)
             self.update()
         return self.download(output=output, stream=stream)
@@ -134,3 +137,7 @@ class BulkSearchTask:
         """Query the API to refresh the tasks attributes"""
         updated_bs = self._endpoint.get_task(self.uuid)
         self.__dict__.update(updated_bs.__dict__)  # Avoid to return a new object
+
+    def cancel(self):
+        """Cancel this bulk search task server-side."""
+        self._endpoint.cancel(self.uuid)
