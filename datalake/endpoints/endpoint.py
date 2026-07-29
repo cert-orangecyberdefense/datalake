@@ -14,6 +14,7 @@ from requests.adapters import HTTPAdapter, Retry
 from datalake.common.output import Output
 from datalake.common.throttler import throttle
 from datalake.common.token_manager import TokenManager
+from datalake.common.user_agent import build_user_agent
 from datalake.common.utils import get_error_message
 
 OCD_DTL_QUOTA_TIME = int(os.getenv("OCD_DTL_QUOTA_TIME", 1))
@@ -43,6 +44,7 @@ class Endpoint:
         self.proxies = proxies
         self.verify = verify
         self.session = requests.Session()
+        self.session.headers.update({"User-Agent": build_user_agent()})
 
         # Configure HTTP retry policy
         retry_policy = Retry(
