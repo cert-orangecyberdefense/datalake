@@ -54,6 +54,21 @@ class BulkSearch(Endpoint):
         bs_as_json = results[0]
         return BulkSearchTask(endpoint=self, **bs_as_json)
 
+    def cancel(self, task_uuid):
+        """
+        Cancel the bulk search task with the given uuid.
+
+        Raises BulkSearchNotFound if the task does not exist.
+        """
+        url = self._build_url_for_endpoint("bulk-search-task")
+        url = url.format(task_uuid=task_uuid)
+        try:
+            self.datalake_requests(url, "delete", headers=self._get_headers())
+        except ValueError as e:
+            if str(e).startswith("404"):
+                raise BulkSearchNotFound from e
+            raise
+
     @output_supported(
         {
             Output.JSON,
