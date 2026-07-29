@@ -1,3 +1,51 @@
+[tool.poetry]
+name = "datalake_scripts"
+version = "3.0.0"
+description = "A collection of scripts to easily use the API of OCD Datalake"
+authors = ["OCD <cert-contact.ocd@orange.com>"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/cert-orangecyberdefense/datalake/"
+repository = "https://github.com/cert-orangecyberdefense/datalake/"
+packages = [
+    { include = "datalake" },
+    { include = "datalake_scripts" },
+]
+include = ["datalake/config/endpoints.json"]
+classifiers = [
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: Console",
+    "Topic :: Security",
+    "Natural Language :: English",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<4.0"
+requests = [
+    { version = "2.31.0", python = "<3.8" },
+    { version = "2.32.3", python = ">=3.8" },
+]
+halo = "0.0.31"
+prettytable = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "6.2.5"
+pytest-asyncio = "0.15.1"
+responses = "0.21.0"
+black = [
+    { version = "*", python = "<3.8" },
+    { version = "24.3.0", python = ">=3.8" },
+]
+
+[tool.poetry.scripts]
+ocd-dtl = "datalake_scripts.cli:main"
+
 [build-system]
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

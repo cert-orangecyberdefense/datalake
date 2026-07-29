@@ -1,54 +1,40 @@
 # Make commands for development tests :
 test_dev_env:
-	@( \
-		python3 -m venv .venv > /dev/null 2>&1; \
-		. .venv/bin/activate > /dev/null 2>&1; \
-		pip install -r requirements.txt > /dev/null 2>&1; \
-		pip install . > /dev/null 2>&1; \
-		black .; \
-		pytest $$path; \
-		deactivate > /dev/null 2>&1 \
-	)
+	@poetry install
+	@poetry run black .
+	@poetry run pytest $$path
 
 test: lint
-	@pytest $$path
+	@poetry run pytest $$path
 
 setup-prepush-hook:
 	sh setup-prepush-hook.sh
 
 lint:
-	@( \
-		python3 -m venv .venv > /dev/null 2>&1; \
-		. .venv/bin/activate > /dev/null 2>&1; \
-		pip install -r requirements.txt > /dev/null 2>&1; \
-		pip install . > /dev/null 2>&1; \
-		black . $(flag); \
-		deactivate > /dev/null 2>&1 \
-	)
+	@poetry install --only dev --no-root
+	@poetry run black . $(flag)
 
-lint_check: 
+lint_check:
 	$(MAKE) --no-print-directory lint flag='--check'
 
 
 # Make commands that are not supposed to be run manually but through GitHub pipelines :
 build_release:
-	pip install build twine
-	python3 -m build
-	twine check dist/*.whl
+	poetry build
 
 clean:
 	@rm -rf dist/
 	@echo "Removed dist folder"
 
 deploy_test: clean build_release
-	python3 -m twine upload --repository testpypi dist/*
+	poetry publish --repository testpypi
 
 deploy_prod: clean build_release
-	python3 -m twine upload dist/*
+	poetry publish
 
 
 # Make commands to be launched manually by ocd dev
-dtl_tag ?= $(shell python3 -c "import re; f=open('datalake_scripts/cli.py'); m=re.search(r'VERSION\\s*=\\s*[\\\"\\']([^\\\"\\']+)[\\\"\\']', f.read()); print(m.group(1) if m else '3.0.0')")
+dtl_tag ?= $(shell poetry version -s)
 base_python ?= 3.12.12.5490952
 
 build_demisto_image:
