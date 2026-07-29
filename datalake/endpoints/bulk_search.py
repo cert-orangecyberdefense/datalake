@@ -32,9 +32,9 @@ class BulkSearch(Endpoint):
         if indicators_only:
             body["indicators_only"] = indicators_only
         if indicators_and_threat_entities_only:
-            body["indicators_and_threat_entities_only"] = (
-                indicators_and_threat_entities_only
-            )
+            body[
+                "indicators_and_threat_entities_only"
+            ] = indicators_and_threat_entities_only
 
         url = self._build_url_for_endpoint("bulk-search")
         response = self.datalake_requests(

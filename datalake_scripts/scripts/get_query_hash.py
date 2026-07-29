@@ -7,7 +7,6 @@ from datalake_scripts.common.base_script import BaseScripts
 
 
 def main(override_args=None):
-
     # Load initial args
     parser = BaseScripts.start(
         "Retrieve a query hash from a query body (a json used for the Advanced Search)."

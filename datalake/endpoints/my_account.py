@@ -5,7 +5,6 @@ from datalake.common.output import parse_response
 
 
 class MyAccount(Endpoint):
-
     def me(self):
         """
         Gets details of the currently logged in user.

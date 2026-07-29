@@ -23,7 +23,6 @@ OCD_DTL_MAX_RETRIES = int(os.getenv("OCD_DTL_MAX_RETRIES", 3))
 
 
 class Endpoint:
-
     def __init__(
         self,
         logger,
