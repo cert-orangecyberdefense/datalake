@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-import sys
+import sys, os
 from datalake_scripts.scripts import (
     add_threats,
     get_threats,
@@ -21,7 +21,7 @@ from datalake_scripts.scripts import (
 
 class Cli:
     CLI_NAME = "ocd-dtl"
-    VERSION = "3.0.0"
+    VERSION = "3.0.1"
 
     def __init__(self):
         parser = argparse.ArgumentParser(
@@ -73,6 +73,8 @@ class Cli:
             print("You must specify a command")
             parser.print_help()
             exit(1)
+
+        os.environ["OCD_DTL_USER_AGENT_INTEGRATION"] = f"{self.CLI_NAME}/{self.VERSION}"
 
         # Call the subcommand method
         args.func(command_arguments)

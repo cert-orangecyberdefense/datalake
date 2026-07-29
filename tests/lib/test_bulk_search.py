@@ -418,10 +418,25 @@ async def test_bulk_search_task_download_async_timeout(
         response_context.add(
             responses.POST, bs_status_url, json=bs_update_json, status=200
         )
+        bs_cancel_url = (
+            TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+            + TestData.TEST_CONFIG["api_version"]
+            + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+                "{task_uuid}", bulk_search_task.uuid
+            )
+        )
+        response_context.add(responses.DELETE, bs_cancel_url, status=204)
 
         task = bulk_search_task.download_async(timeout=0.2)
         with pytest.raises(TimeoutError):
             await task
+
+        cancel_calls = [
+            c
+            for c in response_context.calls
+            if c.request.method == "DELETE" and c.request.url == bs_cancel_url
+        ]
+        assert len(cancel_calls) == 1, "cancel() must be called on timeout"
 
 
 @responses.activate
@@ -437,9 +452,24 @@ def test_bulk_search_task_download_sync_timeout(bulk_search_task: BulkSearchTask
         + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
+    bs_cancel_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", bulk_search_task.uuid
+        )
+    )
+    responses.add(responses.DELETE, bs_cancel_url, status=204)
 
     with pytest.raises(TimeoutError):
         bulk_search_task.download_sync(timeout=0.2)
+
+    cancel_calls = [
+        c
+        for c in responses.calls
+        if c.request.method == "DELETE" and c.request.url == bs_cancel_url
+    ]
+    assert len(cancel_calls) == 1, "cancel() must be called on timeout"
 
 
 @responses.activate
@@ -453,7 +483,114 @@ def test_bulk_search_task_download_sync_failed(bulk_search_task: BulkSearchTask)
         + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
     )
     responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
+    bs_cancel_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", bulk_search_task.uuid
+        )
+    )
+    responses.add(responses.DELETE, bs_cancel_url, status=204)
 
     with pytest.raises(BulkSearchFailedError) as err:
         bulk_search_task.download_sync()
     assert err.value.failed_state == BulkSearchTaskState.CANCELLED
+
+    cancel_calls = [
+        c
+        for c in responses.calls
+        if c.request.method == "DELETE" and c.request.url == bs_cancel_url
+    ]
+    assert len(cancel_calls) == 0, "cancel() must not be called on failed state"
+
+
+@pytest.mark.parametrize(
+    "failed_state",
+    [
+        "CANCELLED",
+        "FAILED_TIMEOUT",
+        "FAILED_ERROR",
+        "FAILED_QUOTA_EXCEEDED",
+        "FAILED_TOO_MANY_RESULTS",
+    ],
+)
+@responses.activate
+def test_bulk_search_task_download_sync_cancel_on_any_failed_state(
+    bulk_search_task: BulkSearchTask, failed_state
+):
+    bulk_search_task.state = BulkSearchTaskState.IN_PROGRESS
+    bs_update_json = copy.deepcopy(bs_status_json)
+    bs_update_json["results"][0]["state"] = failed_state
+    bs_status_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-tasks"]
+    )
+    responses.add(responses.POST, bs_status_url, json=bs_update_json, status=200)
+    bs_cancel_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", bulk_search_task.uuid
+        )
+    )
+    responses.add(responses.DELETE, bs_cancel_url, status=204)
+
+    with pytest.raises(BulkSearchFailedError) as err:
+        bulk_search_task.download_sync()
+    assert err.value.failed_state == BulkSearchTaskState[failed_state]
+
+    cancel_calls = [
+        c
+        for c in responses.calls
+        if c.request.method == "DELETE" and c.request.url == bs_cancel_url
+    ]
+    assert (
+        len(cancel_calls) == 0
+    ), f"cancel() must not be called for state {failed_state}"
+
+
+@responses.activate
+def test_bulk_search_task_cancel(bulk_search_task: BulkSearchTask):
+    task_uuid = bulk_search_task.uuid
+    bs_cancel_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
+    responses.add(responses.DELETE, bs_cancel_url, status=204)
+
+    assert bulk_search_task.cancel() is None
+
+
+@responses.activate
+def test_bulk_search_task_cancel_not_found(bulk_search_task: BulkSearchTask):
+    task_uuid = bulk_search_task.uuid
+    bs_cancel_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
+    responses.add(responses.DELETE, bs_cancel_url, json={}, status=404)
+
+    with pytest.raises(BulkSearchNotFound):
+        bulk_search_task.cancel()
+
+
+@responses.activate
+def test_bulk_search_endpoint_cancel(datalake: Datalake):
+    task_uuid = "d9c00380-2784-4386-9bc3-aff35cfeeb41"
+    bs_cancel_url = (
+        TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
+        + TestData.TEST_CONFIG["api_version"]
+        + TestData.TEST_CONFIG["endpoints"]["bulk-search-task"].replace(
+            "{task_uuid}", task_uuid
+        )
+    )
+    responses.add(responses.DELETE, bs_cancel_url, status=204)
+
+    assert datalake.BulkSearch.cancel(task_uuid) is None
