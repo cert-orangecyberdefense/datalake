@@ -571,11 +571,11 @@ class Threats(Endpoint):
             if not threat_dict.get("hashkey"):
                 list_of_not_found_threats_hashkeys.append(hashkey)
                 self.logger.debug(
-                    f"{str(index).ljust(5)}:{hashkey.ljust(terminal_size - 11)}\x1b[0;30;41mERROR\x1b[0m"
+                    f"{str(index).ljust(5)}:{hashkey.ljust(terminal_size - 11)}ERROR"
                 )
             else:
                 self.logger.debug(
-                    f"{str(index).ljust(5)}:{hashkey.ljust(terminal_size - 10)}\x1b[0;30;42m OK \x1b[0m"
+                    f"{str(index).ljust(5)}:{hashkey.ljust(terminal_size - 10)} OK "
                 )
                 dict_threats["count"] += 1
                 dict_threats["results"].append(threat_dict)

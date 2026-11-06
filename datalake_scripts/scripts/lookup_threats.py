@@ -11,9 +11,9 @@ from datalake_scripts.helper_scripts.utils import (
     parse_atom_type_or_exit,
 )
 
-boolean_to_text_and_color = {
-    True: ("FOUND", "\x1b[6;30;42m"),
-    False: ("NOT_FOUND", "\x1b[6;30;41m"),
+boolean_to_text = {
+    True: "FOUND",
+    False: "NOT_FOUND",
 }
 
 
@@ -115,9 +115,8 @@ def main(override_args=None):
             threat, atom_type=atom_type, hashkey_only=hashkey_only
         )
         found = response.get("threat_found", True)
-        text, color = boolean_to_text_and_color[found]
         dtl.logger.info(
-            "{}{} hashkey:{} {}\x1b[0m".format(color, threat, response["hashkey"], text)
+            f"{threat} hashkey:{response['hashkey']} {boolean_to_text[found]}"
         )
         full_response[threat] = response
 

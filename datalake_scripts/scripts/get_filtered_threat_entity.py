@@ -2,6 +2,7 @@ import sys
 import json
 from datalake import Datalake, Output
 from datalake_scripts.common.base_script import BaseScripts
+from datalake_scripts.common.rendering import get_renderer
 
 
 def main(args=None):
@@ -60,7 +61,7 @@ def main(args=None):
         with open(args.output, "w") as f:
             json.dump(threat_entities, f, indent=4)
     elif threat_entities is not None:
-        print(json.dumps(threat_entities, indent=4))
+        get_renderer(dtl).json(threat_entities)
 
 
 if __name__ == "__main__":

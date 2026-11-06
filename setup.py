@@ -33,7 +33,7 @@ setup(
         "": ".",
     },
     packages=find_packages(),
-    install_requires=["requests", "halo", "prettytable"],
+    install_requires=["requests", "rich"],
     test_suite="nose.collector",
     entry_points={
         "console_scripts": (f"{CLI_NAME} = datalake_scripts.cli:main",),

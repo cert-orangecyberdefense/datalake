@@ -1,3 +1,6 @@
+import json
+
+
 class CsvBuilder:
     @staticmethod
     def create_look_up_csv(
@@ -82,3 +85,14 @@ class CsvBuilder:
             return None
         tags = ",".join([tag["name"] for tag in tags]).replace('"', '""')
         return f'"{tags}"'
+
+
+def format_threats_output(response: dict, one_threat_per_line=False) -> str:
+    """Format a bulk search response as JSON, or as one threat per line"""
+    if one_threat_per_line:
+        threat_list = []
+        for result in response.get("results", []):
+            if result:
+                threat_list += result
+        return "\n".join(threat_list)
+    return json.dumps(response, sort_keys=True, indent=4)
