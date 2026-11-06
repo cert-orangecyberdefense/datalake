@@ -35,11 +35,13 @@ def load_list(file_name: str) -> list:
     """
     Load a file and retrieve each line in a list
     """
-    return [line.rstrip("\n") for line in open(file_name)]
+    with open(file_name) as file:
+        return [line.rstrip("\n") for line in file]
 
 
 def load_json(file_name: str) -> dict:
-    return json.load(open(file_name))
+    with open(file_name) as file:
+        return json.load(file)
 
 
 def split_input_file(input_file, n):

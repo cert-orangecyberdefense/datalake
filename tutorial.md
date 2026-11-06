@@ -15,7 +15,7 @@ The following will guide you through the configuration of your environment and m
 
 ### Step 1: Install datalake
 
-With Python 3.6+:
+With Python 3.8+:
 
 ```bash
 $ pip install datalake-scripts

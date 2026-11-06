@@ -15,7 +15,7 @@ You can use this repository either as a library or as a CLI
 
 ### Installation
 
-With Python 3.6+:  
+With Python 3.8+:  
 ```
 $ pip install datalake-scripts
 $ pip3 install datalake-scripts
