@@ -92,17 +92,13 @@ def main(override_args=None):
                 hashkeys, parsed_threat_type, override_type
             )
         except ValueError as e:
-            dtl.logger.warning(
-                f"\x1b[6;30;41mBATCH {str(index+1)}/{len(list(hashkeys_chunks))}: FAILED\x1b[0m"
-            )
+            dtl.logger.warning(f"BATCH {index + 1}/{len(hashkeys_chunks)}: FAILED")
             for hashkey in hashkeys:
                 response_list.append(hashkey + ": FAILED")
-                dtl.logger.warning(f"\x1b[6;30;41m{hashkey} : FAILED\x1b[0m")
+                dtl.logger.warning(f"{hashkey} : FAILED")
             dtl.logger.error(e)
         else:
-            dtl.logger.info(
-                f"\x1b[6;30;42mBATCH {str(index+1)}/{len(list(hashkeys_chunks))}: OK\x1b[0m"
-            )
+            dtl.logger.info(f"BATCH {index + 1}/{len(hashkeys_chunks)}: OK")
             for hashkey in hashkeys:
                 response_list.append(hashkey + ": OK")
 

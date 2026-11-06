@@ -2,6 +2,7 @@ import sys
 
 from datalake import Datalake
 from datalake_scripts.common.base_script import BaseScripts
+from datalake_scripts.common.rendering import get_renderer
 from datalake_scripts.helper_scripts.utils import save_output
 
 
@@ -24,7 +25,7 @@ def main(override_args=None):
         save_output(args.output, response)
         dtl.logger.debug(f"Results saved in {args.output}\n")
     else:
-        print(response)
+        get_renderer(dtl).user_info(response)
     dtl.logger.debug(f"END: get_my_user_info.py")
 
 

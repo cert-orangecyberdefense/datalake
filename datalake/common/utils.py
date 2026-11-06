@@ -108,7 +108,8 @@ def convert_date_to_normalized_timestamp(date_input: str, start: bool) -> str:
 
 
 def load_json(file_name: str) -> dict:
-    return json.load(open(file_name))
+    with open(file_name) as file:
+        return json.load(file)
 
 
 class SetEncoder(json.JSONEncoder):
