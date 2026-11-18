@@ -1,6 +1,6 @@
 [project]
 name = "datalake_scripts"
-version = "3.1.0"
+version = "3.1.1"
 description = "A collection of scripts to easily use the API of OCD Datalake"
 readme = "README.md"
 authors = [{ name = "OCD", email = "cert-contact.ocd@orange.com" }]
