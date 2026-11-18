@@ -16,17 +16,21 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [ '3.7', '3.8', '3.10', '3.12' ]
+        python-version: [ '3.8', '3.10', '3.12', '3.14' ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install Poetry
+        run: pipx install poetry==2.5.1
       - name: Install dependencies
+        # Create the venv with the stdlib `venv` module: Poetry reuses an existing
+        # in-project .venv instead of building one with `virtualenv`, whose recent
+        # releases no longer seed pip/setuptools for Python 3.8.
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m venv .venv
+          poetry install --no-interaction
       - name: Test with pytest
-        run: |
-          PYTHONPATH=$(pwd) pytest
+        run: poetry run pytest

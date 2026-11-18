@@ -1,6 +1,6 @@
 # Installation for local development
 
-You will need Python 3.6+ in order to execute the scripts.  
+You will need Python 3.8+ and [Poetry](https://python-poetry.org/) in order to develop on this project.  
 
 # Adding a new lib function 
 
@@ -32,9 +32,8 @@ They can have their own tests in directory `./tests/scripts`
 
 # Adding dependencies
 
-If a new library is used, you need to add it in the files : 
-- `requirements.txt`
-- `setup.py` as a new element of the list `install_requires`, if this library will also be used by the python package.
+If a new library is used at runtime, add it with `poetry add <lib>`.
+If it is only needed for development (tests, linter, ...), add it with `poetry add --group dev <lib>`.
 
 # Tests
 
@@ -56,14 +55,10 @@ make test_dev_env path=tests/scripts/test_csv_builder.py::test_single_threat_no_
 
 Or you can also run  :
 ```shell script
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+poetry install
 make test
 ```
-**Notes**: 
-- to leave virtual environment, run `deactivate`  
-- you can here as well add a path to the `make test` command to run only a specific test
+**Note**: you can here as well add a path to the `make test` command to run only a specific test
 
 
 ## Manual tests for cli commands
@@ -73,38 +68,28 @@ But please be aware than the tests on Cli commands only test the calls of the sc
 So when developing/editing a new command, please test several cases manually
 And of course, rely on libary tests for the datalake instance methods.
 
-First install and enter in a virtual environment :
+Install the project (Poetry creates a virtual environment for you) :
 ```shell script
-python3 -m venv .venv
-source .venv/bin/activate
-```
-**Note**: to leave virtual environment, run `deactivate`
-
-and then run the commands :
-```shell script
-pip install -r requirements.txt
+poetry install
 make test
-pip install .
 ```
-You can then launch the Cli commands : 
+You can then launch the Cli commands :
 ```shell script
-$ ocd-dtl <command> <parameter>
+$ poetry run ocd-dtl <command> <parameter>
 ```
 
 ## Manual tests for lib functions
 
-First install and enter in a virtual environment :
+First install dependencies with Poetry :
 ```shell script
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+poetry install
 ```
 
-Then create a script to test new functions : 
+Then create a script to test new functions :
 ```shell script
 touch test_script.py
 vi test_script.py
-python3 test_script.py
+poetry run python3 test_script.py
 ```
 ***Example***:
 ```shell script
@@ -116,9 +101,9 @@ task = dtl.BulkSearch.create_task(for_stix_export=True, query_hash='eeb25f838e59
 stix = task.download_sync_stream_to_file(output=Output.STIX_ZIP, output_path="stix_export.zip")
 ```
 
-Then run it : 
+Then run it :
 ```shell script
-python3 test_script.py
+poetry run python3 test_script.py
 ```
 **Note**: Be careful to not include in your commit this test script, especially if it contains your login/password
 

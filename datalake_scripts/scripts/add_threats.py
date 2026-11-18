@@ -3,11 +3,11 @@ import re
 import sys
 
 from collections import OrderedDict
-from halo import Halo
 from datalake import Datalake
 from datalake import OverrideType, AtomType
 from datalake.endpoints import Endpoint
 from datalake_scripts.common.base_script import BaseScripts
+from datalake_scripts.common.rendering import get_renderer
 from datalake_scripts.helper_scripts.utils import (
     load_csv,
     load_list,
@@ -236,7 +236,7 @@ def main(override_args=None):
     threat_types = parse_threat_types(args.threat_types)
     atom_type = AtomType[args.atom_type.upper()]
 
-    terminal_size = dtl.Threats.terminal_size
+    renderer = get_renderer(dtl)
     if args.no_bulk:
         threat_response = []
         for threat in list_new_threats:
@@ -251,9 +251,7 @@ def main(override_args=None):
                     tags=args.tag,
                 )
                 threat_response.append(res)
-                dtl.logger.info(
-                    f'{threat.ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m'
-                )
+                renderer.item_status(threat, "OK")
             except ValueError as ve:  # Wrong atom type most likely
                 error_message = str(ve)
                 threat_response.append(
@@ -263,25 +261,20 @@ def main(override_args=None):
                         "error_message": error_message,
                     }
                 )
-                dtl.logger.info(
-                    f'{threat.ljust(terminal_size - 6, " ")} '
-                    f"\x1b[0;30;41m  KO  \x1b[0m"
-                )
+                renderer.item_status(threat, "KO")
     else:
         try:
-            spinner = Halo(text=f"Creating threats", spinner="dots")
-            spinner.start()
-            threat_response = dtl.Threats.add_threats(
-                atom_list=list_new_threats,
-                atom_type=atom_type,
-                threat_types=threat_types,
-                override_type=override_type,
-                whitelist=args.whitelist,
-                public=args.public,
-                tags=args.tag,
-                external_analysis_link=args.link,
-            )
-            spinner.succeed()
+            with renderer.progress("Creating threats"):
+                threat_response = dtl.Threats.add_threats(
+                    atom_list=list_new_threats,
+                    atom_type=atom_type,
+                    threat_types=threat_types,
+                    override_type=override_type,
+                    whitelist=args.whitelist,
+                    public=args.public,
+                    tags=args.tag,
+                    external_analysis_link=args.link,
+                )
             failed = []
         except ValueError as ve:
             dtl.logger.error(ve)
@@ -294,15 +287,12 @@ def main(override_args=None):
             for success in batch_res["success"]:
                 for val_created in success["created_atom_values"]:
                     created_counter += 1
-                    dtl.logger.info(
-                        f'{val_created.ljust(terminal_size - 6, " ")} \x1b[0;30;42m  OK  \x1b[0m'
-                    )
+                    renderer.item_status(val_created, "OK")
         for failed_obj in failed:
             for failed_atom_val in failed_obj["failed_atom_values"]:
                 failed_counter += 1
-                dtl.logger.info(
-                    f'Creation failed for value {failed_atom_val.ljust(terminal_size - 6, " ")} \x1b[0;30;4\
-                1m  KO  \x1b[0m'
+                renderer.item_status(
+                    failed_atom_val, "KO", prefix="Creation failed for value "
                 )
         dtl.logger.info(
             f"Number of batches: {len(threat_response)}\n"

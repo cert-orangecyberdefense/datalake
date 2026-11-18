@@ -33,16 +33,14 @@ class Comments(Endpoint):
             try:
                 response = self._post_comment(hashkey, comment, visibility)
             except ValueError as e:
-                self.logger.warning("\x1b[6;30;41m" + hashkey + ": FAILED\x1b[0m")
-                self.logger.debug(
-                    "\x1b[6;30;41m" + hashkey + ": FAILED : " + str(e) + "\x1b[0m"
-                )
+                self.logger.warning(f"{hashkey}: FAILED")
+                self.logger.debug(f"{hashkey}: FAILED : {e}")
                 list_haskeys_no_comment_added.append(hashkey)
                 continue
             if not response:
-                self.logger.warning(f"\x1b[6;30;41m{hashkey}: KO\x1b[0m")
+                self.logger.warning(f"{hashkey}: KO")
                 list_haskeys_no_comment_added.append(hashkey)
             else:
                 list_haskeys_comment_added.append(hashkey)
-                self.logger.debug(f"\x1b[6;30;42m{hashkey}: OK\x1b[0m")
+                self.logger.debug(f"{hashkey}: OK")
         return list_haskeys_comment_added, list_haskeys_no_comment_added

@@ -1,23 +1,11 @@
 import json
-import logging
 import os
 import sys
 
-from halo import Halo
-
 from datalake import Datalake
 from datalake_scripts.common.base_script import BaseScripts
-
-
-def format_output(response: dict, one_threat_per_line=False) -> str:
-    if one_threat_per_line:
-        threat_list = []
-        for result in response.get("results", []):
-            if result:
-                threat_list += result
-        return "\n".join(threat_list)
-    else:
-        return json.dumps(response, sort_keys=True, indent=4)
+from datalake_scripts.common.rendering import get_renderer
+from datalake_scripts.helper_scripts.output_builder import format_threats_output
 
 
 def main(override_args=None):
@@ -68,30 +56,24 @@ def main(override_args=None):
             exit(1)
 
     dtl.logger.debug(f"Start to search for threat from the query hash:{query_hash}")
-    spinner = None
-    if dtl.logger.isEnabledFor(logging.INFO):
-        spinner = Halo(text=f"Creating bulk task", spinner="dots")
-        spinner.start()
-
-    task = dtl.BulkSearch.create_task(
-        query_body=query_body, query_hash=query_hash, query_fields=args.query_fields
-    )
-    if spinner:
-        spinner.text = f"Waiting for bulk task {task.uuid} response"
-    response = task.download_sync()
+    renderer = get_renderer(dtl)
+    with renderer.progress("Creating bulk task") as progress:
+        task = dtl.BulkSearch.create_task(
+            query_body=query_body,
+            query_hash=query_hash,
+            query_fields=args.query_fields,
+        )
+        progress.update(f"Waiting for bulk task {task.uuid} response")
+        response = task.download_sync()
     original_count = response.get("count", 0)
-    if spinner:
-        spinner.succeed()
-        spinner.info(f"Number of threat that have been retrieved: {original_count}")
+    dtl.logger.info(f"Number of threat that have been retrieved: {original_count}")
 
-    formatted_output = format_output(response, args.list)
     if args.output:
         with open(args.output, "w") as output:
-            output.write(formatted_output)
+            output.write(format_threats_output(response, args.list))
         dtl.logger.info(f"Threats saved in {args.output}")
     else:
-        dtl.logger.info(formatted_output)
-        dtl.logger.info("Done")
+        renderer.threats_from_query_hash(response, one_threat_per_line=args.list)
 
 
 if __name__ == "__main__":

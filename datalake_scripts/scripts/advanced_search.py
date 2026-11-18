@@ -75,9 +75,7 @@ def main(override_args=None):
             ordering=[args.ordering],
         )
     save_output(args.output, resp)
-    dtl.logger.info(
-        f"\x1b[0;30;42m OK: MATCHING THREATS SAVED IN {args.output} \x1b[0m"
-    )
+    dtl.logger.info(f"OK: MATCHING THREATS SAVED IN {args.output}")
     dtl.logger.debug(f"END: advanced_search.py")
 
 
