@@ -1,3 +1,59 @@
+[project]
+name = "datalake_scripts"
+version = "3.1.0"
+description = "A collection of scripts to easily use the API of OCD Datalake"
+readme = "README.md"
+authors = [{ name = "OCD", email = "cert-contact.ocd@orange.com" }]
+requires-python = ">=3.8,<4.0"
+dependencies = [
+    "requests==2.32.3",
+    "rich==13.9.4",
+]
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: Console",
+    "Topic :: Security",
+    "Natural Language :: English",
+]
+
+[project.urls]
+Homepage = "https://github.com/cert-orangecyberdefense/datalake/"
+Repository = "https://github.com/cert-orangecyberdefense/datalake/"
+
+[project.scripts]
+ocd-dtl = "datalake_scripts.cli:main"
+
+[tool.poetry]
+packages = [
+    { include = "datalake" },
+    { include = "datalake_scripts" },
+]
+include = [
+    { path = "datalake/config/endpoints.json", format = ["sdist", "wheel"] },
+]
+
+[tool.poetry.group.dev.dependencies]
+# pytest < 8 doesn't run on Python 3.14 (removed `ast.Str`), and the latest
+# releases dropped Python 3.8: pin the newest compatible release per Python range
+pytest = [
+    { version = "8.3.5", python = "<3.9" },
+    { version = "8.4.2", python = ">=3.9" },
+]
+pytest-asyncio = [
+    { version = "0.24.0", python = "<3.9" },
+    { version = "1.1.1", python = ">=3.9" },
+]
+responses = "0.21.0"
+black = "24.3.0"
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+
 [build-system]
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"

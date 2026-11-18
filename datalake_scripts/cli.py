@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import sys, os
+from importlib.metadata import version as _pkg_version, PackageNotFoundError
 from datalake_scripts.scripts import (
     add_threats,
     get_threats,
@@ -19,9 +20,16 @@ from datalake_scripts.scripts import (
 )
 
 
+def _read_version():
+    try:
+        return _pkg_version("datalake_scripts")
+    except PackageNotFoundError:
+        return "0.0.0+unknown"
+
+
 class Cli:
     CLI_NAME = "ocd-dtl"
-    VERSION = "3.0.1"
+    VERSION = _read_version()
 
     def __init__(self):
         parser = argparse.ArgumentParser(

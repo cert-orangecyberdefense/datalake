@@ -128,9 +128,7 @@ class SearchWatch:
                     f"Reference file not found: {reference_file}"
                 ) from e
 
-            self.logger.info(
-                f"\x1b[0;30;47m File to compare with {reference_file} \x1b[0m"
-            )
+            self.logger.info(f"File to compare with {reference_file}")
             previous_datetime = self._extract_timestamp(reference_file)
             diff_threats = self.threats_diff(
                 file_to_compare_with_data,
@@ -152,7 +150,7 @@ class SearchWatch:
                 )
                 file_to_compare_with_data = load_json(file_to_compare_with_json_path)
                 self.logger.info(
-                    f"\x1b[0;30;47m File to compare with {file_to_compare_with_json_path} \x1b[0m"
+                    f"File to compare with {file_to_compare_with_json_path}"
                 )
                 previous_datetime = self._extract_timestamp(file_to_compare_with_json)
                 diff_threats = self.threats_diff(
@@ -162,9 +160,7 @@ class SearchWatch:
                     actual_datetime,
                 )
             else:
-                self.logger.info(
-                    f"\x1b[0;30;43m No file to compare with {filepath} \x1b[0m"
-                )
+                self.logger.info(f"No file to compare with {filepath}")
 
         if save_diff_threats:
             diff_threats_path = (
@@ -178,13 +174,9 @@ class SearchWatch:
                 + ".json"
             )
             save_output(diff_threats_path, diff_threats, cls=SetEncoder)
-            self.logger.info(
-                f"\x1b[0;37;42m OK: DIFF THREATS SAVED IN {diff_threats_path} \x1b[0m"
-            )
+            self.logger.info(f"OK: DIFF THREATS SAVED IN {diff_threats_path}")
 
         save_output(filepath, bulk_search_result_json)
-        self.logger.info(
-            f"\x1b[0;37;42m OK: MATCHING THREATS SAVED IN {filepath} \x1b[0m"
-        )
+        self.logger.info(f"OK: MATCHING THREATS SAVED IN {filepath}")
 
         return diff_threats

@@ -2,7 +2,6 @@ import asyncio
 import copy
 import datetime
 import json
-import tempfile
 from http.client import ResponseNotReady
 
 import pytest
@@ -331,6 +330,7 @@ def test_bulk_search_task_download_sync(bulk_search_task: BulkSearchTask):
 @responses.activate
 def test_bulk_search_task_download_sync_stream_to_file(
     bulk_search_task: BulkSearchTask,
+    tmp_path,
 ):
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
@@ -351,8 +351,7 @@ def test_bulk_search_task_download_sync_stream_to_file(
     )
     expected_result = "bulk search download saved in file"
     responses.add(responses.GET, bs_download_url, body=expected_result, status=200)
-    temporary_file = tempfile.NamedTemporaryFile()
-    output_path = temporary_file.name
+    output_path = str(tmp_path / "bulk_search_download")
 
     bulk_search_task.download_sync_stream_to_file(output_path=output_path)
 
@@ -364,6 +363,7 @@ def test_bulk_search_task_download_sync_stream_to_file(
 @responses.activate
 def test_bulk_search_task_download_sync_stream_to_file_zip(
     bulk_search_task: BulkSearchTask,
+    tmp_path,
 ):
     bs_status_url = (
         TestData.TEST_CONFIG["main"][TestData.TEST_ENV]
@@ -388,8 +388,7 @@ def test_bulk_search_task_download_sync_stream_to_file_zip(
         b"\xe2\x02\x00\x47\x97\x2c\xb2\x07\x00\x00\x00"
     )
     responses.add(responses.GET, bs_download_url, body=expected_result, status=200)
-    temporary_file = tempfile.NamedTemporaryFile()
-    output_path = temporary_file.name
+    output_path = str(tmp_path / "bulk_search_download")
 
     bulk_search_task.download_sync_stream_to_file(
         output_path=output_path, output=Output.JSON_ZIP

@@ -14,14 +14,12 @@ def post_tags(hashkeys, tags, public, dtl):
         try:
             dtl.Tags.add_to_threat(hashkey, tags, public)
         except ValueError as e:
-            dtl.logger.warning("\x1b[6;30;41m" + hashkey + ": FAILED\x1b[0m")
-            dtl.logger.debug(
-                "\x1b[6;30;41m" + hashkey + ": FAILED : " + str(e) + "\x1b[0m"
-            )
+            dtl.logger.warning(f"{hashkey}: FAILED")
+            dtl.logger.debug(f"{hashkey}: FAILED : {e}")
             return_value.append(hashkey + ": FAILED")
         else:
             return_value.append(hashkey + ": OK")
-            dtl.logger.info("\x1b[6;30;42m" + hashkey + ": OK\x1b[0m")
+            dtl.logger.info(f"{hashkey}: OK")
     return return_value
 
 
